@@ -11,6 +11,7 @@ from typing import List
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from gspread_dataframe import set_with_dataframe
+import json
 
 # ---------------------------------------------------------
 # >>> CONFIG (edite aqui se precisar) <<<
@@ -104,9 +105,15 @@ def optionchaindate(subjacente: str, vencimento: str) -> pd.DataFrame:
     return df
 
 # ---------- Google Sheets ----------
-def sheet_client_from_json(path_json: str):
+def sheet_client_from_json(path_or_dict):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(path_json, scope)
+    
+    # If it's a dict (from env var), use from_json_keyfile_dict
+    if isinstance(path_or_dict, dict):
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(path_or_dict, scope)
+    else:
+        creds = ServiceAccountCredentials.from_json_keyfile_name(path_or_dict, scope)
+    
     return gspread.authorize(creds)
 
 def write_df_to_sheet(df: pd.DataFrame, spreadsheet_name: str, worksheet_name: str, creds_json: str):
@@ -145,9 +152,23 @@ def main():
     parser.add_argument("-w", "--tab", default=WORKSHEET, help="Nome da aba")
     parser.add_argument("-c", "--creds", default=CREDS_JSON, help="JSON da Service Account")
     args = parser.parse_args()
-
-    if not os.path.exists(args.creds):
+    
+    # Try to get credentials: file first, then env var
+    creds_source = None
+    
+    if os.path.exists(args.creds):
+        creds_source = args.creds
+        print(f"[INFO] Usando credenciais do arquivo: {args.creds}")
+    elif os.environ.get('GOOGLE_CREDENTIALS'):
+        try:
+            creds_source = json.loads(os.environ.get('GOOGLE_CREDENTIALS'))
+            print("[INFO] Usando credenciais da variável de ambiente GOOGLE_CREDENTIALS")
+        except json.JSONDecodeError as e:
+            print(f"[ERRO] Falha ao parsear GOOGLE_CREDENTIALS: {e}")
+            sys.exit(1)
+    else:
         print(f"[ERRO] Credenciais não encontradas: {args.creds}")
+        print("[DICA] Configure a variável de ambiente GOOGLE_CREDENTIALS com o JSON da service account.")
         sys.exit(1)
 
     tickers = [t.strip().upper() for t in args.tickers.split(",") if t.strip()]
@@ -191,7 +212,7 @@ def main():
     ).reset_index(drop=True)
 
     print(f"[INFO] Gravando no Sheets: '{args.sheet}' -> '{args.tab}' ({len(final)} linhas)")
-    write_df_to_sheet(final, args.sheet, args.tab, args.creds)
+    write_df_to_sheet(final, args.sheet, args.tab, creds_source)
     print("[OK] Planilha atualizada.")
 
 if __name__ == "__main__":
