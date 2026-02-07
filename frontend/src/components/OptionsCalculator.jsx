@@ -275,18 +275,53 @@ const OptionsCalculator = () => {
                         {/* Quantity Input */}
                         <div>
                             <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Quantidade (Lote Mín. 100)</label>
-                            <input
-                                type="number"
-                                value={quantity}
-                                onChange={(e) => setQuantity(Number(e.target.value))}
-                                step={100}
-                                min={100}
-                                style={{
-                                    width: '100%', background: 'rgba(30, 41, 59, 0.6)',
-                                    border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
-                                    padding: '12px', borderRadius: '8px', fontSize: '1rem'
-                                }}
-                            />
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px'
+                            }}>
+                                <button
+                                    onClick={() => setQuantity(Math.max(100, quantity - 100))}
+                                    style={{
+                                        width: '44px', height: '44px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#fff',
+                                        fontSize: '1.8rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    onChange={(e) => setQuantity(Number(e.target.value))}
+                                    step={100}
+                                    min={100}
+                                    style={{
+                                        flex: 1, background: 'rgba(30, 41, 59, 0.6)',
+                                        border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
+                                        padding: '12px', borderRadius: '8px', fontSize: '1rem',
+                                        textAlign: 'center'
+                                    }}
+                                />
+                                <button
+                                    onClick={() => setQuantity(quantity + 100)}
+                                    style={{
+                                        width: '44px', height: '44px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#fff',
+                                        fontSize: '1.8rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
 
                     </div>

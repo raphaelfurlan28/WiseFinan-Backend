@@ -294,27 +294,55 @@ const Calculator = () => {
 
                         {/* Numeric Inputs */}
                         <div>
-                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Aporte Inicial (R$)</label>
-                            <input type="number"
-                                value={initialAmount} onChange={e => setInitialAmount(e.target.value)}
-                                style={{
-                                    width: '100%', background: 'rgba(30, 41, 59, 0.6)',
-                                    border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
-                                    padding: '12px', borderRadius: '8px', fontSize: '1rem'
-                                }}
-                            />
+                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Aporte Inicial</label>
+                            <div style={{
+                                display: 'flex', alignItems: 'center',
+                                background: 'rgba(30, 41, 59, 0.6)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '8px',
+                                padding: '0 12px'
+                            }}>
+                                <span style={{ color: '#fff', fontWeight: 'bold', marginRight: '8px' }}>R$</span>
+                                <input type="text"
+                                    value={Number(initialAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    onChange={e => {
+                                        const raw = e.target.value.replace(/\./g, '').replace(',', '.');
+                                        const num = parseFloat(raw) || 0;
+                                        setInitialAmount(num);
+                                    }}
+                                    style={{
+                                        width: '100%', background: 'transparent',
+                                        border: 'none', color: '#fff',
+                                        padding: '12px 0', fontSize: '1rem', outline: 'none'
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div>
-                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Aporte Mensal (R$)</label>
-                            <input type="number"
-                                value={monthlyAmount} onChange={e => setMonthlyAmount(e.target.value)}
-                                style={{
-                                    width: '100%', background: 'rgba(30, 41, 59, 0.6)',
-                                    border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
-                                    padding: '12px', borderRadius: '8px', fontSize: '1rem'
-                                }}
-                            />
+                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Aporte Mensal</label>
+                            <div style={{
+                                display: 'flex', alignItems: 'center',
+                                background: 'rgba(30, 41, 59, 0.6)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '8px',
+                                padding: '0 12px'
+                            }}>
+                                <span style={{ color: '#fff', fontWeight: 'bold', marginRight: '8px' }}>R$</span>
+                                <input type="text"
+                                    value={Number(monthlyAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    onChange={e => {
+                                        const raw = e.target.value.replace(/\./g, '').replace(',', '.');
+                                        const num = parseFloat(raw) || 0;
+                                        setMonthlyAmount(num);
+                                    }}
+                                    style={{
+                                        width: '100%', background: 'transparent',
+                                        border: 'none', color: '#fff',
+                                        padding: '12px 0', fontSize: '1rem', outline: 'none'
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div>

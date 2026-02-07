@@ -8,7 +8,6 @@ import {
     Layers,
     HelpCircle,
     X,
-    RefreshCw,
     Home,
     TrendingUp,
     Landmark,
@@ -17,14 +16,9 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 import { useNotification } from '../context/NotificationContext';
-import { useAuth } from '../context/AuthContext';
-
-const ADMIN_EMAIL = 'raphaelfurlan28@gmail.com';
 
 export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
     const { unreadCount } = useNotification();
-    const { user } = useAuth();
-    const isAdmin = user?.email === ADMIN_EMAIL;
 
     const menuItems = [
         { id: 'home', label: 'Home', icon: Home },
@@ -37,8 +31,6 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'news', label: 'Notícias', icon: Newspaper },
         { id: 'chat', label: 'Chat', icon: MessageSquare },
         { id: 'support', label: 'Suporte', icon: HelpCircle },
-        // Admin only
-        ...(isAdmin ? [{ id: 'updates', label: 'Atualizações', icon: RefreshCw }] : []),
     ];
 
     return (

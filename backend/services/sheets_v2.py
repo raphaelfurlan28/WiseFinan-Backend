@@ -3,6 +3,7 @@ import json
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
+from services.cache import get_cached_value
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SERVICE_ACCOUNT_FILE = 'service_account.json'
@@ -80,9 +81,12 @@ def get_sheet_data():
         price_raw = get_val(idx_price)
         min_12m_raw = get_val(idx_min_12m)
         max_12m_raw = get_val(idx_max_12m)
-        min_val_raw = get_val(idx_min_val)
-        max_val_raw = get_val(idx_max_val)
-        falta_raw = get_val(idx_falta)
+        
+        # Get volatile values with cache fallback
+        min_val_raw = get_cached_value(t, 'min_val', get_val(idx_min_val))
+        max_val_raw = get_cached_value(t, 'max_val', get_val(idx_max_val))
+        falta_raw = get_cached_value(t, 'falta', get_val(idx_falta))
+        vol_ano_raw = get_cached_value(t, 'vol_ano', get_val(get_col_index(["VOLATILIDADE", "VOL ANO"])))
         
         # Calculate Falta %
         # Sheet might have it as 0.09 or 9% or -0.09
@@ -105,7 +109,7 @@ def get_sheet_data():
             "dividend": get_val(get_col_index(["DIVIDEND", "DY"])),
             "payout": get_val(get_col_index(["PAYOUT"])),
             "change_day": get_val(get_col_index(["VARIAÇÃO", "CHANGE"])),
-            "vol_ano": get_val(get_col_index(["VOLATILIDADE", "VOL ANO"])),
+            "vol_ano": vol_ano_raw,
             "last_close": get_val(get_col_index(["FECHAMENTO ANTERIOR"])),
             "about": get_val(get_col_index(["SOBRE", "DESCRIÇÃO"]))
         })

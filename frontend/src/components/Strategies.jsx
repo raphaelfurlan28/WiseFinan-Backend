@@ -1,12 +1,11 @@
 import React from 'react';
 import {
     BookOpen, Shield, TrendingUp, TrendingDown, AlertTriangle,
-    Target, Anchor, DollarSign, ArrowRight
+    Target, Anchor, DollarSign, ArrowRight, Clock, Activity
 } from 'lucide-react';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea
+    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea
 } from 'recharts';
-import '../styles/main.css';
 import '../styles/main.css';
 import './Strategies.css';
 
@@ -15,197 +14,269 @@ const strategies = [
         name: "Lançamento Coberto",
         subtitle: "Geração de Renda (Dividendos Sintéticos)",
         risk: "Baixo",
-        profit: "Moderado",
         view: "Alta Moderada / Lateral",
-        profitCondition: "Você lucra se a ação subir, ficar parada ou cair levemente (até o preço de custo - prêmio). O lucro máximo ocorre se a ação estiver acima do strike da Call vendida no vencimento.",
         icon: DollarSign,
         color: "#4ade80",
+        sim: {
+            ticker: "PETR4",
+            stockPrice: 38.50,
+            optionTicker: "PETRA40",
+            strike: 40.00,
+            premium: 1.20,
+            expiry: "21/03/2026",
+            breakeven: 37.30,
+            maxProfit: 2.70,
+            scenario: "Ação precisa ficar até R$ 40"
+        },
         steps: [
-            "1. Tenha as ações em carteira (Lote de 100).",
-            "2. Venda uma CALL (Opção de Compra) com strike acima do preço atual (OTM).",
-            "3. Receba o prêmio imediatamente.",
-            "4. Se subir muito, você entrega as ações no strike + prêmio. Se cair/lateralizar, você fica com o prêmio e as ações."
-        ],
-        example: "Ação R$ 30,00. Vende Call Strike R$ 32,00 por R$ 0,80. Lucro máx: R$ 2,80 (R$ 2 na ação + R$ 0,80 prêmio)."
+            "Tenha as ações em carteira (Lote de 100).",
+            "Venda uma CALL com strike acima do preço atual.",
+            "Receba o prêmio imediatamente.",
+            "Se subir muito, entrega ações no strike."
+        ]
     },
     {
         name: "Venda de Put (Cash Secured)",
         subtitle: "Comprar Ações com Desconto",
         risk: "Baixo/Médio",
-        profit: "Moderado",
         view: "Alta / Lateral",
-        profitCondition: "Você lucra se a ação subir, ficar lateral ou cair até o strike. O lucro máximo é limitado ao prêmio recebido, e acontece se a ação terminar acima do strike.",
         icon: Anchor,
         color: "#38bdf8",
+        sim: {
+            ticker: "VALE3",
+            stockPrice: 62.00,
+            optionTicker: "VALEH58",
+            strike: 58.00,
+            premium: 0.85,
+            expiry: "21/03/2026",
+            breakeven: 57.15,
+            maxProfit: 0.85,
+            scenario: "Ação precisa ficar acima de R$ 58"
+        },
         steps: [
-            "1. Tenha dinheiro em garantia para comprar o lote.",
-            "2. Venda uma PUT com strike no preço que deseja pagar (abaixo do atual).",
-            "3. Receba o prêmio.",
-            "4. Se cair abaixo do strike, você é exercido e compra a ação barato (+ prêmio). Se subir, lucro total é o prêmio."
-        ],
-        example: "Ação R$ 30,00. Vende Put Strike R$ 28,00 por R$ 0,50. Se cair a R$ 27, compra por R$ 28 (custo efetivo R$ 27,50)."
+            "Tenha dinheiro em garantia para o lote.",
+            "Venda uma PUT com strike desejado.",
+            "Receba o prêmio imediatamente.",
+            "Se cair, compra a ação com desconto."
+        ]
     },
     {
         name: "Trava de Alta",
         subtitle: "Ganhar na Alta com Custo Reduzido",
         risk: "Limitado",
-        profit: "Limitado",
         view: "Alta Moderada",
-        profitCondition: "Você lucra se o ativo subir acima do seu ponto de equilíbrio (Strike A + Custo). O lucro máximo é atingido se o ativo superar o Strike B (ponta vendida).",
         icon: TrendingUp,
         color: "#facc15",
+        sim: {
+            ticker: "BBAS3",
+            stockPrice: 28.00,
+            optionTicker: "C30/C32",
+            strike: 30.00,
+            strikeB: 32.00,
+            premium: 0.80,
+            expiry: "21/03/2026",
+            breakeven: 30.80,
+            maxProfit: 1.20,
+            scenario: "Ação precisa subir acima de R$ 30,80"
+        },
         steps: [
-            "1. Compre uma CALL de strike menor (A).",
-            "2. Venda uma CALL de strike maior (B).",
-            "3. O custo da montagem é menor que comprar a seco.",
-            "4. O lucro máximo é a diferença entre strikes (B - A) menos o custo."
-        ],
-        example: "Compra Call Strike 30 e Vende Call Strike 32. Paga R$ 0,80. Lucro máx R$ 2,00 - 0,80 = R$ 1,20."
+            "Compre uma CALL de strike menor.",
+            "Venda uma CALL de strike maior.",
+            "Custo menor que comprar a seco.",
+            "Lucro máx = diferença strikes - custo."
+        ]
     },
     {
         name: "Trava de Baixa",
         subtitle: "Ganhar na Queda com Proteção",
         risk: "Limitado",
-        profit: "Limitado",
         view: "Baixa Moderada",
-        profitCondition: "Você lucra se o ativo cair abaixo do ponto de equilíbrio. O lucro máximo ocorre se o ativo estiver abaixo do Strike B (ponta vendida) no vencimento.",
         icon: TrendingDown,
         color: "#f87171",
+        sim: {
+            ticker: "MGLU3",
+            stockPrice: 12.50,
+            optionTicker: "P14/P12",
+            strike: 14.00,
+            strikeB: 12.00,
+            premium: 0.70,
+            expiry: "21/03/2026",
+            breakeven: 13.30,
+            maxProfit: 1.30,
+            scenario: "Ação precisa cair abaixo de R$ 13,30"
+        },
         steps: [
-            "1. Compre uma PUT de strike maior (A).",
-            "2. Venda uma PUT de strike menor (B).",
-            "3. Lucra se o ativo cair até o strike B.",
-            "4. Risco limitado ao custo da montagem."
-        ],
-        example: "Compra Put Strike 30 e Vende Put Strike 28. Paga R$ 0,70. Lucro máx R$ 1,30."
+            "Compre uma PUT de strike maior.",
+            "Venda uma PUT de strike menor.",
+            "Lucra se o ativo cair.",
+            "Risco limitado ao custo."
+        ]
     },
     {
         name: "Collar",
         subtitle: "Proteção Total (Seguro Financiado)",
         risk: "Muito Baixo",
-        profit: "Limitado",
         view: "Proteção / Alta Limitada",
-        profitCondition: "Você lucra com a valorização da ação até o strike da Call. Se a ação cair, sua perda é travada no strike da Put. Ideal para proteger ganhos já obtidos.",
         icon: Shield,
         color: "#a855f7",
+        sim: {
+            ticker: "ITUB4",
+            stockPrice: 32.00,
+            optionTicker: "P28 + C36",
+            strike: 28.00,
+            strikeB: 36.00,
+            premium: 0,
+            expiry: "21/03/2026",
+            breakeven: 32.00,
+            maxProfit: 4.00,
+            scenario: "Proteção em R$ 28, limite de alta R$ 36"
+        },
         steps: [
-            "1. Tenha a ação em carteira.",
-            "2. Compre uma PUT (Seguro) para proteção contra queda.",
-            "3. Financie o seguro vendendo uma CALL (Lançamento Coberto) OTM.",
-            "4. 'Custo Zero' se o prêmio da Call pagar a Put."
-        ],
-        example: "Ação R$ 30. Compra Put 28 (Proteção) e Vende Call 33 (Financiamento). Risco travado em R$ 28."
+            "Tenha a ação em carteira.",
+            "Compre uma PUT como seguro.",
+            "Financie vendendo uma CALL.",
+            "Custo zero se prêmios iguais."
+        ]
     },
     {
         name: "Compra a Seco (Pózinho)",
         subtitle: "Alavancagem Explosiva (Alto Risco)",
         risk: "Alto (Perda Total)",
-        profit: "Ilimitado",
         view: "Movimento Brusco",
-        profitCondition: "Você só lucra se o ativo tiver uma movimentação forte e rápida na direção escolhida, superando o preço de exercício + prêmio pago. Se ficar parado, vira pó.",
         icon: AlertTriangle,
         color: "#ef4444",
+        sim: {
+            ticker: "BOVA11",
+            stockPrice: 125.00,
+            optionTicker: "BOVAK140",
+            strike: 140.00,
+            premium: 0.15,
+            expiry: "21/03/2026",
+            breakeven: 140.15,
+            maxProfit: "Ilimitado",
+            scenario: "Ação precisa explodir acima de R$ 140,15"
+        },
         steps: [
-            "1. Compre uma CALL ou PUT muito fora do dinheiro (OTM).",
-            "2. Custo muito baixo (centavos).",
-            "3. Se o ativo explodir, a opção valoriza 1.000%+. Se não, vira pó (perde o que colocou).",
-            "4. Use apenas 'dinheiro da pinga'."
-        ],
-        example: "Compra Call Strike 40 (Ativo a 30) por R$ 0,05. Se ativo for a 45, opção vale R$ 5,00 (100x)."
+            "Compre CALL ou PUT muito OTM.",
+            "Custo muito baixo (centavos).",
+            "Se explodir, valoriza 1000%+.",
+            "Se não, perde tudo (vira pó)."
+        ]
     },
     {
         name: "Iron Condor",
         subtitle: "Lucrar com Lateralização",
         risk: "Limitado",
-        profit: "Limitado",
         view: "Lateral (Sem movimento)",
-        profitCondition: "Você lucra se o preço do ativo permanecer DENTRO de um intervalo específico até o vencimento. Se sair muito para cima ou para baixo, você tem prejuízo limitado.",
         icon: Target,
-        color: "#6366f1", // Indigo
+        color: "#6366f1",
+        sim: {
+            ticker: "PETR4",
+            stockPrice: 38.00,
+            optionTicker: "C40/42 + P36/34",
+            strike: 36.00,
+            strikeB: 40.00,
+            premium: 0.60,
+            expiry: "21/03/2026",
+            breakeven: "35.40 - 40.60",
+            maxProfit: 0.60,
+            scenario: "Ação precisa ficar entre R$ 36 e R$ 40"
+        },
         steps: [
-            "1. Vende uma Trava de Alta (OTM) e Vende uma Trava de Baixa (OTM).",
-            "2. Recebe crédito na montagem.",
-            "3. Se o ativo ficar entre as pontas vendidas até o vencimento, lucro máximo.",
-            "4. Prejuízo se explodir para qualquer lado."
-        ],
-        example: "Vende Call 35/37 e Vende Put 25/23 (Ativo a 30). Ganha se ficar entre 25 e 35."
+            "Vende Trava de Alta + Trava de Baixa OTM.",
+            "Recebe crédito na montagem.",
+            "Se ficar entre as pontas, lucro máximo.",
+            "Prejuízo se explodir para qualquer lado."
+        ]
     },
     {
         name: "Straddle / Strangle",
         subtitle: "Apostar na Volatilidade Extrema",
         risk: "Limitado ao Custo",
-        profit: "Alto",
         view: "Explosão (Qualquer lado)",
-        profitCondition: "Você lucra se o ativo se mover MUITO para qualquer lado (subir muito ou cair muito), cobrindo o custo das duas opções compradas. Se ficar parado, prejuízo total.",
-        icon: TrendingUp, // Using generic trend
-        color: "#ec4899", // Pink
+        icon: TrendingUp,
+        color: "#ec4899",
+        sim: {
+            ticker: "VALE3",
+            stockPrice: 62.00,
+            optionTicker: "C62 + P62",
+            strike: 62.00,
+            premium: 2.50,
+            expiry: "21/03/2026",
+            breakeven: "59.50 ou 64.50",
+            maxProfit: "Ilimitado",
+            scenario: "Ação precisa mover mais de R$ 2,50"
+        },
         steps: [
-            "1. Compre uma CALL e uma PUT do mesmo strike (Straddle) ou strikes diferentes (Strangle).",
-            "2. Lucra se o ativo subir MUITO ou cair MUITO.",
-            "3. Prejuízo se o ativo ficar parado (perde os dois prêmios)."
-        ],
-        example: "Compra Call 30 e Put 30. Custo R$ 2,00. Lucra se passar de 32 ou cair abaixo de 28."
+            "Compre CALL e PUT do mesmo strike.",
+            "Lucra se subir ou cair muito.",
+            "Prejuízo se ficar parado."
+        ]
     }
 ];
 
-// Helper to generate idealized payoff data
-const getPayoffData = (name) => {
+// Helper to generate payoff data based on strategy
+const getPayoffData = (name, sim) => {
     const data = [];
+    const stock = sim?.stockPrice || 100;
+    const strike = sim?.strike || stock;
+
     switch (name) {
         case "Lançamento Coberto":
         case "Venda de Put (Cash Secured)":
-            data.push({ price: 80, pnl: -15 });
-            data.push({ price: 90, pnl: -5 });
-            data.push({ price: 95, pnl: 0 }); // Breakeven
-            data.push({ price: 100, pnl: 5 }); // Strike
-            data.push({ price: 110, pnl: 5 }); // Cap
-            data.push({ price: 120, pnl: 5 });
+            data.push({ price: stock - 10, pnl: -8 });
+            data.push({ price: stock - 5, pnl: -3 });
+            data.push({ price: sim?.breakeven || stock - 2, pnl: 0 });
+            data.push({ price: strike, pnl: sim?.maxProfit || 3 });
+            data.push({ price: stock + 10, pnl: sim?.maxProfit || 3 });
             break;
 
         case "Trava de Alta":
-            data.push({ price: 80, pnl: -5 });
-            data.push({ price: 90, pnl: -5 });
-            data.push({ price: 95, pnl: 0 });
-            data.push({ price: 100, pnl: 5 });
-            data.push({ price: 110, pnl: 5 });
+            data.push({ price: stock - 5, pnl: -(sim?.premium || 0.8) });
+            data.push({ price: strike, pnl: -(sim?.premium || 0.8) });
+            data.push({ price: sim?.breakeven || strike + 1, pnl: 0 });
+            data.push({ price: sim?.strikeB || strike + 2, pnl: sim?.maxProfit || 1.2 });
+            data.push({ price: stock + 10, pnl: sim?.maxProfit || 1.2 });
             break;
 
         case "Trava de Baixa":
-            data.push({ price: 80, pnl: 5 });
-            data.push({ price: 90, pnl: 5 });
-            data.push({ price: 95, pnl: 0 });
-            data.push({ price: 100, pnl: -5 });
-            data.push({ price: 110, pnl: -5 });
+            data.push({ price: stock - 5, pnl: sim?.maxProfit || 1.3 });
+            data.push({ price: sim?.strikeB || strike - 2, pnl: sim?.maxProfit || 1.3 });
+            data.push({ price: sim?.breakeven || strike - 1, pnl: 0 });
+            data.push({ price: strike, pnl: -(sim?.premium || 0.7) });
+            data.push({ price: stock + 5, pnl: -(sim?.premium || 0.7) });
             break;
 
         case "Collar":
-            data.push({ price: 80, pnl: -5 });
-            data.push({ price: 90, pnl: -5 });
-            data.push({ price: 95, pnl: 0 });
-            data.push({ price: 100, pnl: 5 });
-            data.push({ price: 110, pnl: 5 });
+            data.push({ price: stock - 10, pnl: -(stock - strike) });
+            data.push({ price: strike, pnl: -(stock - strike) });
+            data.push({ price: stock, pnl: 0 });
+            data.push({ price: sim?.strikeB || stock + 4, pnl: sim?.maxProfit || 4 });
+            data.push({ price: stock + 10, pnl: sim?.maxProfit || 4 });
             break;
 
         case "Compra a Seco (Pózinho)":
-            data.push({ price: 80, pnl: -2 });
-            data.push({ price: 100, pnl: -2 });
-            data.push({ price: 110, pnl: 8 });
-            data.push({ price: 120, pnl: 18 });
+            data.push({ price: stock, pnl: -(sim?.premium || 0.15) });
+            data.push({ price: strike - 5, pnl: -(sim?.premium || 0.15) });
+            data.push({ price: strike, pnl: -(sim?.premium || 0.15) });
+            data.push({ price: strike + 5, pnl: 5 - (sim?.premium || 0.15) });
+            data.push({ price: strike + 15, pnl: 15 - (sim?.premium || 0.15) });
             break;
 
         case "Iron Condor":
-            data.push({ price: 80, pnl: -10 });
-            data.push({ price: 90, pnl: 5 });
-            data.push({ price: 100, pnl: 5 });
-            data.push({ price: 110, pnl: -10 });
+            data.push({ price: stock - 10, pnl: -1.4 });
+            data.push({ price: strike, pnl: sim?.maxProfit || 0.6 });
+            data.push({ price: stock, pnl: sim?.maxProfit || 0.6 });
+            data.push({ price: sim?.strikeB || stock + 2, pnl: sim?.maxProfit || 0.6 });
+            data.push({ price: stock + 10, pnl: -1.4 });
             break;
 
         case "Straddle / Strangle":
-            data.push({ price: 80, pnl: 10 });
-            data.push({ price: 90, pnl: 0 });
-            data.push({ price: 100, pnl: -10 });
-            data.push({ price: 110, pnl: 0 });
-            data.push({ price: 120, pnl: 10 });
+            data.push({ price: stock - 10, pnl: 10 - (sim?.premium || 2.5) });
+            data.push({ price: stock - 5, pnl: 5 - (sim?.premium || 2.5) });
+            data.push({ price: stock, pnl: -(sim?.premium || 2.5) });
+            data.push({ price: stock + 5, pnl: 5 - (sim?.premium || 2.5) });
+            data.push({ price: stock + 10, pnl: 10 - (sim?.premium || 2.5) });
             break;
 
         default:
@@ -214,94 +285,137 @@ const getPayoffData = (name) => {
     return data;
 };
 
-// Helper to get zones
-const getZones = (name) => {
-    switch (name) {
-        case "Lançamento Coberto":
-        case "Venda de Put (Cash Secured)":
-        case "Trava de Alta":
-        case "Collar":
-            return [
-                { x1: 80, x2: 95, type: 'loss' },
-                { x1: 95, x2: 120, type: 'profit' }
-            ];
-        case "Trava de Baixa":
-            return [
-                { x1: 80, x2: 95, type: 'profit' },
-                { x1: 95, x2: 120, type: 'loss' }
-            ];
-        case "Compra a Seco (Pózinho)":
-            return [
-                { x1: 80, x2: 105, type: 'loss' },
-                { x1: 105, x2: 120, type: 'profit' }
-            ];
-        case "Iron Condor":
-            return [
-                { x1: 80, x2: 88, type: 'loss' },
-                { x1: 88, x2: 102, type: 'profit' },
-                { x1: 102, x2: 120, type: 'loss' }
-            ];
-        case "Straddle / Strangle":
-            return [
-                { x1: 80, x2: 90, type: 'profit' },
-                { x1: 90, x2: 110, type: 'loss' },
-                { x1: 110, x2: 120, type: 'profit' }
-            ];
-        default:
-            return [];
-    }
-};
+// Enhanced chart with simulation info
+const StrategyChart = ({ strategy, color, sim }) => {
+    const data = getPayoffData(strategy, sim);
 
-const StrategyChart = ({ strategy, color }) => {
-    const data = getPayoffData(strategy);
-    const zones = getZones(strategy);
+    // Strategies where you RECEIVE premium (sell strategies)
+    const isSellStrategy = strategy === "Lançamento Coberto" || strategy === "Venda de Put (Cash Secured)";
 
     if (!data.length) return null;
 
     const gradId = `grad-${strategy.replace(/[^a-zA-Z0-9]/g, '')}`;
 
     return (
-        <div style={{ width: '100%', height: 100, marginTop: '8px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                    <defs>
-                        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={color} stopOpacity={0.4} />
-                            <stop offset="95%" stopColor={color} stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Zones Background */}
-                    {zones.map((zone, i) => (
-                        <ReferenceArea
-                            key={i}
-                            x1={zone.x1}
-                            x2={zone.x2}
-                            fill={zone.type === 'profit' ? '#4ade80' : '#ef4444'}
-                            fillOpacity={0.1}
-                        />
-                    ))}
-
-                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.3)" strokeDasharray="3 3" />
-
-                    <Area
-                        type="monotone"
-                        dataKey="pnl"
-                        stroke={color}
-                        fill={`url(#${gradId})`}
-                        strokeWidth={3}
-                    />
-                </AreaChart>
-            </ResponsiveContainer>
-
-            {/* Labels Overlay */}
+        <div style={{ marginTop: '12px' }}>
+            {/* Simulation Info Header */}
             <div style={{
-                position: 'absolute', top: 5, left: 0, right: 0, bottom: 0,
-                display: 'flex', justifyContent: 'space-between', padding: '0 10px',
-                pointerEvents: 'none', fontSize: '0.6rem', fontWeight: 'bold', textTransform: 'uppercase'
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px',
+                marginBottom: '12px',
+                padding: '12px',
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '8px'
             }}>
-                <div style={{ position: 'absolute', bottom: 5, left: '10%', color: '#ef4444', background: 'rgba(0,0,0,0.5)', padding: '2px 4px', borderRadius: '4px' }}>Prejuízo</div>
-                <div style={{ position: 'absolute', top: 5, right: '10%', color: '#4ade80', background: 'rgba(0,0,0,0.5)', padding: '2px 4px', borderRadius: '4px' }}>Lucro</div>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>Ativo</div>
+                    <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{sim?.ticker}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>R$ {sim?.stockPrice?.toFixed(2)}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>Opção</div>
+                    <div style={{ fontSize: '0.85rem', color: color, fontWeight: 'bold' }}>{sim?.optionTicker}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Strike R$ {sim?.strike?.toFixed(2)}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>Vencimento</div>
+                    <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <Clock size={12} /> {sim?.expiry}
+                    </div>
+                </div>
+            </div>
+
+            {/* Chart */}
+            <div style={{ width: '100%', height: 100, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={color} stopOpacity={0.4} />
+                                <stop offset="95%" stopColor={color} stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <ReferenceLine y={0} stroke="rgba(255,255,255,0.3)" strokeDasharray="3 3" />
+                        <XAxis dataKey="price" hide />
+                        <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                        <Tooltip
+                            contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                            labelStyle={{ color: '#94a3b8' }}
+                            formatter={(value) => [`R$ ${value.toFixed(2)}`, 'P/L']}
+                            labelFormatter={(value) => `Preço: R$ ${value}`}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="pnl"
+                            stroke={color}
+                            fill={`url(#${gradId})`}
+                            strokeWidth={3}
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </div>
+
+            {/* Key Metrics */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px',
+                marginTop: '12px'
+            }}>
+                <div style={{
+                    background: 'rgba(74, 222, 128, 0.1)',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(74, 222, 128, 0.2)'
+                }}>
+                    <div style={{ fontSize: '0.65rem', color: '#4ade80', textTransform: 'uppercase' }}>Lucro Máx</div>
+                    <div style={{ fontSize: '0.9rem', color: '#4ade80', fontWeight: 'bold' }}>
+                        {typeof sim?.maxProfit === 'number' ? `R$ ${sim.maxProfit.toFixed(2)}` : sim?.maxProfit}
+                    </div>
+                </div>
+                <div style={{
+                    background: 'rgba(251, 191, 36, 0.1)',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(251, 191, 36, 0.2)'
+                }}>
+                    <div style={{ fontSize: '0.65rem', color: '#fbbf24', textTransform: 'uppercase' }}>Breakeven</div>
+                    <div style={{ fontSize: '0.9rem', color: '#fbbf24', fontWeight: 'bold' }}>
+                        {typeof sim?.breakeven === 'number' ? `R$ ${sim.breakeven.toFixed(2)}` : sim?.breakeven}
+                    </div>
+                </div>
+                <div style={{
+                    background: isSellStrategy ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: isSellStrategy ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                }}>
+                    <div style={{ fontSize: '0.65rem', color: isSellStrategy ? '#4ade80' : '#ef4444', textTransform: 'uppercase' }}>
+                        {isSellStrategy ? 'Prêmio Recebido' : 'Custo'}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: isSellStrategy ? '#4ade80' : '#ef4444', fontWeight: 'bold' }}>
+                        {isSellStrategy ? '+' : '-'} R$ {sim?.premium?.toFixed(2) || '0.00'}
+                    </div>
+                </div>
+            </div>
+
+            {/* Scenario */}
+            <div style={{
+                marginTop: '12px',
+                padding: '10px',
+                background: `${color}15`,
+                borderRadius: '8px',
+                borderLeft: `3px solid ${color}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+            }}>
+                <Activity size={16} color={color} />
+                <span style={{ fontSize: '0.85rem', color: '#fff' }}>{sim?.scenario}</span>
             </div>
         </div>
     );
@@ -329,7 +443,7 @@ const Strategies = () => {
             {/* Grid */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
                 gap: '24px',
                 paddingBottom: '40px'
             }}>
@@ -337,7 +451,7 @@ const Strategies = () => {
                     <div key={idx} className="rf-card glass-card">
                         {/* Header */}
                         <div className="rf-card-header" style={{
-                            background: `linear-gradient(90deg, ${strat.color}20, transparent)`
+                            background: `linear-gradient(90deg, ${strat.color}35, transparent)`
                         }}>
                             <div className="rf-card-icon" style={{ background: strat.color }}>
                                 <strat.icon size={20} color="#fff" />
@@ -351,14 +465,8 @@ const Strategies = () => {
                         {/* Body */}
                         <div className="rf-card-content">
 
-                            {/* Chart (NEW) */}
-                            <div className="chart-container-wrapper">
-                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payoff Estimado</span>
-                                <StrategyChart strategy={strat.name} color={strat.color} />
-                            </div>
-
                             {/* Tags */}
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                                 <div className="strategy-badge">
                                     <span>Risco:</span> <span style={{ color: strat.color, fontWeight: 'bold' }}>{strat.risk}</span>
                                 </div>
@@ -367,36 +475,22 @@ const Strategies = () => {
                                 </div>
                             </div>
 
-                            {/* Profit Condition */}
-                            <div className="profit-box" style={{
-                                background: `${strat.color}10`,
-                                border: `1px solid ${strat.color}20`
-                            }}>
-                                <span style={{ fontSize: '0.75rem', color: strat.color, fontWeight: 'bold', textTransform: 'uppercase' }}>Quando Lucra?</span>
-                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#fff', lineHeight: '1.4' }}>
-                                    {strat.profitCondition}
-                                </p>
-                            </div>
+                            {/* Enhanced Chart with Simulation Data */}
+                            <StrategyChart strategy={strat.name} color={strat.color} sim={strat.sim} />
 
-                            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)', margin: '16px 0' }}></div>
 
                             {/* Steps */}
                             <div>
-                                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Como Executar</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Como Executar</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     {strat.steps.map((step, sIdx) => (
                                         <div key={sIdx} className="step-item">
-                                            <ArrowRight size={14} color={strat.color} style={{ marginTop: '4px', flexShrink: 0 }} />
-                                            <span>{step.replace(/^\d+\.\s/, '')}</span>
+                                            <ArrowRight size={12} color={strat.color} style={{ marginTop: '3px', flexShrink: 0 }} />
+                                            <span style={{ fontSize: '0.85rem' }}>{step}</span>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-
-                            {/* Example */}
-                            <div className="example-box" style={{ borderLeftColor: strat.color }}>
-                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>EXEMPLO PRÁTICO</span>
-                                <span style={{ fontSize: '0.85rem', color: '#fff', fontStyle: 'italic' }}>"{strat.example}"</span>
                             </div>
 
                         </div>

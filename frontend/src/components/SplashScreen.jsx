@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Loader } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
 
 const SplashScreen = () => {
     const { login, authError } = useAuth();
@@ -10,6 +10,7 @@ const SplashScreen = () => {
     // Form State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -175,16 +176,16 @@ const SplashScreen = () => {
                         </div>
 
                         <div style={{ position: 'relative' }}>
-                            <Lock size={18} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                            <Lock size={18} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 placeholder="Senha"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                                 style={{
-                                    width: '100%', padding: '12px 16px 12px 48px',
+                                    width: '100%', padding: '12px 48px 12px 48px',
                                     background: 'rgba(255, 255, 255, 0.08)',
                                     border: '1px solid rgba(255, 255, 255, 0.1)',
                                     borderRadius: '50px',
@@ -194,6 +195,22 @@ const SplashScreen = () => {
                                     backdropFilter: 'blur(10px)'
                                 }}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                    padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    zIndex: 1
+                                }}
+                            >
+                                {showPassword ? (
+                                    <EyeOff size={18} color="rgba(255,255,255,0.7)" />
+                                ) : (
+                                    <Eye size={18} color="rgba(255,255,255,0.7)" />
+                                )}
+                            </button>
                         </div>
 
                         {authError && (

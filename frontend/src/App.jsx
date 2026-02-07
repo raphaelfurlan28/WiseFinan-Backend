@@ -7,7 +7,6 @@ import Sidebar from './components/Sidebar';
 import StockList from './components/StockList';
 import StockDetail from './components/StockDetail';
 import Home from './components/Home';
-import Updates from './components/Updates';
 import FixedIncome from './components/FixedIncome';
 import Portfolio from './components/Portfolio';
 import Noticias from './components/Noticias';
@@ -75,8 +74,7 @@ const AppContent = () => {
         return <Strategies />;
       case 'support':
         return <Support />;
-      case 'updates':
-        return <Updates />;
+
       default:
         return <Home onNavigate={handleNavigate} onStockClick={setSelectedStock} />;
     }

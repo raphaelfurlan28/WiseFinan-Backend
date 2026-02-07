@@ -4,7 +4,7 @@ import ModernLoader from './ModernLoader';
 import '../components/FixedIncome.css';
 import './OptionsModule.css'; // Import Options Styles
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X, Sparkles, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X, Sparkles, PieChart, Crosshair } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,6 +25,316 @@ const Home = ({ onNavigate }) => {
     const [guaranteeOpportunities, setGuaranteeOpportunities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+    const [selectedOperation, setSelectedOperation] = useState(null);
+
+    // Operation Modal Component - Supports 4 strategies
+    const OperationModal = ({ operation, onClose }) => {
+        if (!operation) return null;
+
+        const { option, type, stock, strategy } = operation;
+        // strategy can be: 'venda_put', 'venda_call', 'compra_put', 'compra_call'
+
+        const strategyNames = {
+            'venda_put': 'Venda de Put (Cash Secured)',
+            'venda_call': 'Lançamento Coberto',
+            'compra_put': 'Compra de Put a Seco',
+            'compra_call': 'Compra de Call a Seco'
+        };
+        const strategyName = strategyNames[strategy] || 'Operação';
+
+        const isPut = type === 'put';
+        const isVenda = strategy?.startsWith('venda');
+        const strategyColor = isPut ? '#ef4444' : '#38bdf8';
+
+        const stockPrice = parseFloat((stock?.price || "0").replace('R$', '').replace('.', '').replace(',', '.'));
+        const strikeVal = parseFloat(String(option.strike).replace(',', '.')) || 0;
+        const premium = option.last_price || 0;
+        const premiumTotal = premium * 100; // 1 lote = 100 opções
+        const guaranteeNeeded = strikeVal * 100; // valor p/ 1 lote
+        const costTotal = premiumTotal; // custo da compra a seco
+
+        return (
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 2000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(15px)'
+            }} onClick={onClose}>
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    transition={{ type: "spring", duration: 0.4 }}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        position: 'relative',
+                        width: '92%', maxWidth: '420px', maxHeight: '85vh',
+                        background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+                        borderRadius: '24px', padding: '24px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+                        overflowY: 'auto', overflow: 'visible'
+                    }}
+                >
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '40px', height: '40px', borderRadius: '12px',
+                                background: `${strategyColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Crosshair size={20} color={strategyColor} />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>{strategyName}</h3>
+                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{option.ticker} • {stock?.ticker}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Fechar button - positioned at top right */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            position: 'absolute', top: -40, right: 0,
+                            background: 'transparent',
+                            border: 'none',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#cbd5e1',
+                            fontSize: '0.8rem', fontWeight: '300',
+                            padding: '0'
+                        }}
+                    >
+                        Fechar
+                    </button>
+
+                    {/* Dados da Operação */}
+                    <div style={{
+                        background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '16px', marginBottom: '20px',
+                        border: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Ação Atual</span>
+                                <div style={{ fontSize: '1rem', color: '#fff', fontWeight: 600 }}>R$ {stockPrice.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Strike</span>
+                                <div style={{ fontSize: '1rem', color: '#fff', fontWeight: 600 }}>R$ {option.strike}</div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>{isVenda ? 'Prêmio/Opção' : 'Custo/Opção'}</span>
+                                <div style={{ fontSize: '1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 600 }}>R$ {premium.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>{isVenda ? 'Prêmio/Lote' : 'Custo/Lote'}</span>
+                                <div style={{ fontSize: '1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 600 }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Vencimento</span>
+                                <div style={{ fontSize: '0.9rem', color: '#fff' }}>{formatDate(option.expiration)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Explicação da Estratégia */}
+                    {
+                        strategy === 'venda_put' && (
+                            <>
+                                {/* Venda de Put Cash Secured */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#4ade80' }}>1.</span> Garantia Necessária
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Tenha <strong style={{ color: '#fff' }}>R$ {guaranteeNeeded.toFixed(2).replace('.', ',')}</strong> em garantia (1 lote).
+                                        <br />Preferencialmente em <strong style={{ color: '#38bdf8' }}>LFTS11</strong> para render enquanto garantia.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#4ade80' }}>2.</span> Execute a Venda
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Venda a PUT <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
+                                        <br />Você receberá <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> de prêmio imediatamente.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#4ade80' }}>3.</span> Cenários no Vencimento
+                                    </h4>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                        <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
+                                            <strong style={{ color: '#4ade80' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
+                                            Opção vira pó. Você fica com o prêmio total. ✓
+                                        </div>
+                                        <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
+                                            <strong style={{ color: '#ef4444' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
+                                            Você será exercido e comprará 100 ações por R$ {option.strike} cada.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>↻</span> Rolagem (Ajuste)
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Se a ação cair muito, você pode <strong style={{ color: '#fff' }}>rolar</strong> recomprando a PUT vendida e vendendo outra com strike menor ou vencimento mais longo.
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {
+                        strategy === 'venda_call' && (
+                            <>
+                                {/* Lançamento Coberto (Venda de Call) */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>1.</span> Requisito: Ter as Ações
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Tenha <strong style={{ color: '#fff' }}>100 ações de {stock?.ticker}</strong> em carteira para cada lote.
+                                        <br />Suas ações serão a garantia da operação.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>2.</span> Execute a Venda
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Venda a CALL <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
+                                        <br />Você receberá <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> de prêmio imediatamente.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>3.</span> Cenários no Vencimento
+                                    </h4>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                        <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
+                                            <strong style={{ color: '#4ade80' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
+                                            Opção vira pó. Você fica com prêmio + ações. ✓
+                                        </div>
+                                        <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
+                                            <strong style={{ color: '#ef4444' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
+                                            Você será exercido e venderá suas ações por R$ {option.strike} cada.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>↻</span> Rolagem (Ajuste)
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Se a ação subir muito, você pode <strong style={{ color: '#fff' }}>rolar</strong> recomprando a CALL vendida e vendendo outra com strike maior ou vencimento mais longo.
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {
+                        strategy === 'compra_call' && (
+                            <>
+                                {/* Compra de Call a Seco */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>1.</span> Capital Necessário
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Você precisará de <strong style={{ color: '#ef4444' }}>R$ {costTotal.toFixed(2).replace('.', ',')}</strong> para comprar 1 lote (100 opções).
+                                        <br />Este é o valor máximo que você pode perder.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>2.</span> Execute a Compra
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Compre a CALL <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
+                                        <br />Você está apostando que a ação <strong style={{ color: '#4ade80' }}>SUBIRÁ</strong> acima do strike até o vencimento.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#38bdf8' }}>3.</span> Cenários no Vencimento
+                                    </h4>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                        <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
+                                            <strong style={{ color: '#4ade80' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
+                                            Você lucra a diferença × 100 ações. Lucro potencial ilimitado! ✓
+                                        </div>
+                                        <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
+                                            <strong style={{ color: '#ef4444' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
+                                            Opção vira pó. Você perde o prêmio pago (R$ {costTotal.toFixed(2).replace('.', ',')}).
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#ef4444' }}>⚠</span> Risco Máximo
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Perda limitada ao prêmio pago. Operação especulativa de <strong style={{ color: '#fff' }}>alto risco</strong>.
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {
+                        strategy === 'compra_put' && (
+                            <>
+                                {/* Compra de Put a Seco */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#ef4444' }}>1.</span> Capital Necessário
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Você precisará de <strong style={{ color: '#ef4444' }}>R$ {costTotal.toFixed(2).replace('.', ',')}</strong> para comprar 1 lote (100 opções).
+                                        <br />Este é o valor máximo que você pode perder.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#ef4444' }}>2.</span> Execute a Compra
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Compre a PUT <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
+                                        <br />Você está apostando que a ação <strong style={{ color: '#ef4444' }}>CAIRÁ</strong> abaixo do strike até o vencimento.
+                                    </p>
+                                </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#ef4444' }}>3.</span> Cenários no Vencimento
+                                    </h4>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                        <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
+                                            <strong style={{ color: '#4ade80' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
+                                            Você lucra a diferença × 100 ações. Lucro potencial até R$ {(strikeVal * 100).toFixed(0)}! ✓
+                                        </div>
+                                        <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
+                                            <strong style={{ color: '#ef4444' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
+                                            Opção vira pó. Você perde o prêmio pago (R$ {costTotal.toFixed(2).replace('.', ',')}).
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#ef4444' }}>⚠</span> Risco Máximo
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                        Perda limitada ao prêmio pago. Operação especulativa de <strong style={{ color: '#fff' }}>alto risco</strong>.
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+                </motion.div >
+            </div >
+        );
+    };
 
 
     useEffect(() => {
@@ -160,7 +470,7 @@ const Home = ({ onNavigate }) => {
                                                 justifyContent: 'center',
                                                 padding: '0' // Reset padding so children control it
                                             }}
-                                            onClick={() => setSelectedOpportunity(item)}
+                                            onClick={() => setSelectedOpportunity({ ...item, opportunityType: 'cheap' })}
                                         >
                                             <div className="rf-card-header" style={{
                                                 padding: '12px',
@@ -278,7 +588,7 @@ const Home = ({ onNavigate }) => {
                                                 justifyContent: 'center',
                                                 padding: '0'
                                             }}
-                                            onClick={() => setSelectedOpportunity(item)}
+                                            onClick={() => setSelectedOpportunity({ ...item, opportunityType: 'expensive' })}
                                         >
                                             <div className="rf-card-header" style={{
                                                 padding: '12px',
@@ -654,6 +964,24 @@ const Home = ({ onNavigate }) => {
                                                             <div style={{ marginTop: '0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}>
                                                                 <Calendar size={10} /> {formatDate(opt.expiration)}
                                                             </div>
+                                                            {/* Ver Operação Button */}
+                                                            <button
+                                                                onClick={() => setSelectedOperation({
+                                                                    option: opt,
+                                                                    type: 'call',
+                                                                    stock: selectedOpportunity.stock,
+                                                                    strategy: selectedOpportunity.opportunityType === 'cheap' ? 'compra_call' : 'venda_call'
+                                                                })}
+                                                                style={{
+                                                                    marginTop: '10px', width: '100%', padding: '8px 12px',
+                                                                    background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                                                                    borderRadius: '8px', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600,
+                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                <Crosshair size={14} /> Ver Operação
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 );
@@ -734,6 +1062,24 @@ const Home = ({ onNavigate }) => {
                                                             <div style={{ marginTop: '0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}>
                                                                 <Calendar size={10} /> {formatDate(opt.expiration)}
                                                             </div>
+                                                            {/* Ver Operação Button */}
+                                                            <button
+                                                                onClick={() => setSelectedOperation({
+                                                                    option: opt,
+                                                                    type: 'put',
+                                                                    stock: selectedOpportunity.stock,
+                                                                    strategy: selectedOpportunity.opportunityType === 'cheap' ? 'venda_put' : 'compra_put'
+                                                                })}
+                                                                style={{
+                                                                    marginTop: '10px', width: '100%', padding: '8px 12px',
+                                                                    background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                                                                    borderRadius: '8px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600,
+                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                <Crosshair size={14} /> Ver Operação
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 );
@@ -751,6 +1097,12 @@ const Home = ({ onNavigate }) => {
                     </div>
                 )
             }
+
+            {/* Operation Explanation Modal */}
+            <OperationModal
+                operation={selectedOperation}
+                onClose={() => setSelectedOperation(null)}
+            />
         </div >
     );
 };

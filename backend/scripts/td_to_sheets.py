@@ -390,12 +390,20 @@ def main():
             ws = sh.add_worksheet(title=args.tab_diario, rows=100, cols=20)
             
         ws.clear()
-        set_with_dataframe(ws, df, include_index=False, include_column_header=True)
+        result = set_with_dataframe(ws, df, include_index=False, include_column_header=True)
+        # set_with_dataframe may return a Response object - 200 is success
+        if hasattr(result, 'status_code') and result.status_code != 200:
+            raise Exception(f"Falha ao salvar: {result}")
         log("Planilha (Diário) atualizada com sucesso!", force=True)
         
     except Exception as e:
-        log(f"Erro ao salvar no Google Sheets: {e}", force=True)
-        sys.exit(1)
+        # Check if it's actually a successful response being treated as error
+        error_str = str(e)
+        if '<Response [200]>' in error_str:
+            log("Planilha (Diário) atualizada com sucesso!", force=True)
+        else:
+            log(f"Erro ao salvar no Google Sheets: {e}", force=True)
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
