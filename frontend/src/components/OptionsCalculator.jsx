@@ -281,14 +281,16 @@ const OptionsCalculator = () => {
                                 <button
                                     onClick={() => setQuantity(Math.max(100, quantity - 100))}
                                     style={{
-                                        width: '44px', height: '44px',
-                                        background: 'transparent',
-                                        border: 'none',
+                                        minWidth: '44px', width: '44px', height: '44px',
+                                        background: 'rgba(255,255,255,0.1)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
                                         color: '#fff',
-                                        fontSize: '1.8rem',
+                                        fontSize: '1.5rem',
                                         fontWeight: 'bold',
                                         cursor: 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        flexShrink: 0
                                     }}
                                 >
                                     −
@@ -303,20 +305,23 @@ const OptionsCalculator = () => {
                                         flex: 1, background: 'rgba(30, 41, 59, 0.6)',
                                         border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
                                         padding: '12px', borderRadius: '8px', fontSize: '1rem',
-                                        textAlign: 'center'
+                                        textAlign: 'center', minWidth: '80px'
                                     }}
                                 />
                                 <button
                                     onClick={() => setQuantity(quantity + 100)}
                                     style={{
-                                        width: '44px', height: '44px',
-                                        background: 'transparent',
-                                        border: 'none',
+                                        minWidth: '44px', width: '44px', height: '44px',
+                                        background: 'rgba(255,255,255,0.1)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
                                         color: '#fff',
-                                        fontSize: '1.8rem',
+                                        fontSize: '1.5rem',
                                         fontWeight: 'bold',
                                         cursor: 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        flexShrink: 0,
+                                        paddingBottom: '4px' // Adjust vertical alignment of +
                                     }}
                                 >
                                     +

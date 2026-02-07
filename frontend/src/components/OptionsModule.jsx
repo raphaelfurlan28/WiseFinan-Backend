@@ -10,6 +10,13 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
     const [selectedExpiry, setSelectedExpiry] = useState(null);
 
     useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
+    useEffect(() => {
         fetch(getApiUrl(`/api/stocks/${ticker}/options`))
             .then(res => res.json())
             .then(data => {
