@@ -1,0 +1,186 @@
+import React, { useState, useEffect } from 'react';
+import { X, Calendar } from 'lucide-react';
+import './OptionsModule.css';
+
+export default function OptionsModule({ ticker, logoUrl, onClose }) {
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedExpiry, setSelectedExpiry] = useState(null);
+
+    useEffect(() => {
+        fetch(`/api/stocks/${ticker}/options`)
+            .then(res => res.json())
+            .then(data => {
+                setOptions(data);
+                // Extract unique expirations and sort
+                const expirations = [...new Set(data.map(o => o.expiration))].sort();
+                if (expirations.length > 0) setSelectedExpiry(expirations[0]);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching options:", err);
+                setLoading(false);
+            });
+    }, [ticker]);
+
+    // Filter options by selected expiry
+    const filteredOptions = options.filter(o => o.expiration === selectedExpiry);
+
+    // Separate Calls and Puts
+    const calls = filteredOptions.filter(o => o.type === 'CALL');
+    const puts = filteredOptions.filter(o => o.type === 'PUT');
+
+    if (loading) return (
+        <div className="options-modal-overlay">
+            <div className="options-modal loading">
+                <div className="spinner"></div>
+                <p>Carregando opções de {ticker}...</p>
+            </div>
+        </div>
+    );
+
+    const expirations = [...new Set(options.map(o => o.expiration))].sort();
+
+    return (
+        <div className="options-modal-overlay">
+            <div className="options-modal">
+                <header className="options-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {logoUrl ? (
+                            <img
+                                src={logoUrl}
+                                alt={ticker}
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
+                                    objectFit: 'cover',
+                                    backgroundColor: 'rgba(255,255,255,0.05)'
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                color: '#ccc'
+                            }}>
+                                {ticker ? ticker[0] : '#'}
+                            </div>
+                        )}
+                        <h2 style={{ margin: 0 }}>Opções de {ticker}</h2>
+                    </div>
+                    <button className="close-btn" onClick={onClose}><X size={24} /></button>
+                </header>
+
+                {/* LABEL ADDED HERE: Discreet "Vencimentos" */}
+                <div style={{ padding: '0 20px', marginTop: '12px', marginBottom: '4px' }}>
+                    <span style={{
+                        fontSize: '11px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}>
+                        <Calendar size={12} />
+                        Vencimentos
+                    </span>
+                </div>
+
+                <div className="expiry-filter">
+                    {/* Removed Calendar icon from here since it's in label now, or keep it? 
+                        User wanted text to be explicit. Keeping button list clean. */}
+                    <div className="expiry-scroll">
+                        {expirations.map(exp => {
+                            // Format: YYYY-MM-DD -> DD/MM/YYYY
+                            const [year, month, day] = exp.split('-');
+                            const formattedDate = `${day}/${month}/${year}`;
+
+                            return (
+                                <button
+                                    key={exp}
+                                    className={`expiry-btn ${selectedExpiry === exp ? 'active' : ''}`}
+                                    onClick={() => setSelectedExpiry(exp)}
+                                >
+                                    {formattedDate}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="options-content">
+                    <div className="options-column calls">
+                        <h3>CALLs</h3>
+                        <div className="cards-list">
+                            {calls.length === 0 && <p className="empty-msg">Nenhuma Call disponível.</p>}
+                            {calls.map((opt, idx) => (
+                                <OptionCard key={idx} option={opt} type="call" />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="options-column puts">
+                        <h3>PUTs</h3>
+                        <div className="cards-list">
+                            {puts.length === 0 && <p className="empty-msg">Nenhuma Put disponível.</p>}
+                            {puts.map((opt, idx) => (
+                                <OptionCard key={idx} option={opt} type="put" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function OptionCard({ option, type }) {
+    const isDistPositive = option.dist_val >= 0;
+
+    return (
+        <div className={`option-card ${type}`}>
+            <div className="card-header">
+                <div className="strike-container">
+                    <span className="strike-label">Strike</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>R$ {option.strike}</span>
+                    <div style={{
+                        fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '2px 6px', borderRadius: '4px', width: 'fit-content', marginTop: '4px',
+                        background: 'rgba(0, 0, 0, 0.2)', color: isDistPositive ? '#4ade80' : '#f87171',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {isDistPositive ? '▲' : '▼'} {option.distance}
+                    </div>
+                </div>
+                <span className="ticker">{option.ticker}</span>
+            </div>
+
+            <div className="separator-line"></div>
+
+            <div className="card-body">
+                <div className="row">
+                    <span>Preço:</span>
+                    <strong>R$ {option.price}</strong>
+                </div>
+                <div className="row">
+                    <span>Prêmio:</span>
+                    <strong className="premium">{option.premium}</strong>
+                </div>
+                <div className="row secondary">
+                    <span>Vol: {option.volume}</span>
+                    <span>Neg: {option.trades}</span>
+                </div>
+            </div>
+        </div>
+    )
+}

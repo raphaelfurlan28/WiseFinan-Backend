@@ -1,0 +1,217 @@
+.rf-container {
+    padding: 20px;
+    padding-bottom: 80px;
+    /* Mobile nav space */
+}
+
+.rf-header {
+    margin-bottom: 24px;
+}
+
+.rf-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, #fff, #aaa);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.indices-bar {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.index-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.index-label {
+    font-size: 0.65rem;
+    color: #888;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.index-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    /* White as requested */
+}
+
+/* GRIDS */
+.rf-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .rf-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* CARDS */
+.rf-card {
+    /* Glassmorphism handled by .glass-card */
+    /* background: rgba(30, 30, 30, 0.50); REMOVED override */
+    /* backdrop-filter: blur(12px); */
+    /* -webkit-backdrop-filter: blur(12px); */
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.rf-card-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rf-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.rf-card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.rf-card-content {
+    padding: 16px;
+}
+
+/* CARD THEMES */
+.card-indices .rf-card-header {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.card-indices .rf-card-icon {
+    background: #444;
+    color: #fff;
+}
+
+.card-reserva .rf-card-header {
+    background: linear-gradient(90deg, rgba(255, 255, 0, 0.1), transparent);
+}
+
+.card-reserva .rf-card-icon {
+    background: #ffd700;
+    color: #000;
+}
+
+.card-protecao .rf-card-header {
+    background: linear-gradient(90deg, rgba(255, 0, 100, 0.1), transparent);
+}
+
+.card-protecao .rf-card-icon {
+    background: #ff0066;
+}
+
+.card-prefixado .rf-card-header {
+    background: linear-gradient(90deg, rgba(0, 150, 255, 0.1), transparent);
+}
+
+.card-prefixado .rf-card-icon {
+    background: #0099ff;
+}
+
+.card-longo .rf-card-header {
+    background: linear-gradient(90deg, rgba(0, 255, 136, 0.1), transparent);
+}
+
+.card-longo .rf-card-icon {
+    background: #00ff88;
+    color: #000;
+}
+
+
+/* ITEMS */
+.rf-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rf-item:last-child {
+    border-bottom: none;
+}
+
+.rf-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rf-item-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #eee;
+}
+
+.rf-item-venc {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.rf-item-details {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rf-detail-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.rf-label {
+    font-size: 0.7rem;
+    color: #666;
+}
+
+.rf-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ccc;
+}
+
+.rf-value.highlight {
+    color: #fff;
+    font-weight: 600;
+}
+
+.card-treasury .rf-card-header {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.2), transparent);
+}
+
+.card-treasury .rf-card-icon {
+    background: #a855f7;
+    color: #fff;
+}

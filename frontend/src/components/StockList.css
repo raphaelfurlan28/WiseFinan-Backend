@@ -1,0 +1,223 @@
+.stock-list-container {
+    padding: 20px;
+    /* Match RF padding */
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+    width: 100%;
+    /* Removed max-width 1200px to occupy full space */
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    margin-bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+    /* Limit width */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-bar input {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 16px;
+    width: 100%;
+    outline: none;
+}
+
+.stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* More space between cards */
+    width: 100%;
+}
+
+/* Updated Card Style - TALLER/BIGGER */
+/* Updated Card Style - Unified with Fixed Income */
+/* Updated Card Style - Unified with Fixed Income */
+.stock-card {
+    /* Glassmorphism handled by .glass-card */
+    /* background: rgba(30, 30, 30, 0.50); REMOVED override */
+    /* backdrop-filter: blur(12px); Handled by .glass-card */
+    /* -webkit-backdrop-filter: blur(12px); */
+
+    padding: 0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* Ensure full width */
+    max-width: 100%;
+    /* Prevent shrinking */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.stock-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Simulated Header with Gradient */
+.stock-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    /* Reduced from 16px to 10px/14px */
+    /* Clean/White Gradient similar to Indices */
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stock-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: transparent;
+    /* Changed from #fff to remove white border */
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    margin-right: 10px;
+}
+
+.stock-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Changed from contain to cover to fill square */
+    padding: 0;
+    /* Removed padding */
+}
+
+.placeholder-icon {
+    font-size: 16px;
+    /* Reduced font */
+    font-weight: bold;
+    color: #333;
+}
+
+.stock-card-content {
+    padding: 10px 14px;
+    /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* Reduced gap from 12px */
+}
+
+.stock-info {
+    flex: 1;
+    margin-left: 0;
+    /* Icon is handled in header flex */
+}
+
+.stock-info h3 {
+    font-size: 16px;
+    /* Slightly smaller title */
+    font-weight: 600;
+    margin-bottom: 0px;
+    color: var(--text-primary);
+}
+
+.stock-info p {
+    color: var(--text-secondary);
+    font-size: 11px;
+    /* Smaller subtitle */
+    line-height: 1.2;
+}
+
+.stock-price {
+    text-align: right;
+    margin-right: 12px;
+}
+
+.stock-price .price {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+    /* Bigger price */
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.stock-price .change {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.stock-price .change.up {
+    color: var(--success-color);
+}
+
+.stock-price .change.down {
+    color: var(--danger-color);
+}
+
+/* Progress Bar Row */
+.stock-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    /* More space above progress */
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-track {
+    flex: 1;
+    height: 8px;
+    /* Thicker bar */
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-label {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: right;
+    letter-spacing: 0.5px;
+}
