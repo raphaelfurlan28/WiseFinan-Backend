@@ -10,3 +10,4 @@ yfinance
 requests
 feedparser
 gspread
+oauth2client
