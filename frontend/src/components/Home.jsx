@@ -27,12 +27,17 @@ const Home = ({ onNavigate }) => {
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
     const [selectedOperation, setSelectedOperation] = useState(null);
 
+    useEffect(() => {
+        if (selectedOperation || selectedOpportunity) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedOperation, selectedOpportunity]);
+
     // Operation Modal Component - Supports 4 strategies
     const OperationModal = ({ operation, onClose }) => {
-        useEffect(() => {
-            document.body.style.overflow = 'hidden';
-            return () => { document.body.style.overflow = 'unset'; };
-        }, []);
 
         if (!operation) return null;
 

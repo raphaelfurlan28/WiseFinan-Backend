@@ -290,7 +290,9 @@ const OptionsCalculator = () => {
                                         fontWeight: 'bold',
                                         cursor: 'pointer',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        flexShrink: 0
+                                        flexShrink: 0,
+                                        padding: 0,
+                                        lineHeight: 1
                                     }}
                                 >
                                     −
@@ -321,7 +323,8 @@ const OptionsCalculator = () => {
                                         cursor: 'pointer',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         flexShrink: 0,
-                                        paddingBottom: '4px' // Adjust vertical alignment of +
+                                        padding: 0,
+                                        lineHeight: 1
                                     }}
                                 >
                                     +
