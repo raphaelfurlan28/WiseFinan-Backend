@@ -15,6 +15,10 @@ load_dotenv(dotenv_path)
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def index():
+    return "🚀 Backend WiseFinan rodando! Acesse /api/home para dados."
+
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     try:
