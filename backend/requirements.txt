@@ -9,3 +9,4 @@ gunicorn
 yfinance
 requests
 feedparser
+gspread
