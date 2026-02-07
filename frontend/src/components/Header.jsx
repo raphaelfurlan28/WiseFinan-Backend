@@ -14,18 +14,16 @@ export default function Header({ onToggleSidebar, user, onProfileClick }) {
                     <Menu size={24} color="var(--text-primary)" />
                 </button>
                 {/* Text Next to Menu - Login Style */}
-                <div style={{ display: 'flex', alignItems: 'center', marginLeft: '16px', gap: '12px' }}>
-                    <img src="/logo-app.svg" alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px' }} />
-                    <span style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '1.2rem',
-                        fontWeight: '700',
-                        color: '#e2e8f0',
-                        letterSpacing: '-0.5px'
-                    }}>
-                        WiseFinan
-                    </span>
-                </div>
+                <span style={{
+                    marginLeft: '16px',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '1.2rem',
+                    fontWeight: '700',
+                    color: '#e2e8f0',
+                    letterSpacing: '-0.5px'
+                }}>
+                    WiseFinan
+                </span>
             </div>
 
             <div className="header-right">
