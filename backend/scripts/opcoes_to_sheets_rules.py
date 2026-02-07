@@ -159,10 +159,10 @@ def main():
     if os.path.exists(args.creds):
         creds_source = args.creds
         print(f"[INFO] Usando credenciais do arquivo: {args.creds}")
-    elif os.environ.get('GOOGLE_CREDENTIALS'):
+    elif os.environ.get('GOOGLE_CREDENTIALS_JSON'):
         try:
-            creds_source = json.loads(os.environ.get('GOOGLE_CREDENTIALS'))
-            print("[INFO] Usando credenciais da variável de ambiente GOOGLE_CREDENTIALS")
+            creds_source = json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON'))
+            print("[INFO] Usando credenciais da variável de ambiente GOOGLE_CREDENTIALS_JSON")
         except json.JSONDecodeError as e:
             print(f"[ERRO] Falha ao parsear GOOGLE_CREDENTIALS: {e}")
             sys.exit(1)
