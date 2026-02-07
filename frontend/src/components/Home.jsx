@@ -29,6 +29,11 @@ const Home = ({ onNavigate }) => {
 
     // Operation Modal Component - Supports 4 strategies
     const OperationModal = ({ operation, onClose }) => {
+        useEffect(() => {
+            document.body.style.overflow = 'hidden';
+            return () => { document.body.style.overflow = 'unset'; };
+        }, []);
+
         if (!operation) return null;
 
         const { option, type, stock, strategy } = operation;
@@ -66,14 +71,20 @@ const Home = ({ onNavigate }) => {
                     onClick={e => e.stopPropagation()}
                     style={{
                         position: 'relative',
-                        width: '92%', maxWidth: '420px', maxHeight: '85vh',
+                        width: '92%', maxWidth: '420px',
+                        display: 'flex', flexDirection: 'column'
+                    }}
+                >
+                    <button onClick={onClose} style={{ position: 'absolute', top: -30, right: 0, background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: '300', padding: '0', zIndex: 10 }}>Fechar</button>
+
+                    <div style={{
                         background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
                         borderRadius: '24px', padding: '24px',
                         border: '1px solid rgba(255,255,255,0.1)',
                         boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-                        overflowY: 'auto', overflow: 'visible'
-                    }}
-                >
+                        overflowY: 'auto',
+                        maxHeight: '85vh'
+                    }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -90,21 +101,7 @@ const Home = ({ onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Fechar button - positioned at top right */}
-                    <button
-                        onClick={onClose}
-                        style={{
-                            position: 'absolute', top: -40, right: 0,
-                            background: 'transparent',
-                            border: 'none',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: '#cbd5e1',
-                            fontSize: '0.8rem', fontWeight: '300',
-                            padding: '0'
-                        }}
-                    >
-                        Fechar
-                    </button>
+
 
                     {/* Dados da Operação */}
                     <div style={{
@@ -331,6 +328,7 @@ const Home = ({ onNavigate }) => {
                             </>
                         )
                     }
+                    </div>
                 </motion.div >
             </div >
         );
