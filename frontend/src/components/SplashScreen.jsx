@@ -129,37 +129,31 @@ const SplashScreen = () => {
                 animate={{ opacity: showLogin ? 1 : 0, y: showLogin ? 0 : 30 }}
                 transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
                 style={{
-                    width: '90%', maxWidth: '380px',
+                    width: '85%', maxWidth: '300px', // Less wide
                     pointerEvents: showLogin ? 'auto' : 'none',
                     zIndex: 10
                 }}
             >
                 <div style={{
-                    background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
-                    borderRadius: '24px',
-                    padding: '32px',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                    display: 'flex', flexDirection: 'column', gap: '24px',
-                    position: 'relative', overflow: 'hidden'
+                    display: 'flex', flexDirection: 'column', gap: '20px',
+                    position: 'relative', width: '100%'
                 }}>
-                    {/* Decorative Glow similar to Profile */}
-                    <div style={{
-                        position: 'absolute', top: -50, right: -50, width: 150, height: 150,
-                        background: '#10b981', filter: 'blur(80px)', opacity: 0.15, borderRadius: '50%'
-                    }}></div>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                    <h2 style={{
-                        margin: 0, fontSize: '1.5rem', color: 'white', fontWeight: '700',
-                        letterSpacing: '-0.5px', textAlign: 'center', zIndex: 1, position: 'relative'
-                    }}>
-                        Bem-vindo de volta
-                    </h2>
-
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', zIndex: 1, position: 'relative' }}>
+                        {/* Title Login positioned left */}
+                        <span style={{
+                            fontSize: '1rem',
+                            fontWeight: '500', // Less thick
+                            color: 'rgba(255,255,255,0.9)',
+                            alignSelf: 'flex-start', // Left aligned
+                            marginLeft: '8px',
+                            marginBottom: '-8px' // Close to input
+                        }}>
+                            Login:
+                        </span>
 
                         <div style={{ position: 'relative' }}>
-                            <Mail size={18} color="#94a3b8" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                            <Mail size={18} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                             <input
                                 type="email"
                                 placeholder="Email"
@@ -168,18 +162,20 @@ const SplashScreen = () => {
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                                 style={{
-                                    width: '100%', padding: '16px 16px 16px 48px',
-                                    background: 'rgba(15, 23, 42, 0.6)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '16px',
-                                    color: '#fff', fontSize: '1rem', outline: 'none',
-                                    fontWeight: '500', transition: 'all 0.2s'
+                                    width: '100%', padding: '12px 16px 12px 48px',
+                                    background: 'rgba(255, 255, 255, 0.08)', // Slightly lighter
+                                    border: '1px solid rgba(255, 255, 255, 0.1)', // Thin border for definition
+                                    borderRadius: '50px',
+                                    color: '#fff', fontSize: '0.9rem', outline: 'none',
+                                    fontWeight: '500', transition: 'all 0.3s',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Drop shadow (Floating)
+                                    backdropFilter: 'blur(10px)'
                                 }}
                             />
                         </div>
 
                         <div style={{ position: 'relative' }}>
-                            <Lock size={18} color="#94a3b8" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                            <Lock size={18} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                             <input
                                 type="password"
                                 placeholder="Senha"
@@ -188,46 +184,49 @@ const SplashScreen = () => {
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                                 style={{
-                                    width: '100%', padding: '16px 16px 16px 48px',
-                                    background: 'rgba(15, 23, 42, 0.6)',
+                                    width: '100%', padding: '12px 16px 12px 48px',
+                                    background: 'rgba(255, 255, 255, 0.08)',
                                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '16px',
-                                    color: '#fff', fontSize: '1rem', outline: 'none',
-                                    fontWeight: '500', transition: 'all 0.2s'
+                                    borderRadius: '50px',
+                                    color: '#fff', fontSize: '0.9rem', outline: 'none',
+                                    fontWeight: '500', transition: 'all 0.3s',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                    backdropFilter: 'blur(10px)'
                                 }}
                             />
                         </div>
 
                         {authError && (
-                            <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>
+                            <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.15)', borderRadius: '20px', color: '#fca5a5', fontSize: '0.8rem', textAlign: 'center', backdropFilter: 'blur(4px)' }}>
                                 {authError}
                             </div>
                         )}
 
                         <motion.button
-                            whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' }}
+                            whileHover={{ scale: 1.02, boxShadow: '0 5px 15px rgba(16, 185, 129, 0.3)' }}
                             whileTap={{ scale: 0.98 }}
                             type="submit"
                             disabled={isSubmitting}
                             style={{
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)', // Depth gradient
                                 border: 'none',
-                                borderRadius: '16px',
-                                padding: '16px',
+                                borderRadius: '50px', // Round
+                                padding: '12px',
                                 color: '#fff',
-                                fontWeight: 600,
-                                fontSize: '1rem',
+                                fontWeight: 700,
+                                fontSize: '0.95rem',
                                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.3)', // Bottom shadow only
+                                textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                             }}
                         >
                             {isSubmitting ? (
-                                <Loader size={20} className="animate-spin" />
+                                <Loader size={18} className="animate-spin" />
                             ) : (
                                 <>
                                     Entrar
-                                    <ArrowRight size={20} />
+                                    <ArrowRight size={18} />
                                 </>
                             )}
                         </motion.button>

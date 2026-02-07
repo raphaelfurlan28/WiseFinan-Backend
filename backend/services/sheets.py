@@ -326,15 +326,28 @@ def get_filtered_opportunities():
                 
             # Helper to parse price
             def parse_price(val):
-                if isinstance(val, (int, float)): return float(val)
-                if isinstance(val, str):
-                    return float(val.replace('R$', '').replace(' ', '').replace('.','').replace(',','.'))
-                return 0.0
+                try:
+                    if isinstance(val, (int, float)): return float(val)
+                    if isinstance(val, str):
+                        clean = val.replace('R$', '').replace(' ', '').replace('%', '')
+                        if ',' in clean and '.' in clean:
+                            clean = clean.replace('.', '').replace(',', '.')
+                        else:
+                            clean = clean.replace(',', '.')
+                        return float(clean)
+                    return 0.0
+                except:
+                    return 0.0
 
             stock_price = parse_price(stock.get('price', 0.0))
             cost_val = parse_price(stock.get('min_val', 0.0))
             max_val = parse_price(stock.get('max_val', 0.0))
             
+            # --- FILTER FIX: Don't show stocks with invalid targets ---
+            # If both Min and Max targets are missing/0, it's not a valid opportunity
+            if cost_val <= 0 and max_val <= 0:
+                continue
+
             # Check Options
             stock_opts = options_by_ticker.get(ticker, [])
             
