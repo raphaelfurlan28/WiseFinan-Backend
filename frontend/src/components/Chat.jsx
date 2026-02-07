@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageSquare, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, Trash2, AlertCircle, Loader, Trash } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import './FixedIncome.css'; // Reusing common styles
 
@@ -15,7 +16,7 @@ const Chat = () => {
 
     const fetchMessages = async () => {
         try {
-            const res = await fetch('/api/chat');
+            const res = await fetch(getApiUrl('/api/chat'));
             if (res.ok) {
                 const json = await res.json();
                 if (Array.isArray(json)) {
@@ -52,7 +53,7 @@ const Chat = () => {
         setInputText(''); // Optimistic clear
 
         try {
-            await fetch('/api/chat', {
+            await fetch(getApiUrl('/api/chat'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -71,7 +72,7 @@ const Chat = () => {
         if (!window.confirm("Apagar mensagem?")) return;
 
         try {
-            await fetch(`/api/chat?id=${msgId}`, { method: 'DELETE' });
+            await fetch(getApiUrl(`/api/chat?id=${msgId}`), { method: 'DELETE' });
             fetchMessages(); // Refresh
         } catch (err) {
             console.error("Error deleting message:", err);
@@ -109,7 +110,7 @@ const Chat = () => {
             }}>
                 {/* Standard Gradient Header */}
                 <div className="rf-card-header" style={{
-                    background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15), transparent)',
+                    background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.35), transparent)',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     padding: '16px',
                     display: 'flex', alignItems: 'center', gap: '12px'

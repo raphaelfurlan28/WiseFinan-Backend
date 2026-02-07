@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './FixedIncome.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Shield, Lock, Clock, AlertTriangle, Landmark, Search } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 
 // Helper to format date
 const formatDate = (dateStr) => {
@@ -314,7 +315,7 @@ export default function FixedIncome() {
 
     const fetchIndices = async () => {
         try {
-            const res = await fetch('/api/indices');
+            const res = await fetch(getApiUrl('/api/indices'));
             const json = await res.json();
             setIndices(json);
         } catch (err) {
@@ -325,7 +326,7 @@ export default function FixedIncome() {
 
     const fetchFixedIncome = async () => {
         try {
-            const res = await fetch('/api/rf');
+            const res = await fetch(getApiUrl('/api/rf'));
             const json = await res.json();
             if (Array.isArray(json)) {
                 setData(json);
@@ -337,7 +338,7 @@ export default function FixedIncome() {
 
     const fetchChartData = async () => {
         try {
-            const res = await fetch('/api/indicators/history');
+            const res = await fetch(getApiUrl('/api/indicators/history'));
             const json = await res.json();
             if (Array.isArray(json)) {
                 setChartData(json);
@@ -350,7 +351,7 @@ export default function FixedIncome() {
     // NEW FETCH
     const fetchTreasuryEtfs = async () => {
         try {
-            const res = await fetch('/api/etfs/treasury');
+            const res = await fetch(getApiUrl('/api/etfs/treasury'));
             const json = await res.json();
             if (Array.isArray(json)) {
                 setTreasuryEtfs(json);

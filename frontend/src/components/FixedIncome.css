@@ -105,7 +105,7 @@
 
 /* CARD THEMES */
 .card-indices .rf-card-header {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
 }
 
 .card-indices .rf-card-icon {
@@ -114,7 +114,7 @@
 }
 
 .card-reserva .rf-card-header {
-    background: linear-gradient(90deg, rgba(255, 255, 0, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.35), transparent);
 }
 
 .card-reserva .rf-card-icon {
@@ -123,7 +123,7 @@
 }
 
 .card-protecao .rf-card-header {
-    background: linear-gradient(90deg, rgba(255, 0, 100, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(255, 0, 102, 0.35), transparent);
 }
 
 .card-protecao .rf-card-icon {
@@ -131,7 +131,7 @@
 }
 
 .card-prefixado .rf-card-header {
-    background: linear-gradient(90deg, rgba(0, 150, 255, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(0, 153, 255, 0.35), transparent);
 }
 
 .card-prefixado .rf-card-icon {
@@ -139,7 +139,7 @@
 }
 
 .card-longo .rf-card-header {
-    background: linear-gradient(90deg, rgba(0, 255, 136, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(0, 255, 136, 0.35), transparent);
 }
 
 .card-longo .rf-card-icon {
@@ -208,7 +208,7 @@
 }
 
 .card-treasury .rf-card-header {
-    background: linear-gradient(90deg, rgba(168, 85, 247, 0.2), transparent);
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.4), transparent);
 }
 
 .card-treasury .rf-card-icon {

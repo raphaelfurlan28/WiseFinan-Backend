@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar } from 'lucide-react';
+import ModernLoader from './ModernLoader';
+import { getApiUrl } from '../services/api';
 import './OptionsModule.css';
 
 export default function OptionsModule({ ticker, logoUrl, onClose }) {
@@ -8,7 +10,7 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
     const [selectedExpiry, setSelectedExpiry] = useState(null);
 
     useEffect(() => {
-        fetch(`/api/stocks/${ticker}/options`)
+        fetch(getApiUrl(`/api/stocks/${ticker}/options`))
             .then(res => res.json())
             .then(data => {
                 setOptions(data);
@@ -30,14 +32,7 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
     const calls = filteredOptions.filter(o => o.type === 'CALL');
     const puts = filteredOptions.filter(o => o.type === 'PUT');
 
-    if (loading) return (
-        <div className="options-modal-overlay">
-            <div className="options-modal loading">
-                <div className="spinner"></div>
-                <p>Carregando opções de {ticker}...</p>
-            </div>
-        </div>
-    );
+    if (loading) return <ModernLoader text={`Carregando opções de ${ticker}...`} />;
 
     const expirations = [...new Set(options.map(o => o.expiration))].sort();
 

@@ -58,24 +58,28 @@ def get_stock_fundamentals(ticker):
 def update_options():
     try:
         import subprocess
-        # Script path: ../opcoes_to_sheets_rules.py
-        script_path = os.path.join(basedir, '../opcoes_to_sheets_rules.py')
-        
-        # We need to run it with the same python env if possible, or system python
-        # Assuming system python or venv is active. 
-        # For safety/simplicity, we use 'python' assuming it's in path or sys.executable
         import sys
         
-        # Execute script
-        result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, cwd=os.path.join(basedir, '..'))
+        # Script path: scripts/opcoes_to_sheets_rules.py
+        script_path = os.path.join(basedir, 'scripts/opcoes_to_sheets_rules.py')
+        # Credentials path: ./service_account.json (inside backend)
+        cred_file = os.path.join(basedir, 'service_account.json')
+        
+        # Execute script with credentials argument
+        args = [sys.executable, script_path, "--creds", cred_file]
+        
+        result = subprocess.run(args, capture_output=True, text=True, cwd=basedir)
         
         if result.returncode == 0:
             return jsonify({"status": "success", "output": result.stdout})
         else:
-            return jsonify({"status": "error", "output": result.stderr}), 500
+            # Join stdout and stderr for full error visibility
+            full_log = result.stdout + "\n[STDERR]\n" + result.stderr
+            return jsonify({"status": "error", "output": full_log}), 500
             
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 @app.route('/api/update/rf', methods=['POST'])
 def update_rf():
@@ -83,12 +87,11 @@ def update_rf():
         import subprocess
         import sys
         
-        # Script path: ../td_to_sheets.py
-        script_path = os.path.join(basedir, '../td_to_sheets.py')
-        cred_file = os.path.join(basedir, '../service_account.json')
+        # Script path: scripts/td_to_sheets.py
+        script_path = os.path.join(basedir, 'scripts/td_to_sheets.py')
+        cred_file = os.path.join(basedir, 'service_account.json')
         
         # Arguments from bat file
-        # --force-selenium --debug --sheet-name "Fundamentos Ações" ...
         args = [
             sys.executable, script_path,
             "--force-selenium",
@@ -100,7 +103,7 @@ def update_rf():
         ]
         
         # Execute
-        result = subprocess.run(args, capture_output=True, text=True, cwd=os.path.join(basedir, '..'))
+        result = subprocess.run(args, capture_output=True, text=True, cwd=basedir)
         
         if result.returncode == 0:
             return jsonify({"status": "success", "output": result.stdout})

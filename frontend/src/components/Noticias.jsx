@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Newspaper, ExternalLink } from 'lucide-react';
+import ModernLoader from './ModernLoader';
+import { getApiUrl } from '../services/api';
 import './FixedIncome.css'; // Reuse glass styles
 
 const Noticias = () => {
@@ -10,7 +12,7 @@ const Noticias = () => {
         const fetchData = async () => {
             try {
                 // Fetch News only (ignoring indicators as requested)
-                const resDash = await fetch('/api/news/dashboard');
+                const resDash = await fetch(getApiUrl('/api/news/dashboard'));
                 const dataDash = await resDash.json();
                 if (dataDash.news) setNews(dataDash.news);
             } catch (err) {
@@ -46,7 +48,7 @@ const Noticias = () => {
             {/* News Feed - Full Width */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {loading ? (
-                    <p style={{ color: '#94a3b8', textAlign: 'center' }}>Carregando notícias...</p>
+                    <ModernLoader text="Carregando Notícias..." />
                 ) : news.length > 0 ? (
                     news.map((item, idx) => (
                         <div key={idx} style={{

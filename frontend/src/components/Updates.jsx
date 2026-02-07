@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle, XCircle, Terminal } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 import './Updates.css';
 
 export default function Updates() {
@@ -9,21 +10,26 @@ export default function Updates() {
 
     const addLog = (msg, type = 'info') => {
         const time = new Date().toLocaleTimeString();
-        setLogs(prev => [`[${time}] ${msg}`, ...prev]);
+        setLogs(prev => [`[${time}] ${msg} `, ...prev]);
     };
 
     const handleUpdateOptions = async () => {
         setLoadingOptions(true);
         addLog('Iniciando atualização de Opções...', 'info');
         try {
-            const res = await fetch('/api/update/options', { method: 'POST' });
+            const res = await fetch(getApiUrl('/api/update/options'), { method: 'POST' });
             const data = await res.json();
 
             if (res.ok) {
                 addLog('Opções atualizadas com sucesso!', 'success');
-                addLog(data.output, 'debug');
+                addLog(data.output || 'Sem output', 'debug');
             } else {
-                addLog(`Erro ao atualizar Opções: ${data.output || data.error}`, 'error');
+                // Better error display - show all available fields
+                const errorMsg = data.output || data.error || data.message || JSON.stringify(data);
+                addLog(`Erro ao atualizar Opções: ${errorMsg}`, 'error');
+                if (data.traceback) {
+                    addLog(`Traceback: ${data.traceback}`, 'debug');
+                }
             }
         } catch (err) {
             addLog(`Erro de conexão: ${err.message}`, 'error');
@@ -36,17 +42,17 @@ export default function Updates() {
         setLoadingRF(true);
         addLog('Iniciando atualização de Renda Fixa...', 'info');
         try {
-            const res = await fetch('/api/update/rf', { method: 'POST' });
+            const res = await fetch(getApiUrl('/api/update/rf'), { method: 'POST' });
             const data = await res.json();
 
             if (res.ok) {
                 addLog('Renda Fixa atualizada com sucesso!', 'success');
                 addLog(data.output, 'debug');
             } else {
-                addLog(`Erro ao atualizar Renda Fixa: ${data.output || data.error}`, 'error');
+                addLog(`Erro ao atualizar Renda Fixa: ${data.output || data.error} `, 'error');
             }
         } catch (err) {
-            addLog(`Erro de conexão: ${err.message}`, 'error');
+            addLog(`Erro de conexão: ${err.message} `, 'error');
         } finally {
             setLoadingRF(false);
         }
@@ -64,7 +70,7 @@ export default function Updates() {
                     <h3>Renda Variável (Opções)</h3>
                     <p>Executa <code>opcoes_to_sheets_rules.py</code></p>
                     <button
-                        className={`update-btn ${loadingOptions ? 'loading' : ''}`}
+                        className={`update - btn ${loadingOptions ? 'loading' : ''} `}
                         onClick={handleUpdateOptions}
                         disabled={loadingOptions || loadingRF}
                     >
@@ -77,7 +83,7 @@ export default function Updates() {
                     <h3>Renda Fixa (Tesouro)</h3>
                     <p>Executa <code>td_to_sheets.py</code></p>
                     <button
-                        className={`update-btn ${loadingRF ? 'loading' : ''}`}
+                        className={`update - btn ${loadingRF ? 'loading' : ''} `}
                         onClick={handleUpdateRF}
                         disabled={loadingOptions || loadingRF}
                     >

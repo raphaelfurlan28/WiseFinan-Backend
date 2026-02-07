@@ -197,16 +197,16 @@
 
 /* Header Colors - UPDATED: CALL IS BLUE */
 .options-column.calls h3 {
-    background: rgba(56, 189, 248, 0.1);
-    /* Blue tint */
+    background: rgba(56, 189, 248, 0.35);
+    /* Blue tint - more intense */
     color: #38bdf8;
     /* Blue */
     border-bottom: 2px solid #38bdf8;
 }
 
 .options-column.puts h3 {
-    background: rgba(239, 68, 68, 0.1);
-    /* Red tint */
+    background: rgba(239, 68, 68, 0.35);
+    /* Red tint - more intense */
     color: #ef4444;
     /* Red */
     border-bottom: 2px solid #f87171;
@@ -230,16 +230,19 @@
     opacity: 0.6;
 }
 
-/* Option Card - Updated Layout */
+/* Option Card - Updated Layout - Fully Opaque */
 .option-card {
     background-color: #1e293b;
-    /* Dark neutral card */
+    /* Fully opaque solid card */
     border-radius: 12px;
     padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
     /* Shadow for depth */
     transition: transform 0.1s ease-in-out;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
 }
 
 .option-card:hover {
@@ -307,13 +310,15 @@
 }
 
 .ticker {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-family: monospace;
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
-    padding: 3px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .separator-line {
@@ -354,4 +359,84 @@
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.4);
     margin-top: 2px;
+}
+
+/* Mobile Responsive Fixes */
+@media (max-width: 480px) {
+    .options-modal {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .options-content {
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .options-column {
+        min-width: 0;
+        /* Allow flex shrink */
+        flex: 1;
+        box-sizing: border-box;
+    }
+
+    .cards-list {
+        padding: 8px;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .option-card {
+        padding: 10px;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+        word-break: break-word;
+    }
+
+    .card-header {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .ticker {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .strike-val {
+        font-size: 1rem;
+    }
+
+    .row {
+        font-size: 0.8rem;
+    }
+
+    .row strong {
+        font-size: 0.85rem;
+    }
+
+    .expiry-filter {
+        padding: 12px 10px;
+    }
+
+    .expiry-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .options-header {
+        padding: 16px;
+    }
+
+    .options-header h2 {
+        font-size: 1.1rem;
+    }
 }

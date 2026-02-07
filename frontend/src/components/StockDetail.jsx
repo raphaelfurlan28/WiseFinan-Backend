@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, TrendingUp, TrendingDown, ListPlus, Landmark, Target, DollarSign, ArrowUp, ArrowDown, Coins, PieChart, Activity } from 'lucide-react';
 import OptionsModule from './OptionsModule';
+import ModernLoader from './ModernLoader';
+import { getApiUrl } from '../services/api';
 import './StockDetail.css';
 
 export default function StockDetail({ stock, onBack }) {
@@ -12,7 +14,7 @@ export default function StockDetail({ stock, onBack }) {
     useEffect(() => {
         if (stock?.ticker) {
             setLoadingHistory(true);
-            fetch(`/api/stocks/${stock.ticker}/history`)
+            fetch(getApiUrl(`/api/stocks/${stock.ticker}/history`))
                 .then(res => res.json())
                 .then(data => {
                     setHistory(data);
@@ -156,44 +158,51 @@ export default function StockDetail({ stock, onBack }) {
 
             {showOptions && <OptionsModule ticker={stock.ticker} logoUrl={stock.image_url} onClose={() => setShowOptions(false)} />}
 
-            {/* Historical Chart Section */}
-            <div className="chart-section">
-                <h3>Histórico de Preços</h3>
-                <div className="chart-container" style={{ height: 250, width: '100%' }}>
-                    {loadingHistory ? (
-                        <div className="chart-loading">Carregando gráfico...</div>
-                    ) : history.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis dataKey="date" hide={true} />
-                                <YAxis
-                                    orientation="right"
-                                    tick={{ fill: '#94a3b8', fontSize: 12 }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    domain={['auto', 'auto']}
-                                    width={40}
-                                />
-                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                                <Area type="monotone" dataKey="price" stroke={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2} />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="chart-empty">Sem dados de histórico.</div>
-                    )}
+            {/* Historical Chart Section - Now in Card Format */}
+            <div className="rf-card glass-card" style={{ marginTop: '24px', marginBottom: '24px' }}>
+                <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
+                    <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                        <TrendingUp size={20} color="#fff" />
+                    </div>
+                    <span className="label">Histórico de Preços</span>
+                </div>
+                <div className="rf-card-content" style={{ padding: '20px' }}>
+                    <div className="chart-container" style={{ height: 250, width: '100%' }}>
+                        {loadingHistory ? (
+                            <ModernLoader text="Carregando gráfico..." />
+                        ) : history.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                    <XAxis dataKey="date" hide={true} />
+                                    <YAxis
+                                        orientation="right"
+                                        tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        domain={['auto', 'auto']}
+                                        width={40}
+                                    />
+                                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                                    <Area type="monotone" dataKey="price" stroke={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="chart-empty">Sem dados de histórico.</div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             <div className="stats-grid">
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <DollarSign size={20} color="#fff" />
                         </div>
@@ -205,7 +214,7 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <ArrowUp size={20} color="#fff" />
                         </div>
@@ -217,7 +226,7 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <ArrowDown size={20} color="#fff" />
                         </div>
@@ -229,7 +238,7 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <Coins size={20} color="#fff" />
                         </div>
@@ -270,7 +279,7 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <PieChart size={20} color="#fff" />
                         </div>
@@ -282,7 +291,7 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' }}>
+                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <Activity size={20} color="#fff" />
                         </div>
@@ -352,7 +361,7 @@ function FundamentalsSection({ ticker }) {
 
     useEffect(() => {
         setLoading(true);
-        fetch(`/api/stocks/${ticker}/fundamentals`)
+        fetch(getApiUrl(`/api/stocks/${ticker}/fundamentals`))
             .then(res => res.json())
             .then(data => {
                 setData(data);
@@ -418,7 +427,7 @@ function FundamentalsSection({ ticker }) {
     const ChartContainer = ({ title, children, icon: Icon, color }) => (
         <div className="rf-card glass-card" style={{ marginBottom: '20px' }}>
             <div className="rf-card-header" style={{
-                background: `linear-gradient(90deg, ${color}20, transparent)`,
+                background: `linear-gradient(90deg, ${color}60, transparent)`,
                 borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                 padding: '16px',
                 display: 'flex',

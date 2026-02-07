@@ -31,13 +31,12 @@
 }
 
 .glass-card {
-    background: rgba(30, 41, 59, 0.4) !important;
-    /* Force Update */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    /* Lighter border to verify update */
+    background: #1e293b !important;
+    /* Fully Opaque */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .rf-card:hover {

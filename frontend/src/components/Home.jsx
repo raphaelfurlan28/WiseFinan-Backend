@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import ModernLoader from './ModernLoader';
 import '../components/FixedIncome.css';
 import './OptionsModule.css'; // Import Options Styles
 import '../styles/main.css';
-import { TrendingUp, DollarSign, Calendar, AlertCircle, X, Sparkles, PieChart, Landmark } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X, Sparkles, PieChart } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -28,7 +30,7 @@ const Home = ({ onNavigate }) => {
     useEffect(() => {
         const fetchOpportunities = async () => {
             try {
-                const res = await fetch('/api/home');
+                const res = await fetch(getApiUrl('/api/home'));
                 const json = await res.json();
 
                 // Handle new dictionary structure
@@ -54,14 +56,7 @@ const Home = ({ onNavigate }) => {
 
 
 
-    if (loading) {
-        return (
-            <div className="loading-overlay">
-                <div className="spinner"></div>
-                <div className="loading-text">Buscando oportunidades...</div>
-            </div>
-        );
-    }
+    if (loading) return <ModernLoader text="Carregando Oportunidades..." />;
 
     // Helper to calculate or format distance
     const getDistance = (opt, stockPrice) => {
@@ -112,8 +107,8 @@ const Home = ({ onNavigate }) => {
                     flexDirection: 'column'
                 }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(0, 255, 136, 0.1), transparent)',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: 'linear-gradient(90deg, rgba(0, 255, 136, 0.35), transparent)',
+                        borderBottom: '1px solid rgba(0, 255, 136, 0.2)',
                         padding: '16px',
                         display: 'flex',
                         alignItems: 'center',
@@ -230,8 +225,8 @@ const Home = ({ onNavigate }) => {
                     flexDirection: 'column'
                 }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent)', // Red gradient
-                        borderBottom: '1px solid rgba(239, 68, 68, 0.1)',
+                        background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.35), transparent)',
+                        borderBottom: '1px solid rgba(239, 68, 68, 0.2)',
                         padding: '16px',
                         display: 'flex',
                         alignItems: 'center',
@@ -358,7 +353,7 @@ const Home = ({ onNavigate }) => {
                 }}>
                     {/* Header - Blue Theme */}
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent)',
+                        background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.35), transparent)',
                         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                         padding: '16px',
                         display: 'flex', alignItems: 'center', gap: '12px'
@@ -450,7 +445,7 @@ const Home = ({ onNavigate }) => {
                     display: 'flex', flexDirection: 'column'
                 }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.1), transparent)', // Purple
+                        background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.35), transparent)', // Purple
                         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                         padding: '16px', display: 'flex', alignItems: 'center', gap: '12px'
                     }}>
@@ -629,8 +624,9 @@ const Home = ({ onNavigate }) => {
                                                                 </div>
                                                             </div>
                                                             <span style={{
-                                                                fontSize: '0.7rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
-                                                                color: 'rgba(255, 255, 255, 0.7)', padding: '3px 6px', borderRadius: '4px', letterSpacing: '0.5px'
+                                                                fontSize: '0.6rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
+                                                                color: 'rgba(255, 255, 255, 0.7)', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.3px',
+                                                                whiteSpace: 'nowrap', flexShrink: 0
                                                             }}>
                                                                 {opt.ticker}
                                                             </span>
@@ -708,8 +704,9 @@ const Home = ({ onNavigate }) => {
                                                                 </div>
                                                             </div>
                                                             <span style={{
-                                                                fontSize: '0.7rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
-                                                                color: 'rgba(255, 255, 255, 0.7)', padding: '3px 6px', borderRadius: '4px', letterSpacing: '0.5px'
+                                                                fontSize: '0.6rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
+                                                                color: 'rgba(255, 255, 255, 0.7)', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.3px',
+                                                                whiteSpace: 'nowrap', flexShrink: 0
                                                             }}>
                                                                 {opt.ticker}
                                                             </span>

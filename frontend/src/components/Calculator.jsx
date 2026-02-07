@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator as CalcIcon, TrendingUp, Calendar, DollarSign, Search, ChevronDown } from 'lucide-react';
+import { Calculator as CalcIcon, DollarSign, Percent, Calendar, TrendingUp, ChevronDown, BarChart2, Target, Info, ArrowRight, AlertCircle, Landmark, RefreshCw, Shield, Lock, ClipboardCheck, Search } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import { getApiUrl } from '../services/api';
 import './FixedIncome.css'; // Reusing glass card styles
 
 const Calculator = () => {
@@ -26,11 +27,11 @@ const Calculator = () => {
         const fetchData = async () => {
             try {
                 // Get RF Data (Bonds)
-                const res = await fetch('/api/rf');
+                const res = await fetch(getApiUrl('/api/rf'));
                 const bondsData = await res.json();
 
                 // Get ETF Data (Real-time yfinance)
-                const resEtf = await fetch('/api/etfs/treasury');
+                const resEtf = await fetch(getApiUrl('/api/etfs/treasury'));
                 const etfData = await resEtf.json();
 
                 let allAssets = [];
@@ -40,7 +41,7 @@ const Calculator = () => {
                 setBonds(allAssets);
 
                 // Get Indices
-                const resInd = await fetch('/api/indices');
+                const resInd = await fetch(getApiUrl('/api/indices'));
                 const indices = await resInd.json();
                 if (indices.ipca) {
                     setIpcaProj(parseFloat(indices.ipca.replace('%', '').replace(',', '.')));
@@ -214,7 +215,7 @@ const Calculator = () => {
                 {/* Controls - Left Panel */}
                 <div className="rf-card glass-card" style={{ padding: '16px' }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                         borderRadius: '16px 16px 0 0',
                         padding: '12px 16px',
                         margin: '-16px -16px 16px -16px',
@@ -353,7 +354,7 @@ const Calculator = () => {
                     <div className="calc-results-grid">
                         <div className="rf-card glass-card" style={{ padding: '16px' }}>
                             <div className="rf-card-header" style={{
-                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
                                 margin: '-16px -16px 16px -16px',
@@ -373,7 +374,7 @@ const Calculator = () => {
 
                         <div className="rf-card glass-card" style={{ padding: '16px' }}>
                             <div className="rf-card-header" style={{
-                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
                                 margin: '-16px -16px 16px -16px',
@@ -393,7 +394,7 @@ const Calculator = () => {
 
                         <div className="rf-card glass-card" style={{ padding: '16px' }}>
                             <div className="rf-card-header" style={{
-                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
                                 margin: '-16px -16px 16px -16px',
@@ -418,7 +419,7 @@ const Calculator = () => {
                     {/* Chart */}
                     <div className="rf-card glass-card" style={{ flex: 1, minHeight: '400px', padding: '16px' }}>
                         <div className="rf-card-header" style={{
-                            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                             borderRadius: '16px 16px 0 0',
                             padding: '12px 16px',
                             margin: '-16px -16px 16px -16px',

@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import ModernLoader from './components/ModernLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import StockList from './components/StockList';
@@ -32,21 +34,9 @@ const AppContent = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home');
 
-  // Loading State
+  // Global Loading
   if (loading) {
-    return (
-      <div style={{
-        height: '100vh',
-        width: '100vw',
-        background: '#0f172a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white'
-      }}>
-        Carregando...
-      </div>
-    );
+    return <ModernLoader text="Carregando..." />;
   }
 
   // Splash Screen / Login

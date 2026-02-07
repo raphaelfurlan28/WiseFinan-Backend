@@ -26,7 +26,7 @@ const Support = () => {
                 {/* Contact Card */}
                 <div className="rf-card glass-card" style={{ padding: '0px' }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                         borderRadius: '16px 16px 0 0',
                         padding: '12px 16px',
                         display: 'flex', alignItems: 'center', gap: '12px'

@@ -107,26 +107,33 @@ const Portfolio = () => {
             </header>
 
             {/* Profile Selector */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 {Object.keys(profiles).map((key) => {
                     const isActive = selectedProfile === key;
                     const p = profiles[key];
+                    // Color coding for each profile
+                    const colorMap = {
+                        conservador: '#4ade80', // Green
+                        moderado: '#facc15',    // Yellow
+                        arrojado: '#ef4444'     // Red
+                    };
+                    const profileColor = colorMap[key] || '#4ade80';
+
                     return (
                         <button
                             key={key}
                             onClick={() => setSelectedProfile(key)}
                             style={{
-                                padding: '12px 24px',
-                                borderRadius: '12px',
-                                border: isActive ? '1px solid #ffffff' : '1px solid rgba(255,255,255,0.1)',
-                                background: isActive ? '#ffffff' : 'rgba(255,255,255,0.05)',
-                                color: isActive ? '#000000' : '#94a3b8',
+                                padding: '8px 20px',
+                                borderRadius: '20px',
+                                border: isActive ? `2px solid ${profileColor}` : 'none',
+                                background: isActive ? `${profileColor}20` : 'transparent',
+                                color: isActive ? profileColor : '#64748b',
                                 cursor: 'pointer',
                                 fontWeight: '600',
-                                fontSize: '1rem',
-                                transition: 'all 0.3s ease',
-                                minWidth: '140px',
-                                boxShadow: isActive ? '0 0 20px rgba(255,255,255,0.3)' : 'none'
+                                fontSize: '0.95rem',
+                                transition: 'all 0.2s ease',
+                                minWidth: '120px'
                             }}
                         >
                             {p.label}
@@ -178,7 +185,7 @@ const Portfolio = () => {
                 <div className="rf-card glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
                     <div className="rf-card-header" style={{
                         width: 'calc(100% + 48px)', // Fix alignment (Inner + 2*Padding)
-                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                         borderRadius: '16px 16px 0 0',
                         padding: '12px 16px',
                         margin: '-24px -24px 24px -24px',
@@ -235,7 +242,7 @@ const Portfolio = () => {
                             return (
                                 <div key={idx} className="rf-card glass-card" style={{ padding: '0px', border: isStock ? '1px solid rgba(255,255,255,0.2)' : 'none' }}>
                                     <div className="rf-card-header" style={{
-                                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                         borderRadius: '16px 16px 0 0',
                                         padding: '12px 16px',
                                         margin: '0',

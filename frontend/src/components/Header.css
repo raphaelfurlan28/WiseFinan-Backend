@@ -28,20 +28,27 @@
 }
 
 .menu-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 8px;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+    color: #0f172a;
+}
+
+.menu-btn:hover {
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+    transform: translateY(-1px);
 }
 
 .menu-btn:active {
     transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 4px rgba(74, 222, 128, 0.3);
 }
 
 .logo-container {

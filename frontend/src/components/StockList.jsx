@@ -3,6 +3,8 @@ import {
   Search, ChevronRight, TrendingUp, TrendingDown,
   Landmark, Zap, ShoppingBag, Factory, Pickaxe, HeartPulse, Cpu, Building, Briefcase, Leaf
 } from 'lucide-react';
+import ModernLoader from './ModernLoader';
+import { getApiUrl } from '../services/api';
 import './StockList.css';
 
 export default function StockList({ onSelectStock }) {
@@ -11,7 +13,7 @@ export default function StockList({ onSelectStock }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetch('/api/stocks')
+    fetch(getApiUrl('/api/stocks'))
       .then(res => res.json())
       .then(data => {
         setStocks(data);
@@ -70,12 +72,7 @@ export default function StockList({ onSelectStock }) {
 
   const [activeSector, setActiveSector] = useState(null);
 
-  if (loading) return (
-    <div className="loading-overlay">
-      <div className="spinner"></div>
-      <div className="loading-text">Atualizando renda variável</div>
-    </div>
-  );
+  if (loading) return <ModernLoader text="Carregando Renda Variável..." />;
 
   return (
     <div className="stock-list-container">

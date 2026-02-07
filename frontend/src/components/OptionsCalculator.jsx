@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, Search, TrendingUp, DollarSign, ChevronDown, Check, X } from 'lucide-react';
+import ModernLoader from './ModernLoader';
+import ModernSpinner from './ModernSpinner';
+import { getApiUrl } from '../services/api';
 import { ResponsiveContainer } from 'recharts';
 import './FixedIncome.css';
 
@@ -22,7 +25,7 @@ const OptionsCalculator = () => {
             setIsLoading(true);
             try {
                 // Fetch options for the typed ticker (e.g. PETR4, POMO4, or underlying like PETR)
-                const res = await fetch(`/api/stocks/${searchTerm}/options`);
+                const res = await fetch(getApiUrl(`/api/stocks/${searchTerm}/options`));
                 const data = await res.json();
 
                 if (Array.isArray(data)) {
@@ -97,6 +100,9 @@ const OptionsCalculator = () => {
     return (
         <div className="rf-container">
             {/* Header */}
+            {/* Loader Overlay for Search */}
+            {isLoading && <ModernLoader text={`Buscando ${searchTerm || 'opções'}...`} />}
+
             <header className="rf-header" style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                     <div style={{
@@ -141,7 +147,7 @@ const OptionsCalculator = () => {
                 {/* Left Panel: Parameters */}
                 <div className="rf-card glass-card" style={{ padding: '16px' }}>
                     <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                         borderRadius: '16px 16px 0 0',
                         padding: '12px 16px',
                         margin: '-16px -16px 16px -16px',
@@ -196,7 +202,10 @@ const OptionsCalculator = () => {
                                         padding: '4px'
                                     }}>
                                         {isLoading ? (
-                                            <div style={{ padding: '8px', color: '#666', textAlign: 'center' }}>Carregando...</div>
+                                            <div style={{ padding: '12px', color: '#94a3b8', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                <ModernSpinner size={20} />
+                                                Buscando {searchTerm}...
+                                            </div>
                                         ) : options.length > 0 ? (
                                             options.map((opt, idx) => (
                                                 <div key={idx}
@@ -289,7 +298,7 @@ const OptionsCalculator = () => {
                     {/* Summary */}
                     <div className="rf-card glass-card" style={{ padding: '16px', flex: 1 }}>
                         <div className="rf-card-header" style={{
-                            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent)',
+                            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                             borderRadius: '16px 16px 0 0',
                             padding: '12px 16px',
                             margin: '-16px -16px 16px -16px',

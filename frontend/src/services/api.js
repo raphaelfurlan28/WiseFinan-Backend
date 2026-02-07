@@ -1,10 +1,19 @@
 import axios from 'axios';
 
 // Get Base URL from environment or default to relative (for dev proxy)
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+// Helper function for raw fetch calls
+export const getApiUrl = (path) => {
+    // In production, prepend BASE_URL; in dev, use relative path for proxy
+    if (BASE_URL) {
+        return `${BASE_URL}${path}`;
+    }
+    return path;
+};
 
 const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: BASE_URL || '/api',
     headers: {
         'Content-Type': 'application/json',
     },
