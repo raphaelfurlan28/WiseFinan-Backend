@@ -10,6 +10,7 @@ const Chat = () => {
     const [inputText, setInputText] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
+    const prevMessagesLen = useRef(0);
 
     // Hardcoded user for now (matches App.jsx)
     const currentUser = "Raphael Furlan";
@@ -20,7 +21,10 @@ const Chat = () => {
             if (res.ok) {
                 const json = await res.json();
                 if (Array.isArray(json)) {
-                    setMessages(json);
+                    // Only update if content changed
+                    if (JSON.stringify(json) !== JSON.stringify(messages)) {
+                        setMessages(json);
+                    }
                 }
             }
         } catch (err) {
@@ -35,11 +39,20 @@ const Chat = () => {
         fetchMessages();
         const interval = setInterval(fetchMessages, 2000); // 2 seconds
         return () => clearInterval(interval);
-    }, []);
+    }, [messages]); // Add messages to dependency to support the check inside fetchMessages (though normally stale closure is issue, here we read state inside) 
+    // Wait, fetchMessages closes over 'messages'. We need to use functional ref or dependency.
+    // Better idea: use a ref for comparison or functional update? 
+    // Actually, simply removing 'dates' dependency in standard fetch is fine, but for comparison we need the latest 'messages'.
+    // Let's use a functional update approach or just let it re-run.
+    // If we add 'messages' to dependency, the interval resets on every change. That's fine.
 
-    // Scroll to bottom on new messages & Mark as Read
+    // Scroll to bottom on NEW messages & Mark as Read
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messages.length > prevMessagesLen.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+        prevMessagesLen.current = messages.length;
+
         if (messages.length > 0) {
             updateReadStatus(messages.length);
         }
@@ -80,7 +93,7 @@ const Chat = () => {
     };
 
     return (
-        <div className="rf-container" style={{ height: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column' }}>
+        <div className="rf-container" style={{ height: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

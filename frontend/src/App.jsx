@@ -15,6 +15,7 @@ import OptionsCalculator from './components/OptionsCalculator';
 import Support from './components/Support';
 import Chat from './components/Chat';
 import Strategies from './components/Strategies';
+import Calendario from './components/Calendario';
 import SplashScreen from './components/SplashScreen';
 import UserProfileModal from './components/UserProfileModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -72,6 +73,8 @@ const AppContent = () => {
         return <Chat />;
       case 'strategies':
         return <Strategies />;
+      case 'calendar':
+        return <Calendario />;
       case 'support':
         return <Support />;
 

@@ -12,7 +12,8 @@ import {
     TrendingUp,
     Landmark,
     MessageSquare,
-    BookOpen
+    BookOpen,
+    Calendar
 } from 'lucide-react';
 import './Sidebar.css';
 import { useNotification } from '../context/NotificationContext';
@@ -29,6 +30,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'options_calculator', label: 'Simulador Opções', icon: Layers },
         { id: 'strategies', label: 'Estratégias Opções', icon: BookOpen },
         { id: 'news', label: 'Notícias', icon: Newspaper },
+        { id: 'calendar', label: 'Calendário', icon: Calendar },
         { id: 'chat', label: 'Chat', icon: MessageSquare },
         { id: 'support', label: 'Suporte', icon: HelpCircle },
     ];
