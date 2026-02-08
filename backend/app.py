@@ -27,6 +27,19 @@ def get_stocks():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/calendar', methods=['GET'])
+def get_calendar():
+    try:
+        from services.calendar_service import get_calendar_data
+        from services.sheets import get_sheet_data
+        
+        stocks = get_sheet_data()
+        tickers = [s['ticker'] for s in stocks if 'ticker' in s]
+        data = get_calendar_data(tickers)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/stocks/<ticker>/history', methods=['GET'])
 def get_stock_history(ticker):
     try:
