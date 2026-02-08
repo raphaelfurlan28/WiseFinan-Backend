@@ -362,27 +362,6 @@ def update_user_endpoint():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/calendar', methods=['GET'])
-def get_calendar():
-    try:
-        # 1. Get List of Tickers (Assets)
-        # Should we use 'get_sheet_data'? Yes.
-        data = get_sheet_data()
-        tickers = [item['ticker'] for item in data if item.get('ticker')]
-        
-        # 2. Call Calendar Service
-        from services.calendar_service import get_calendar_data
-        calendar_data = get_calendar_data(tickers)
-        
-        # 3. Enhance with Company Name/Logo from sheet data?
-        # The frontend calls /api/stocks anyway, so it can map Ticker -> Logo.
-        # But maybe returns names here for convenience? Not strictly needed.
-        
-        return jsonify(calendar_data)
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
