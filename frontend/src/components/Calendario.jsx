@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalIcon, ChevronLeft, ChevronRight, TrendingUp, FileText, AlertCircle, X } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 import './Calendar.css';
 
 // Constants
@@ -25,10 +26,10 @@ export default function Calendario() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const calRes = await fetch('/api/calendar');
+                const calRes = await fetch(getApiUrl('/api/calendar'));
                 const calJson = await calRes.json();
 
-                const stocksRes = await fetch('/api/stocks');
+                const stocksRes = await fetch(getApiUrl('/api/stocks'));
                 const stocksJson = await stocksRes.json();
 
                 const map = {};

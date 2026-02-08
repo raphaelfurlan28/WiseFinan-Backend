@@ -40,10 +40,10 @@ def get_calendar():
         
         print(f"[CALENDAR] Found {len(tickers)} tickers")
         
-        # Limit to avoid timeout (yfinance is slow)
-        if len(tickers) > 15:
-            print(f"[CALENDAR] Limiting to first 15 tickers to avoid timeout")
-            tickers = tickers[:15]
+        # Limit removed: Parallel processing in service now handles more tickers
+        # if len(tickers) > 15:
+        #     print(f"[CALENDAR] Limiting to first 15 tickers to avoid timeout")
+        #     tickers = tickers[:15]
         
         try:
             from services.calendar_service import get_calendar_data

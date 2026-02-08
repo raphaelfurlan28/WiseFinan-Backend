@@ -1,8 +1,11 @@
 .calendar-page {
-    padding: 24px;
+    padding: 16px;
     max-width: 1200px;
     margin: 0 auto;
     color: #e2e8f0;
+    box-sizing: border-box;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 /* Header Standard */
@@ -38,19 +41,20 @@
 /* Standard Tabs */
 .tabs-std {
     display: flex;
-    gap: 16px;
+    gap: 8px;
     margin-bottom: 24px;
     background: rgba(30, 41, 59, 0.4);
     padding: 4px;
     border-radius: 12px;
     display: inline-flex;
+    flex-wrap: wrap;
 }
 
 .tab-btn-std {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 6px;
+    padding: 8px 12px;
     border: none;
     background: transparent;
     color: #94a3b8;
@@ -58,14 +62,11 @@
     border-radius: 8px;
     font-weight: 600;
     transition: all 0.2s;
+    font-size: 0.9rem;
 }
 
 .tab-btn-std.active {
     background: #10b981;
-    /* Green */
-    color: #000;
-    /* Black text on green? Or White? User asked for standard app color. Primary is usually Green in this app? */
-    /* Wait, app uses Blue/Green. User asked to change Blue to Green in tabs */
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     color: #fff;
 }
@@ -75,14 +76,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
 .month-nav h2 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     margin: 0;
-    width: 200px;
+    min-width: 150px;
     text-align: center;
 }
 
@@ -101,25 +102,25 @@
 .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
+    gap: 4px;
+    width: 100%;
 }
 
 .weekday-header {
     text-align: center;
     color: #94a3b8;
     font-weight: bold;
-    padding: 8px;
+    padding: 4px 2px;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.65rem;
 }
 
 .day-cell {
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+    border-radius: 8px;
     aspect-ratio: 1 / 1;
-    /* Perfect square */
-    padding: 6px;
+    padding: 4px;
     position: relative;
     transition: all 0.2s;
     display: flex;

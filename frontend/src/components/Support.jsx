@@ -52,8 +52,6 @@ const Support = () => {
                         >
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: '16px',
-                                background: 'rgba(34, 197, 94, 0.15)',
-                                border: '1px solid rgba(34, 197, 94, 0.3)',
                                 padding: '16px',
                                 borderRadius: '12px',
                                 transition: 'transform 0.2s',
@@ -82,8 +80,6 @@ const Support = () => {
                         >
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: '16px',
-                                background: 'rgba(168, 85, 247, 0.15)',
-                                border: '1px solid rgba(168, 85, 247, 0.3)',
                                 padding: '16px',
                                 borderRadius: '12px',
                                 transition: 'transform 0.2s',

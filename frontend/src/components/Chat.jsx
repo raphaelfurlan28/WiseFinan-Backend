@@ -1,95 +1,89 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, Trash2, AlertCircle, Loader, Trash } from 'lucide-react';
-import { getApiUrl } from '../services/api';
-import { useNotification } from '../context/NotificationContext';
+import { MessageSquare, Send, Trash2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../services/firebaseConfig';
+import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import './FixedIncome.css'; // Reusing common styles
 
 const Chat = () => {
-    const { updateReadStatus } = useNotification();
+    const { user } = useAuth();
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
-    const prevMessagesLen = useRef(0);
 
-    // Hardcoded user for now (matches App.jsx)
-    const currentUser = "Raphael Furlan";
+    // Admin email allowed to send messages
+    const ADMIN_EMAIL = 'raphaelfurlan28@gmail.com';
+    const canSend = user?.email === ADMIN_EMAIL;
 
-    const fetchMessages = async () => {
-        try {
-            const res = await fetch(getApiUrl('/api/chat'));
-            if (res.ok) {
-                const json = await res.json();
-                if (Array.isArray(json)) {
-                    // Only update if content changed
-                    if (JSON.stringify(json) !== JSON.stringify(messages)) {
-                        setMessages(json);
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Error fetching chat:", err);
-        } finally {
+    // Real-time listener for messages
+    useEffect(() => {
+        const q = query(collection(db, "chat_messages"), orderBy("timestamp", "asc"));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const msgs = [];
+            querySnapshot.forEach((doc) => {
+                msgs.push({ id: doc.id, ...doc.data() });
+            });
+            setMessages(msgs);
             setLoading(false);
-        }
-    };
+        }, (error) => {
+            console.error("Error fetching chat:", error);
+            setLoading(false);
+        });
 
-    // Poll for messages
+        return () => unsubscribe();
+    }, []);
+
+    // Scroll to bottom on new messages
     useEffect(() => {
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 2000); // 2 seconds
-        return () => clearInterval(interval);
-    }, [messages]); // Add messages to dependency to support the check inside fetchMessages (though normally stale closure is issue, here we read state inside) 
-    // Wait, fetchMessages closes over 'messages'. We need to use functional ref or dependency.
-    // Better idea: use a ref for comparison or functional update? 
-    // Actually, simply removing 'dates' dependency in standard fetch is fine, but for comparison we need the latest 'messages'.
-    // Let's use a functional update approach or just let it re-run.
-    // If we add 'messages' to dependency, the interval resets on every change. That's fine.
-
-    // Scroll to bottom on NEW messages & Mark as Read
-    useEffect(() => {
-        if (messages.length > prevMessagesLen.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }
-        prevMessagesLen.current = messages.length;
-
-        if (messages.length > 0) {
-            updateReadStatus(messages.length);
-        }
-    }, [messages, updateReadStatus]);
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!inputText.trim()) return;
+        if (!inputText.trim() || !canSend) return;
 
         const text = inputText;
         setInputText(''); // Optimistic clear
 
         try {
-            await fetch(getApiUrl('/api/chat'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user: currentUser,
-                    text: text
-                })
+            await addDoc(collection(db, "chat_messages"), {
+                text: text,
+                user: user.name || user.email,
+                email: user.email, // Store email for ownership check
+                timestamp: serverTimestamp()
             });
-            fetchMessages(); // Refresh immediately
         } catch (err) {
             console.error("Error sending message:", err);
             setInputText(text); // Restore on error
+            alert("Erro ao enviar mensagem.");
         }
     };
 
     const handleDelete = async (msgId) => {
+        // Allow delete if admin
+        if (!canSend) return;
+
         if (!window.confirm("Apagar mensagem?")) return;
 
         try {
-            await fetch(getApiUrl(`/api/chat?id=${msgId}`), { method: 'DELETE' });
-            fetchMessages(); // Refresh
+            await deleteDoc(doc(db, "chat_messages", msgId));
         } catch (err) {
             console.error("Error deleting message:", err);
+            alert("Erro ao apagar mensagem.");
         }
+    };
+
+    // Format timestamp
+    const formatTime = (timestamp) => {
+        if (!timestamp) return 'Enviando...';
+        // Firestore timestamp to Date
+        const date = timestamp.toDate();
+        return date.toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        });
     };
 
     return (
@@ -139,6 +133,11 @@ const Chat = () => {
                         <MessageSquare size={20} />
                     </div>
                     <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#fff' }}>Mensagens</h3>
+                    {!canSend && (
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: 'auto' }}>
+                            Apenas o administrador pode enviar mensagens.
+                        </span>
+                    )}
                 </div>
 
                 {/* Messages List */}
@@ -156,29 +155,29 @@ const Chat = () => {
                                 <MessageSquare size={24} color="#64748b" />
                             </div>
                             <span style={{ fontSize: '0.9rem' }}>Nenhuma mensagem ainda.</span>
-                            <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Seja o primeiro a enviar!</span>
                         </div>
                     )}
 
-                    {messages.map((msg, idx) => {
-                        const isMe = msg.user === currentUser;
+                    {messages.map((msg) => {
+                        const isMe = msg.email === user?.email;
+                        const isAdminMsg = msg.email === ADMIN_EMAIL;
+
                         return (
-                            <div key={idx} className="message-group" style={{
+                            <div key={msg.id} className="message-group" style={{
                                 alignSelf: isMe ? 'flex-end' : 'flex-start',
-                                maxWidth: '75%',
+                                maxWidth: '85%',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: isMe ? 'flex-end' : 'flex-start',
                                 position: 'relative'
                             }}>
-                                {/* Name header removed as it is now in footer */}
-
-                                {/* Bubble Container */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
                                     {/* Bubble */}
                                     <div style={{
-                                        background: isMe ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255, 255, 255, 0.1)',
-                                        color: isMe ? '#fff' : '#e2e8f0',
+                                        background: isAdminMsg
+                                            ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' // Admin (Blue)
+                                            : 'rgba(255, 255, 255, 0.1)', // Others (Gray - though likely none as only admin sends)
+                                        color: '#fff',
                                         padding: '12px 16px',
                                         borderRadius: '16px',
                                         borderBottomRightRadius: isMe ? '4px' : '16px',
@@ -186,14 +185,29 @@ const Chat = () => {
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         lineHeight: '1.5',
                                         fontSize: '0.95rem',
-                                        border: isMe ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                                        position: 'relative'
+                                        border: isAdminMsg ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                                        position: 'relative',
+                                        minWidth: '120px'
                                     }}>
-                                        {msg.text}
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+
+                                        <div style={{
+                                            fontSize: '0.65rem',
+                                            color: 'rgba(255,255,255,0.7)',
+                                            marginTop: '6px',
+                                            textAlign: 'right',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <span>{msg.user}</span>
+                                            <span>{formatTime(msg.timestamp)}</span>
+                                        </div>
                                     </div>
 
-                                    {/* Delete Button (Only for me) */}
-                                    {isMe && (
+                                    {/* Delete Button (Only for Admin) */}
+                                    {canSend && (
                                         <button
                                             onClick={() => handleDelete(msg.id)}
                                             className="delete-btn"
@@ -211,57 +225,67 @@ const Chat = () => {
                                             onMouseEnter={(e) => e.target.style.opacity = 1}
                                             onMouseLeave={(e) => e.target.style.opacity = 0.5}
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={16} />
                                         </button>
                                     )}
                                 </div>
-
-                                <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '4px', opacity: 0.8, marginRight: isMe ? '4px' : 0, marginLeft: !isMe ? '4px' : 0 }}>
-                                    {msg.user} • {msg.time_display}
-                                </span>
                             </div>
                         );
                     })}
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Area */}
-                <form onSubmit={handleSend} style={{
-                    padding: '16px',
-                    background: 'rgba(0, 0, 0, 0.2)',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                    display: 'flex',
-                    gap: '12px'
-                }}>
-                    <input
-                        type="text"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Digite sua mensagem..."
-                        style={{
-                            flex: 1,
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '12px',
-                            padding: '12px 16px',
-                            color: '#fff',
-                            fontSize: '1rem',
-                            outline: 'none'
-                        }}
-                    />
-                    <button type="submit" disabled={!inputText.trim()} style={{
-                        background: '#3b82f6',
-                        border: 'none',
-                        borderRadius: '12px',
-                        width: '48px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: inputText.trim() ? 'pointer' : 'default',
-                        opacity: inputText.trim() ? 1 : 0.5,
-                        transition: 'opacity 0.2s'
+                {/* Input Area (Only for Admin) */}
+                {canSend ? (
+                    <form onSubmit={handleSend} style={{
+                        padding: '16px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                        display: 'flex',
+                        gap: '12px'
                     }}>
-                        <Send size={20} color="#fff" />
-                    </button>
-                </form>
+                        <input
+                            type="text"
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            placeholder="Digite sua mensagem..."
+                            style={{
+                                flex: 1,
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px',
+                                padding: '12px 16px',
+                                color: '#fff',
+                                fontSize: '1rem',
+                                outline: 'none'
+                            }}
+                        />
+                        <button type="submit" disabled={!inputText.trim()} style={{
+                            background: '#3b82f6',
+                            border: 'none',
+                            borderRadius: '12px',
+                            width: '48px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: inputText.trim() ? 'pointer' : 'default',
+                            opacity: inputText.trim() ? 1 : 0.5,
+                            transition: 'opacity 0.2s'
+                        }}>
+                            <Send size={20} color="#fff" />
+                        </button>
+                    </form>
+                ) : (
+                    <div style={{
+                        padding: '16px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                        textAlign: 'center',
+                        color: '#94a3b8',
+                        fontSize: '0.9rem'
+                    }}>
+                        <AlertCircle size={16} style={{ display: 'inline', marginBottom: '-3px', marginRight: '6px' }} />
+                        Apenas o administrador pode enviar mensagens.
+                    </div>
+                )}
             </div>
         </div>
     );
