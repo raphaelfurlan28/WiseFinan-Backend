@@ -116,10 +116,10 @@
 .day-cell {
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    height: 100px;
-    /* Square-ish */
-    padding: 8px;
+    border-radius: 10px;
+    aspect-ratio: 1 / 1;
+    /* Perfect square */
+    padding: 6px;
     position: relative;
     transition: all 0.2s;
     display: flex;

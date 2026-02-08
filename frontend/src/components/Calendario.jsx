@@ -197,7 +197,7 @@ export default function Calendario() {
                                     return acc;
                                 }, {})
                             )
-                                .sort(([tickerA], [tickerB]) => tickerA.localeCompare(tickerB))
+                                .sort(([, countA], [, countB]) => countB - countA)
                                 .map(([ticker, count]) => {
                                     const info = stocksMap[ticker] || { name: ticker, logo: null };
                                     return (

@@ -33,7 +33,6 @@ def get_calendar():
         import traceback
         print("[CALENDAR] Starting calendar data fetch...")
         
-        from services.calendar_service import get_calendar_data
         from services.sheets import get_sheet_data
         
         stocks = get_sheet_data()
@@ -41,15 +40,21 @@ def get_calendar():
         
         print(f"[CALENDAR] Found {len(tickers)} tickers")
         
-        # Limit to avoid timeout on first call (cache will help on subsequent)
-        # If more than 30 tickers, process in chunks
-        if len(tickers) > 30:
-            print(f"[CALENDAR] Limiting to first 30 tickers to avoid timeout")
-            tickers = tickers[:30]
+        # Limit to avoid timeout (yfinance is slow)
+        if len(tickers) > 15:
+            print(f"[CALENDAR] Limiting to first 15 tickers to avoid timeout")
+            tickers = tickers[:15]
         
-        data = get_calendar_data(tickers)
-        print(f"[CALENDAR] Got {len(data.get('dividend_events', []))} dividend events")
-        return jsonify(data)
+        try:
+            from services.calendar_service import get_calendar_data
+            data = get_calendar_data(tickers)
+            print(f"[CALENDAR] Got {len(data.get('dividend_events', []))} dividend events")
+            return jsonify(data)
+        except Exception as inner_e:
+            print(f"[CALENDAR] yfinance failed: {inner_e}")
+            # Return empty data instead of 500
+            return jsonify({"dividend_events": [], "earnings_events": [], "warning": "Data temporarily unavailable"})
+            
     except Exception as e:
         print(f"[CALENDAR ERROR] {str(e)}")
         print(traceback.format_exc())
