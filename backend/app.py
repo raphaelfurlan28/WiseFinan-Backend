@@ -30,15 +30,30 @@ def get_stocks():
 @app.route('/api/calendar', methods=['GET'])
 def get_calendar():
     try:
+        import traceback
+        print("[CALENDAR] Starting calendar data fetch...")
+        
         from services.calendar_service import get_calendar_data
         from services.sheets import get_sheet_data
         
         stocks = get_sheet_data()
         tickers = [s['ticker'] for s in stocks if 'ticker' in s]
+        
+        print(f"[CALENDAR] Found {len(tickers)} tickers")
+        
+        # Limit to avoid timeout on first call (cache will help on subsequent)
+        # If more than 30 tickers, process in chunks
+        if len(tickers) > 30:
+            print(f"[CALENDAR] Limiting to first 30 tickers to avoid timeout")
+            tickers = tickers[:30]
+        
         data = get_calendar_data(tickers)
+        print(f"[CALENDAR] Got {len(data.get('dividend_events', []))} dividend events")
         return jsonify(data)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"[CALENDAR ERROR] {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": str(e), "dividend_events": [], "earnings_events": []}), 500
 
 @app.route('/api/stocks/<ticker>/history', methods=['GET'])
 def get_stock_history(ticker):
