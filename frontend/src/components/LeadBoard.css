@@ -756,9 +756,14 @@
     /* Reveal actions on hover for cleanliness */
     .leadboard-card .lead-archive-btn {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 16px;
         right: 16px;
+        transform: none;
+        opacity: 0.6;
+    }
+
+    .leadboard-card:hover .lead-archive-btn {
+        opacity: 1;
     }
 
     /* User Actions - Keep responsive */
