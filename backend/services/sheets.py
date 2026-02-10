@@ -899,20 +899,28 @@ def append_subscription_request(data):
     Appends a new subscription request to the 'User' tab.
     Data format: {'nome': ..., 'email': ..., 'whatsapp': ..., 'plano': ...}
     """
+    from datetime import datetime, timedelta
+    
     creds = get_credentials()
     if not creds: return {"error": "Credentials not found"}
     service = build('sheets', 'v4', credentials=creds)
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
-    RANGE_NAME = "User!A:E"
+    RANGE_NAME = "User!A:F" # Expanded to column F for Date/Time
     
-    # Rows: Name, Email, Whatsapp, Plan, Status (Pendente)
+    # Get current time in Brasília (UTC-3)
+    # Note: For production on Render, we adjust manually if TZ is not set
+    now = datetime.utcnow() - timedelta(hours=3)
+    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    
+    # Rows: Name, Email, Whatsapp, Plan, Status (Pendente), Date/Time
     values = [
         [
             data.get('nome', ''),
             data.get('email', ''),
             data.get('whatsapp', ''),
             data.get('plano', ''),
-            'Pendente'
+            'Pendente',
+            timestamp
         ]
     ]
     

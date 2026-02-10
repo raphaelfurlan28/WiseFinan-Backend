@@ -54,66 +54,78 @@ const HeroSection = ({ onLoginClick }) => {
                         </div>
 
                         <div className="ui-grid">
-                            <div className="ui-card">
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                className="ui-card"
+                            >
                                 <div className="ui-card-header">
                                     <div className="icon-box icon-green">
                                         <TrendingUp size={20} />
                                     </div>
                                     <span className="ui-card-label">Rentabilidade</span>
                                 </div>
-                                <div className="ui-card-value" style={{ fontSize: '1.2rem' }}>Acima de 2% Mensal</div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                                    Utilizando estratégias de Venda Coberta com Opções
+                                <div className="ui-card-value">Acima de 2% Mensal</div>
+                                <div className="ui-card-subtext">
+                                    Utilizando estratégias de Venda Coberta com Opções para gerar renda passiva consistente.
                                 </div>
                                 <div className="progress-bar">
                                     <div className="progress-fill fill-green"></div>
                                 </div>
-                            </div>
-                            <div className="ui-card">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                className="ui-card"
+                            >
                                 <div className="ui-card-header">
                                     <div className="icon-box icon-blue">
                                         <Zap size={20} />
                                     </div>
-                                    <span className="ui-card-label">Alta Rentabilidade</span>
+                                    <span className="ui-card-label">Alta Performance</span>
                                 </div>
-                                <div className="ui-card-value" style={{ fontSize: '1.2rem' }}>Compra de Ações</div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                                    Aproveitando oportunidades de custo baixo
+                                <div className="ui-card-value">Compra de Ações</div>
+                                <div className="ui-card-subtext">
+                                    Identificamos oportunidades de custo baixo (Buy & Hold) com alto potencial de valorização.
                                 </div>
                                 <div className="progress-bar">
                                     <div className="progress-fill fill-blue"></div>
                                 </div>
-                            </div>
-                            <div className="ui-card">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                className="ui-card"
+                            >
                                 <div className="ui-card-header">
                                     <div className="icon-box icon-purple">
                                         <Shield size={20} />
                                     </div>
                                     <span className="ui-card-label">Proteção</span>
                                 </div>
-                                <div className="ui-card-value" style={{ fontSize: '1.2rem' }}>Renda Fixa e Garantias</div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                                    Tesouro, Divisão de Portfólio e Opções Cobertas
+                                <div className="ui-card-value">Renda Fixa & Equity</div>
+                                <div className="ui-card-subtext">
+                                    Equilíbrio estratégico entre Tesouro Direto, CDBs e seguros de carteira com derivativos.
                                 </div>
                                 <div className="progress-bar">
                                     <div className="progress-fill fill-purple"></div>
                                 </div>
-                            </div>
-                            <div className="ui-card">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                className="ui-card"
+                            >
                                 <div className="ui-card-header">
                                     <div className="icon-box icon-yellow">
                                         <Calculator size={20} />
                                     </div>
                                     <span className="ui-card-label">Calculadoras</span>
                                 </div>
-                                <div className="ui-card-value" style={{ fontSize: '1.2rem' }}>Retorno de Investimentos</div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                                    Calcule o retorno das suas Opções e da sua Renda Fixa
+                                <div className="ui-card-value">Inteligência de Dados</div>
+                                <div className="ui-card-subtext">
+                                    Simule retornos reais descontando inflação e taxas, com precisão estatística avançada.
                                 </div>
                                 <div className="progress-bar">
                                     <div className="progress-fill fill-yellow"></div>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 </div>
