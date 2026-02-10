@@ -42,6 +42,14 @@ def _get_db():
     _db = firestore.client()
     return _db
 
+def _check_auth_config():
+    """Prints auth config for debugging to logs."""
+    try:
+        app = firebase_admin.get_app()
+        print(f"[CRM AUTH DEBUG] Connected to Project: {app.project_id} | Time: {datetime.utcnow()}")
+    except Exception as e:
+        print(f"[CRM AUTH DEBUG] Could not determine project ID: {e}")
+
 
 def create_lead(data):
     """
