@@ -22,6 +22,23 @@ const SubscriptionModal = ({ isOpen, onClose, selectedPlan }) => {
 
     const isFormValid = formData.nome && formData.email && formData.whatsapp;
 
+    const handlePhoneChange = (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+
+        if (value.length > 10) {
+            value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+        } else if (value.length > 6) {
+            value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+        } else if (value.length > 2) {
+            value = value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+        } else if (value.length > 0) {
+            value = value.replace(/^(\d*)/, '($1');
+        }
+
+        setFormData({ ...formData, whatsapp: value });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!isFormValid) return;
@@ -85,7 +102,7 @@ const SubscriptionModal = ({ isOpen, onClose, selectedPlan }) => {
                             <p className="success-footer">
                                 Em breve a equipe de Suporte da WiseFinan entrará em contato para formalizar o pagamento e liberação do acesso ao APP.
                             </p>
-                            <button className="btn-primary" style={{ width: '100%', marginTop: '2rem' }} onClick={onClose}>
+                            <button className="btn-primary centered-text" style={{ width: '100%', marginTop: '2rem' }} onClick={onClose}>
                                 Voltar para a Home
                             </button>
                         </div>
@@ -125,9 +142,10 @@ const SubscriptionModal = ({ isOpen, onClose, selectedPlan }) => {
                                     <label><Phone size={16} /> WhatsApp</label>
                                     <input
                                         type="tel"
-                                        placeholder="(00) 00000-0000"
+                                        placeholder="(DD) 99999-9999"
                                         value={formData.whatsapp}
-                                        onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                                        onChange={handlePhoneChange}
+                                        maxLength={15}
                                         required
                                     />
                                 </div>
@@ -139,7 +157,7 @@ const SubscriptionModal = ({ isOpen, onClose, selectedPlan }) => {
                                 )}
 
                                 <button
-                                    className={`btn-primary ${!isFormValid || status === 'loading' ? 'disabled' : ''}`}
+                                    className={`btn-primary centered-text ${!isFormValid || status === 'loading' ? 'disabled' : ''}`}
                                     disabled={!isFormValid || status === 'loading'}
                                     type="submit"
                                 >
@@ -166,6 +184,13 @@ const SubscriptionModal = ({ isOpen, onClose, selectedPlan }) => {
             </div>
 
             <style jsx>{`
+                .btn-primary.centered-text {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    gap: 8px; /* For icon spacing */
+                }
                 .modal-overlay {
                     position: fixed;
                     top: 0;

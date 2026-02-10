@@ -753,4 +753,25 @@
         transform: translateY(-50%);
         right: 16px;
     }
+
+    /* User Actions Horizontal on Desktop */
+    .lead-user-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .btn-generate-password,
+    .btn-create-firebase {
+        width: auto;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
+
+    .password-display-area {
+        flex-direction: row;
+        align-items: center;
+    }
 }

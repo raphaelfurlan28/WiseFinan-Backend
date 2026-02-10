@@ -83,7 +83,10 @@ const AppContent = () => {
       case 'calendar':
         return <Calendario />;
       case 'admin-leads':
-        return <LeadBoard />;
+        if (user?.email === 'raphaelfurlan28@gmail.com') {
+          return <LeadBoard />;
+        }
+        return <Home onNavigate={handleNavigate} onStockClick={setSelectedStock} />;
       case 'support':
         return <Support />;
 
