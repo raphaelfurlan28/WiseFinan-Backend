@@ -170,6 +170,10 @@ def update_lead(lead_id, field, value):
         print(f"[CRM] Lead {lead_id} updated: {field} = {value}")
         return {"success": True, "lead_id": lead_id, "field": field, "value": value}
 
+    except Exception as e:
+        print(f"[CRM ERROR] update_lead: {e}")
+        return {"error": str(e)}
+
 def delete_lead(lead_id):
     """
     Hard deletes a lead from Firestore.
@@ -182,10 +186,6 @@ def delete_lead(lead_id):
         return {"success": True, "lead_id": lead_id}
     except Exception as e:
         print(f"[CRM ERROR] delete_lead: {e}")
-        return {"error": str(e)}
-        
-    except Exception as e:
-        print(f"[CRM ERROR] update_lead: {e}")
         return {"error": str(e)}
 
 def generate_password_for_lead(lead_id):
