@@ -314,29 +314,8 @@ def get_market_indicators():
         print(f"Error fetching Dollar: {e}")
         indicators["dollar"] = 5.00 # Fallback
 
-    # 4. Bitcoin (BTC-USD converted or BTC-BRL if available)
-    try:
-        # BTC-BRL is often delisted/unstable on YF. Using BTC-USD is safer.
-        # We can try BTC-BRL first, if fails, fallback to USD * Dollar
-        try:
-            btc_ticker = yf.Ticker("BTC-BRL")
-            btc_hist = btc_ticker.history(period="1d")
-            if not btc_hist.empty:
-                indicators["bitcoin"] = round(float(btc_hist['Close'].iloc[-1]), 2)
-            else:
-                raise Exception("No data for BTC-BRL")
-        except:
-             # Fallback to BTC-USD
-             btc_usd = yf.Ticker("BTC-USD")
-             btc_hist = btc_usd.history(period="1d")
-             if not btc_hist.empty:
-                 usd_val = float(btc_hist['Close'].iloc[-1])
-                 d_val = indicators.get("dollar", 5.00) or 5.00
-                 indicators["bitcoin"] = round(usd_val * d_val, 2)
-
-    except Exception as e:
-        print(f"Error fetching Bitcoin: {e}")
-        indicators["bitcoin"] = 0.0
+    # 4. Bitcoin (Removed per request)
+    indicators["bitcoin"] = None
 
     return indicators
 
