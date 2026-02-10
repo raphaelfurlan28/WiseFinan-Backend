@@ -377,41 +377,46 @@ export default function FixedIncome() {
         <div className="rf-container">
             <header className="rf-header" style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            padding: '10px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Landmark size={28} color="#fff" />
-                        </div>
-                        <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Renda Fixa</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {/* Minimalist Header */}
+                        <Landmark size={20} color="#94a3b8" />
+                        <h1 style={{
+                            margin: 0,
+                            fontSize: '1.25rem',
+                            fontWeight: 600,
+                            background: 'linear-gradient(90deg, #fff, #cbd5e1)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}>Renda Fixa</h1>
                     </div>
                     {data.length > 0 && data[0].data_ref && (
-                        <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#666' }}>
                             Atualizado: {formatDate(data[0].data_ref.split("T")[0])}
                         </span>
                     )}
                 </div>
 
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)', margin: '16px 0' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', margin: '16px 0' }}></div>
 
-                <div className="search-bar" style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '10px 16px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '0'
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    background: 'rgba(30, 41, 59, 0.4)',
+                    borderRadius: '24px',
+                    padding: '6px 12px',
+                    marginBottom: '0',
+                    border: 'none',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
+                    width: '100%',
+                    boxSizing: 'border-box'
                 }}>
-                    <Search size={20} color="#94a3b8" />
+                    <Search size={16} color="#94a3b8" />
                     <input
                         type="text"
                         placeholder="Buscar título..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
-                            background: 'transparent', border: 'none', color: '#fff', fontSize: '1rem', flex: 1, outline: 'none'
+                            background: 'transparent', border: 'none', color: '#fff', fontSize: '0.9rem', flex: 1, outline: 'none'
                         }}
                     />
                 </div>
@@ -429,7 +434,7 @@ export default function FixedIncome() {
 
             {/* Separator and Title for Títulos Públicos */}
             <div style={{ marginTop: '40px', marginBottom: '20px' }}>
-                <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', marginBottom: '30px' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', marginBottom: '30px' }}></div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#f8fafc' }}>Títulos Públicos</h2>
             </div>
 
@@ -469,7 +474,7 @@ export default function FixedIncome() {
 
             {/* Separator and Title for Garantias */}
             <div style={{ marginTop: '40px', marginBottom: '20px' }}>
-                <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', marginBottom: '30px' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', marginBottom: '30px' }}></div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#f8fafc' }}>Renda Fixa para Garantias</h2>
             </div>
 

@@ -21,8 +21,23 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
             .then(res => res.json())
             .then(data => {
                 setOptions(data);
-                // Extract unique expirations and sort
-                const expirations = [...new Set(data.map(o => o.expiration))].sort();
+                // Filter unique expirations (within 2 months) and sort
+                const today = new Date();
+                const maxDate = new Date();
+                maxDate.setMonth(today.getMonth() + 2);
+
+                // Ensure comparison at start of day
+                today.setHours(0, 0, 0, 0);
+                maxDate.setHours(23, 59, 59, 999);
+
+                const expirations = [...new Set(data.map(o => o.expiration))]
+                    .filter(exp => {
+                        const [year, month, day] = exp.split('-').map(Number);
+                        const expDate = new Date(year, month - 1, day);
+                        return expDate >= today && expDate <= maxDate;
+                    })
+                    .sort();
+
                 if (expirations.length > 0) setSelectedExpiry(expirations[0]);
                 setLoading(false);
             })
@@ -78,7 +93,25 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
                         )}
                         <h2 style={{ margin: 0 }}>Opções de {ticker}</h2>
                     </div>
-                    <button className="close-btn" onClick={onClose}><X size={24} /></button>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#64748b',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: 500
+                        }}
+                    >
+                        Fechar
+                        <X size={16} />
+                    </button>
                 </header>
 
                 {/* LABEL ADDED HERE: Discreet "Vencimentos" */}

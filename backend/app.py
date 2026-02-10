@@ -13,7 +13,13 @@ if not os.path.exists(dotenv_path):
 load_dotenv(dotenv_path)
 
 app = Flask(__name__)
-CORS(app)
+# Explicitly configure CORS for production and local development
+CORS(app, resources={r"/api/*": {"origins": [
+    "https://wisefinan-af83a.web.app", 
+    "https://wisefinan-af83a.firebaseapp.com",
+    "http://localhost:5173", 
+    "http://localhost:3000"
+]}})
 
 @app.route('/')
 def index():
@@ -359,6 +365,27 @@ def update_user_endpoint():
              
         from services.sheets import update_user_profile
         res = update_user_profile(email, new_name, new_photo)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/subscription/request', methods=['POST'])
+def subscription_request():
+    try:
+        from flask import request
+        data = request.json
+        
+        # Validation
+        if not data.get('nome') or not data.get('email') or not data.get('whatsapp'):
+            return jsonify({"error": "Missing required fields"}), 400
+            
+        from services.sheets import append_subscription_request
+        res = append_subscription_request(data)
         
         if "error" in res:
             return jsonify(res), 500

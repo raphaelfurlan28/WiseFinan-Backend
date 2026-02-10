@@ -17,6 +17,7 @@ const OptionsCalculator = () => {
     // Simulation State
     const [quantity, setQuantity] = useState(100);
     const [action, setAction] = useState('buy'); // 'buy' or 'sell'
+    const [targetPrice, setTargetPrice] = useState(''); // Target exit price (user input)
 
     // Fetch Options on Search
     useEffect(() => {
@@ -104,18 +105,11 @@ const OptionsCalculator = () => {
             {isLoading && <ModernLoader text={`Buscando ${searchTerm || 'opções'}...`} />}
 
             <header className="rf-header" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Layers size={28} color="#fff" />
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Simulador de Opções</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Layers size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Simulador de Opções</h1>
                 </div>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
 
             {/* Responsive Styles (Copied from Calculator.jsx) */}
@@ -330,6 +324,35 @@ const OptionsCalculator = () => {
                                     +
                                 </button>
                             </div>
+
+                            {/* Target Price (Saída) */}
+                            <div>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Preço Alvo / Saída (Opcional)</label>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center',
+                                    background: 'rgba(30, 41, 59, 0.6)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px'
+                                }}>
+                                    <span style={{ color: '#94a3b8', marginRight: '8px' }}>R$</span>
+                                    <input
+                                        type="number"
+                                        placeholder="0,00"
+                                        value={targetPrice}
+                                        onChange={(e) => setTargetPrice(e.target.value)}
+                                        step={0.01}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#fff',
+                                            width: '100%',
+                                            outline: 'none',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -408,6 +431,54 @@ const OptionsCalculator = () => {
                                         <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '8px' }}>
                                             {quantity} ações x R$ {price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </div>
+
+                                        {/* Projected Return Block (if Target Price is set) */}
+                                        {targetPrice && !isNaN(parseFloat(targetPrice.replace(',', '.'))) && (
+                                            <div style={{
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                borderRadius: '12px', padding: '16px'
+                                            }}>
+                                                <span style={{ fontSize: '0.9rem', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>
+                                                    Resultado Estimado (na Saída)
+                                                </span>
+                                                {(() => {
+                                                    const exitP = parseFloat(targetPrice.replace(',', '.'));
+                                                    const totalEntry = totalValue; // Total paid/received initially
+                                                    const totalExit = exitP * quantity;
+
+                                                    // Profit Calculation:
+                                                    // If BUY: Exit (Credit) - Entry (Debit)
+                                                    // If SELL: Entry (Credit) - Exit (Debit)
+                                                    let profit = 0;
+                                                    if (action === 'buy') {
+                                                        profit = totalExit - totalEntry;
+                                                    } else {
+                                                        profit = totalEntry - totalExit;
+                                                    }
+
+                                                    const isProfit = profit >= 0;
+                                                    const roi = totalEntry > 0 ? (profit / totalEntry) * 100 : 0;
+
+                                                    return (
+                                                        <div>
+                                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: isProfit ? '#4ade80' : '#f87171' }}>
+                                                                {isProfit ? '+' : ''} R$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                <span style={{ fontSize: '1.2rem', marginLeft: '8px', color: isProfit ? '#86efac' : '#fca5a5', fontWeight: 'normal' }}>
+                                                                    ({roi.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%)
+                                                                </span>
+                                                            </div>
+                                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '8px' }}>
+                                                                {action === 'buy'
+                                                                    ? `Pagou R$ ${totalEntry.toFixed(2)} -> Vendeu por R$ ${totalExit.toFixed(2)}`
+                                                                    : `Recebeu R$ ${totalEntry.toFixed(2)} -> Recomprou por R$ ${totalExit.toFixed(2)}`
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Guarantee Info for Sell */}

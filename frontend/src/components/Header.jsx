@@ -17,10 +17,11 @@ export default function Header({ onToggleSidebar, user, onProfileClick }) {
                 <span style={{
                     marginLeft: '16px',
                     fontFamily: 'Inter, sans-serif',
-                    fontSize: '1.2rem',
+                    fontSize: '1.5rem',
                     fontWeight: '700',
                     color: '#e2e8f0',
-                    letterSpacing: '-0.5px'
+                    letterSpacing: '-0.5px',
+                    textShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)'
                 }}>
                     WiseFinan
                 </span>
@@ -31,10 +32,20 @@ export default function Header({ onToggleSidebar, user, onProfileClick }) {
                     <Bell size={20} color="var(--text-primary)" />
                     {unreadCount > 0 && (
                         <span className="notif-badge" style={{
-                            position: 'absolute', top: -5, right: -5,
-                            background: '#ef4444', color: 'white',
-                            fontSize: '0.65rem', padding: '2px 5px', borderRadius: '10px',
-                            minWidth: '16px', textAlign: 'center'
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            background: '#ef4444',
+                            color: 'white',
+                            fontSize: '0.6rem',
+                            fontWeight: 'bold',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: 1
                         }}>
                             {unreadCount}
                         </span>

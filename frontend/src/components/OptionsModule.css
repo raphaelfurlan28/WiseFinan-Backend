@@ -73,21 +73,23 @@
 
 .close-btn {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
+    padding: 8px 16px;
+    border-radius: 8px;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
 .close-btn:hover {
     background: rgba(255, 255, 255, 0.15);
-    color: #cdfeff;
-    transform: rotate(90deg);
+    color: #fff;
 }
 
 /* Expiry Filter */
@@ -438,5 +440,30 @@
 
     .options-header h2 {
         font-size: 1.1rem;
+    }
+}
+
+/* Desktop Responsive Fixes */
+@media (min-width: 768px) {
+    .options-modal-overlay {
+        align-items: center;
+        padding: 40px;
+    }
+
+    .options-modal {
+        width: 90%;
+        max-width: 900px;
+        height: 80%;
+        max-height: 700px;
+        border-radius: 24px;
+        margin: auto;
+    }
+
+    .option-card {
+        max-width: 100%;
+    }
+
+    .cards-list {
+        padding: 20px;
     }
 }

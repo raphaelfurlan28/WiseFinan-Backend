@@ -1,11 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Shield, TrendingUp, Zap, Umbrella, Lock, Activity, Anchor, BarChart3, PieChart as PieIcon, DollarSign } from 'lucide-react';
+import { Shield, TrendingUp, Zap, Umbrella, Lock, Activity, Anchor, BarChart3, PieChart as PieIcon, DollarSign, Landmark, Building2, AlertTriangle, ChevronRight } from 'lucide-react';
 import './FixedIncome.css';
+import { getApiUrl } from '../services/api';
+import InvestmentGoals from './InvestmentGoals';
 
 const Portfolio = () => {
     const [selectedProfile, setSelectedProfile] = useState('moderado');
     const [investmentValue, setInvestmentValue] = useState('');
+    const [allStocks, setAllStocks] = useState([]);
+    const [fixedIncomeData, setFixedIncomeData] = useState([]);
+    const [treasuryBonds, setTreasuryBonds] = useState([]);
+    const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
+    const [loading, setLoading] = useState(true);
+
+    // Fetch stocks and fixed income data on mount
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [stocksRes, rfRes, treasuryRes, homeRes, indicesRes] = await Promise.all([
+                    fetch(getApiUrl('/api/stocks')),
+                    fetch(getApiUrl('/api/rf')),
+                    fetch(getApiUrl('/api/etfs/treasury')),
+                    fetch(getApiUrl('/api/home')),
+                    fetch(getApiUrl('/api/indices'))
+                ]);
+                const stocks = await stocksRes.json();
+                const rf = await rfRes.json();
+                const treasury = await treasuryRes.json();
+                const homeData = await homeRes.json();
+                // Indices might fail, handle gracefully
+                let indicesData = null;
+                try {
+                    indicesData = await indicesRes.json();
+                } catch (e) {
+                    console.warn("Failed to parse indices JSON", e);
+                }
+
+                if (Array.isArray(stocks)) setAllStocks(stocks);
+                if (Array.isArray(rf)) setFixedIncomeData(rf);
+                if (Array.isArray(treasury)) setTreasuryBonds(treasury);
+                if (indicesData) setIndices(indicesData);
+
+                // Merge fixed income from Home API if available
+                if (homeData.fixed_income && Array.isArray(homeData.fixed_income)) {
+                    // Check if we should append or replace. For now, let's append unique items or just use it ensuring it's array
+                    // To avoid complexity, we can store it in a new state or just merge.
+                    // The user wants "Títulos Públicos" which are often in homeData.fixed_income
+                    // Let's create a specific state for this if needed, or just append to existing fixedIncomeData
+                    setFixedIncomeData(prev => [...prev, ...homeData.fixed_income]);
+                }
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                // Fallback indices if fetch fails completely
+                setIndices({ selic: '10.75%', cdi: '10.65%', ipca: '6.40%', poupanca: '0.5% + TR' });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    // Parse volatility value from string like "22,99%" to number
+    const parseVolatility = (volStr) => {
+        if (!volStr) return 999;
+        const clean = volStr.toString().replace('%', '').replace(',', '.');
+        return parseFloat(clean) || 999;
+    };
+
+    // Helper to get best stock per sector
+    const getBestStocksBySector = (stocks, limit = 4) => {
+        const distinctSectors = [];
+        const sectorSet = new Set();
+
+        for (const stock of stocks) {
+            const sector = stock.setor || 'Outros';
+            if (!sectorSet.has(sector)) {
+                distinctSectors.push(stock);
+                sectorSet.add(sector);
+            }
+            if (distinctSectors.length >= limit) break;
+        }
+
+
+        if (distinctSectors.length < limit) {
+            for (const stock of stocks) {
+                if (!distinctSectors.includes(stock)) {
+                    distinctSectors.push(stock);
+                }
+                if (distinctSectors.length >= limit) break;
+            }
+        }
+
+        return distinctSectors;
+    };
+
+    // Filter stocks by volatility threshold
+    const getLowVolatilityStocks = () => {
+        const filtered = allStocks
+            .filter(s => parseVolatility(s.vol_ano) < 25)
+            .sort((a, b) => parseVolatility(a.vol_ano) - parseVolatility(b.vol_ano));
+        return getBestStocksBySector(filtered, 3);
+    };
+
+    const getHighVolatilityStocks = () => {
+        const filtered = allStocks
+            .filter(s => parseVolatility(s.vol_ano) >= 25)
+            .sort((a, b) => parseVolatility(b.vol_ano) - parseVolatility(a.vol_ano));
+        return getBestStocksBySector(filtered, 3);
+    };
+
+    // Filter fixed income by type
+    const getFixedIncomeByType = (types) => {
+        return fixedIncomeData
+            .filter(item => types.some(t => (item.Nome || item.name || '').toLowerCase().includes(t.toLowerCase())))
+            .slice(0, 3);
+    };
 
     const formatCurrency = (value) => {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -47,29 +157,162 @@ const Portfolio = () => {
             label: "Conservador",
             description: "Foco total na preservação de capital. Alocação exclusiva em Renda Fixa.",
             data: [
-                { name: "Reserva de Emergência", value: 50, color: "#3b82f6", icon: Shield, desc: "Liquidez Diária (Selic/CDB)" },
-                { name: "Proteção IPCA", value: 30, color: "#a855f7", icon: Umbrella, desc: "Tesouro IPCA+ (Poder de Compra)" },
-                { name: "Pré-Fixados", value: 20, color: "#10b981", icon: Lock, desc: "Rentabilidade garantida (Curto Prazo)" }
+                { name: "Reserva de Emergência", value: 50, color: "#3b82f6", icon: Shield, desc: "Liquidez Diária (Selic)", recommendationType: "selic" },
+                { name: "Proteção IPCA", value: 30, color: "#a855f7", icon: Umbrella, desc: "Tesouro IPCA+ (Poder de Compra)", recommendationType: "ipca" },
+                { name: "Pré-Fixados", value: 20, color: "#10b981", icon: Lock, desc: "Rentabilidade garantida", recommendationType: "prefixado" }
             ]
         },
         moderado: {
             label: "Moderado",
             description: "Busca rentabilidade acima da inflação com exposição controlada em ações de baixa volatilidade.",
             data: [
-                { name: "Reserva de Emergência", value: 30, color: "#3b82f6", icon: Shield, desc: "Liquidez e Segurança" },
-                { name: "Proteção IPCA", value: 40, color: "#a855f7", icon: Umbrella, desc: "Longo Prazo e Aposentadoria" },
-                { name: "Ações (Baixa Volatilidade)", value: 30, color: "#f59e0b", icon: Anchor, desc: "Setores Perenes: Energia, Seguros, Saneamento", isStock: true }
+                { name: "Reserva de Emergência", value: 30, color: "#3b82f6", icon: Shield, desc: "Liquidez e Segurança", recommendationType: "selic" },
+                { name: "Proteção IPCA", value: 40, color: "#a855f7", icon: Umbrella, desc: "Longo Prazo e Aposentadoria", recommendationType: "ipca" },
+                { name: "Ações (Baixa Volatilidade)", value: 30, color: "#f59e0b", icon: Anchor, desc: "Setores Perenes: Energia, Seguros", isStock: true, recommendationType: "lowVol" }
             ]
         },
         arrojado: {
             label: "Arrojado",
             description: "Foco na multiplicação de patrimônio, aceitando maior volatilidade em setores cíclicos.",
             data: [
-                { name: "Reserva de Emergência", value: 15, color: "#3b82f6", icon: Shield, desc: "Liquidez Mínima" },
-                { name: "Proteção IPCA", value: 25, color: "#a855f7", icon: Umbrella, desc: "Garantia Real" },
-                { name: "Ações (Baixa Volatilidade)", value: 25, color: "#f59e0b", icon: Anchor, desc: "Base de Dividendos (Bancos, Utilities)", isStock: true },
-                { name: "Ações (Alta Volatilidade)", value: 35, color: "#ef4444", icon: Activity, desc: "Crescimento: Varejo, Tech, Commodities", isStock: true }
+                { name: "Reserva de Emergência", value: 15, color: "#3b82f6", icon: Shield, desc: "Liquidez Mínima", recommendationType: "selic" },
+                { name: "Proteção IPCA", value: 25, color: "#a855f7", icon: Umbrella, desc: "Garantia Real", recommendationType: "ipca" },
+                { name: "Ações (Baixa Volatilidade)", value: 25, color: "#f59e0b", icon: Anchor, desc: "Dividendos (Bancos, Utilities)", isStock: true, recommendationType: "lowVol" },
+                { name: "Ações (Alta Volatilidade)", value: 35, color: "#ef4444", icon: Activity, desc: "Crescimento: Varejo, Commodities", isStock: true, recommendationType: "highVol" }
             ]
+        }
+    };
+
+    // Generate recommendations based on type
+    const getRecommendations = (type) => {
+        switch (type) {
+            case 'selic':
+                // Reserva de Emergência: Tesouro Selic
+                let selic = treasuryBonds.filter(item => (item.titulo || '').toLowerCase().includes('selic'));
+                if (!selic || selic.length === 0) {
+                    selic = fixedIncomeData.filter(item => (item.titulo || item.name || '').toLowerCase().includes('selic'));
+                }
+
+                // Deduplicate by name just in case
+                const seenSelic = new Set();
+                selic = selic.filter(item => {
+                    const name = item.titulo || item.name;
+                    if (seenSelic.has(name)) return false;
+                    seenSelic.add(name);
+                    return true;
+                });
+
+                const lfts11Data = treasuryBonds.find(item => (item.titulo || '').toUpperCase().includes('LFTS11'));
+                const lfts11Yield = lfts11Data && lfts11Data.yield_val !== undefined
+                    ? `${lfts11Data.yield_val.toFixed(2).replace('.', ',')}%`
+                    : 'Selic + 0%';
+
+                return [
+                    {
+                        name: 'LFTS11 (ETF Selic)',
+                        type: 'ETF de Renda Fixa',
+                        yield: lfts11Yield,
+                        image: 'https://brapi.dev/api/v2/logo/LFTS11'
+                    },
+                    ...selic.slice(0, 2).map(t => ({
+                        name: t.titulo || t.name,
+                        type: 'Tesouro Direto',
+                        yield: t.rentabilidade_anual ? (t.rentabilidade_anual.includes('%') ? t.rentabilidade_anual : t.rentabilidade_anual + '%') : ((t.taxa_compra || 'Selic') + (t.taxa_compra && !t.taxa_compra.toString().includes('%') ? '%' : '')),
+                        image: null
+                    }))
+                ];
+            case 'ipca':
+                // Proteção: IPCA+
+                let ipca = treasuryBonds.filter(item => (item.titulo || '').toLowerCase().includes('ipca'));
+                if (!ipca || ipca.length === 0) {
+                    ipca = fixedIncomeData.filter(item => (item.titulo || item.name || '').toLowerCase().includes('ipca'));
+                }
+
+                // Deduplicate IPCA by name
+                const seenIpca = new Set();
+                ipca = ipca.filter(item => {
+                    const name = item.titulo || item.name;
+                    if (seenIpca.has(name)) return false;
+                    seenIpca.add(name);
+                    return true;
+                });
+
+                return ipca
+                    .slice(0, 3)
+                    .map(t => {
+                        let rate = t.rentabilidade_anual || t.taxa_compra || "0";
+                        let displayYield = rate;
+
+                        // Logic to sum IPCA
+                        // Expected format usually: "IPCA + 6,50%" or just "6,50%"
+                        try {
+                            // Extract numbers. If it has "+", likely refers to the fixed part.
+                            // If simply "6.50", assumes it's the fixed part to add to IPCA.
+                            let fixedString = rate.toString();
+                            if (fixedString.includes('+')) {
+                                fixedString = fixedString.split('+')[1];
+                            }
+
+                            const fixedPartStr = fixedString.replace(/[^\d,.]/g, "").replace(",", ".");
+                            const fixedPart = parseFloat(fixedPartStr); // Fixed part (e.g. 6.50)
+
+                            // Parse Dynamic IPCA (e.g. "4.50%" or "4.50" or "4,50")
+                            const ipcaVal = indices.ipca || "0";
+                            const ipcaClean = ipcaVal.toString().replace(/[^\d,.]/g, "").replace(",", ".");
+                            const ipcaNum = parseFloat(ipcaClean); // Dynamic IPCA (e.g. 4.50)
+
+                            if (!isNaN(fixedPart)) {
+                                const total = fixedPart + (isNaN(ipcaNum) ? 0 : ipcaNum);
+                                displayYield = total.toFixed(2).replace('.', ',') + '%';
+                            }
+                        } catch (e) {
+                            console.error("Error parsing IPCA", e);
+                        }
+
+                        return {
+                            name: t.titulo || t.name,
+                            type: 'Tesouro Direto',
+                            yield: displayYield,
+                            image: null
+                        };
+                    });
+            case 'prefixado':
+                // Pré-fixados: CDBs, LCIs -> Agora Tesouro Prefixado
+                return fixedIncomeData
+                    .filter(item =>
+                        (item.Nome || item.name || item.titulo || '').toLowerCase().includes('prefixado') ||
+                        (item.Nome || item.name || item.titulo || '').toLowerCase().includes('pré') ||
+                        (item.category || '').toLowerCase().includes('pré')
+                    )
+                    .slice(0, 3)
+                    .map(item => {
+                        let y = item.Rentabilidade || item.yield || item.taxa_compra || "0";
+                        if (y && !y.toString().includes('%')) y += '%';
+                        return {
+                            name: item.Nome || item.name || item.titulo,
+                            type: 'Tesouro Direto',
+                            yield: y,
+                            image: null
+                        };
+                    });
+            case 'lowVol':
+                return getLowVolatilityStocks().map(s => ({
+                    name: s.company_name || s.ticker,
+                    type: `${s.ticker}${s.setor ? ' • ' + s.setor : ''}`,
+                    isStock: true,
+                    falta: s.falta_pct, // Correctly mapped from API 'falta_pct'
+                    image: s.image_url || `https://brapi.dev/api/v2/logo/${s.ticker}`
+                }));
+            case 'highVol':
+                return getHighVolatilityStocks().map(s => ({
+                    name: s.company_name || s.ticker,
+                    type: `${s.ticker}${s.setor ? ' • ' + s.setor : ''}`,
+                    isStock: true,
+                    falta: s.falta_pct, // Correctly mapped from API 'falta_pct'
+                    image: s.image_url || `https://brapi.dev/api/v2/logo/${s.ticker}`
+                }));
+            default:
+                return [];
         }
     };
 
@@ -91,19 +334,13 @@ const Portfolio = () => {
     return (
         <div className="rf-container" style={{ paddingBottom: '80px' }}>
             {/* Header */}
+            {/* Header */}
             <header className="rf-header" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <PieIcon size={28} color="#fff" />
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Divisão de Portfólio</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <PieIcon size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Divisão de Portfólio</h1>
                 </div>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
 
             {/* Profile Selector */}
@@ -161,28 +398,28 @@ const Portfolio = () => {
                         value={investmentValue}
                         onChange={handleInvestmentChange}
                         style={{
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '12px',
-                            padding: '12px 16px',
+                            background: 'rgba(30, 41, 59, 0.4)',
+                            border: 'none',
+                            borderRadius: '24px',
+                            padding: '10px 16px',
                             color: '#fff',
                             fontSize: '16px',
-                            fontWeight: '500',
+                            fontWeight: '600',
                             outline: 'none',
                             width: '180px',
                             minWidth: '150px',
                             textAlign: 'left',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                            boxShadow: '0 2px 3px rgba(0, 0, 0, 0.2)'
                         }}
                     />
                 </div>
             </div>
 
             {/* Content Grid */}
-            <div className="portfolio-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+            <div className="portfolio-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
 
                 {/* Chart Section */}
-                <div className="rf-card glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                <div className="rf-card glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '400px' }}>
                     <div className="rf-card-header" style={{
                         width: 'calc(100% + 48px)', // Fix alignment (Inner + 2*Padding)
                         background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
@@ -275,13 +512,190 @@ const Portfolio = () => {
                                             {item.desc}
                                         </div>
 
-                                        {/* Volatility Badge for Stocks */}
-                                        {isStock && (
-                                            <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                                {item.name.includes("Baixa") ? (
-                                                    <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '4px 8px', borderRadius: '4px' }}>Var. Baixa</span>
-                                                ) : (
-                                                    <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '4px 8px', borderRadius: '4px' }}>Var. Alta</span>
+
+
+                                        {/* Recommendations Section */}
+                                        {item.recommendationType && (
+                                            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                                                    {isStock ? <TrendingUp size={14} color={item.color} /> : <Landmark size={14} color={item.color} />}
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                        {isStock ? 'Ações Disponíveis' : 'Títulos Compatíveis'}
+                                                    </span>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    {getRecommendations(item.recommendationType).length > 0 ? (
+                                                        getRecommendations(item.recommendationType).map((rec, recIdx) => (
+                                                            <div
+                                                                key={recIdx}
+                                                                style={{
+                                                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+                                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                                    borderRadius: '12px',
+                                                                    padding: '10px 12px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '10px',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s ease'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)';
+                                                                    e.currentTarget.style.transform = 'translateX(4px)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)';
+                                                                    e.currentTarget.style.transform = 'translateX(0)';
+                                                                }}
+                                                            >
+                                                                {/* Logo/Icon */}
+                                                                {isStock && rec.image ? (
+                                                                    <img
+                                                                        src={rec.image}
+                                                                        alt={rec.name}
+                                                                        style={{
+                                                                            width: 36,
+                                                                            height: 36,
+                                                                            borderRadius: '50%',
+                                                                            objectFit: 'cover',
+                                                                            background: '#fff',
+                                                                            border: '1px solid #ffffffff',
+                                                                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                                                                        }}
+                                                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                                    />
+                                                                ) : null}
+
+                                                                {/* Fallback Icon */}
+                                                                <div style={{
+                                                                    width: 32,
+                                                                    height: 32,
+                                                                    borderRadius: '50%',
+                                                                    background: item.color + '20',
+                                                                    display: (isStock && rec.image) ? 'none' : 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                }}>
+                                                                    {isStock ? (
+                                                                        <Building2 size={16} color={item.color} />
+                                                                    ) : (
+                                                                        <Landmark size={16} color={item.color} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Content */}
+                                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                                    <div style={{
+                                                                        fontSize: '0.70rem',
+                                                                        fontWeight: 600,
+                                                                        color: '#fff',
+                                                                        lineHeight: '1.2',
+                                                                        marginBottom: '2px'
+                                                                    }}>
+                                                                        {rec.name}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '0.6rem',
+                                                                        color: '#64748b',
+                                                                        lineHeight: '1.2',
+                                                                        marginTop: '1px'
+                                                                    }}>
+                                                                        {rec.type}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Badge */}
+                                                                {rec.yield && (
+                                                                    <div style={{ marginLeft: 'auto', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                                        <span style={{
+                                                                            fontSize: '0.7rem',
+                                                                            color: isStock ? (rec.yield.includes('Baixa') || parseFloat(rec.yield.replace('Vol: ', '').replace(',', '.')) < 25 ? 'rgb(52, 211, 153)' : '#f87171') : item.color,
+                                                                            fontWeight: 600
+                                                                        }}>
+                                                                            {rec.yield}
+                                                                        </span>
+                                                                        {!isStock && (
+                                                                            <span style={{ fontSize: '0.58rem', color: '#64748b', marginTop: '1px' }}>
+                                                                                {item.recommendationType === 'selic' ? (rec.name?.includes('LFTS11') ? 'ao Ano' : 'ao dia útil') : 'ao Ano'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Discount Indicator */}
+                                                                {isStock && rec.falta && (
+                                                                    <div title={`Desconto: ${rec.falta} (Disclaimer: Compra recomendada apenas se descontado)`} style={{ marginLeft: '8px', position: 'relative', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                        {(() => {
+                                                                            const faltaVal = parseFloat(rec.falta.replace('%', '').replace(',', '.')) || 0;
+                                                                            let color = '#ef4444';
+                                                                            if (faltaVal > -15) color = '#4ade80';
+                                                                            else if (faltaVal >= -30) color = '#facc15';
+
+                                                                            const fillPercentage = Math.max(0, Math.min(100, 100 + faltaVal));
+                                                                            const radius = 10;
+                                                                            const circumference = 2 * Math.PI * radius;
+                                                                            const strokeDashoffset = circumference - (fillPercentage / 100) * circumference;
+
+                                                                            return (
+                                                                                <svg width="24" height="24" style={{ transform: 'rotate(-90deg)' }}>
+                                                                                    <circle cx="12" cy="12" r={radius} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                                                                                    <circle
+                                                                                        cx="12" cy="12" r={radius} fill="transparent" stroke={color} strokeWidth="3"
+                                                                                        strokeDasharray={circumference}
+                                                                                        strokeDashoffset={strokeDashoffset}
+                                                                                        strokeLinecap="round"
+                                                                                    />
+                                                                                </svg>
+                                                                            );
+                                                                        })()}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div style={{ fontSize: '0.65rem', color: '#64748b', fontStyle: 'italic', textAlign: 'center', padding: '10px' }}>
+                                                            {loading ? 'Carregando...' : 'Nenhuma sugestão disponível'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {isStock && (
+                                                    <div style={{
+                                                        marginTop: '12px',
+                                                        padding: '10px',
+                                                        background: `${item.color}08`,
+                                                        borderRadius: '8px',
+                                                        border: `1px solid ${item.color}20`,
+                                                        fontSize: '0.65rem',
+                                                        color: '#94a3b8',
+                                                        lineHeight: '1.4'
+                                                    }}>
+                                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                                            <Zap size={12} color={item.color} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                                            <p style={{ margin: 0 }}>
+                                                                <strong style={{ color: item.color }}>Estratégia:</strong> Aguarde estar em custo baixo (descontado). Utilize <span style={{ color: '#fff' }}>Venda de Puts</span> como forma de aquisição, rentabilizando sua reserva de oportunidade enquanto aguarda o preço ideal.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {item.recommendationType === 'selic' && (
+                                                    <div style={{
+                                                        marginTop: '12px',
+                                                        padding: '10px',
+                                                        background: `${item.color}08`,
+                                                        borderRadius: '8px',
+                                                        border: `1px solid ${item.color}20`,
+                                                        fontSize: '0.65rem',
+                                                        color: '#94a3b8',
+                                                        lineHeight: '1.4'
+                                                    }}>
+                                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                                            <Zap size={12} color={item.color} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                                            <p style={{ margin: 0 }}>
+                                                                <strong style={{ color: item.color }}>Estratégia:</strong> Utilize o <span style={{ color: '#fff' }}>LFTS11</span> como reserva de oportunidade, rentabilizando o capital através das opções enquanto as ações não estão descontadas.
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -293,15 +707,20 @@ const Portfolio = () => {
                 </div>
             </div>
 
+
+
+            {/* Investment Goals Section */}
+            <InvestmentGoals />
+
             {/* Mobile Responsiveness Styles */}
             <style>{`
-                @media (max-width: 1024px) {
+                @media (max-width: 768px) {
                     .portfolio-grid {
-                        grid-template-columns: 1fr !important;
+                         grid-template-columns: 1fr !important;
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

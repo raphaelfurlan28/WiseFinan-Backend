@@ -143,9 +143,56 @@ class PersistentValueCache:
                 # Invalid value - return cached value if exists
                 cached = self.store.get(key)
                 if cached is not None:
-                    # print(f"[CACHE] Using cached value for {key}: {cached}")
                     return cached
                 # No cache available
+                return current_value
+
+    def get_or_update_variation(self, ticker: str, current_value):
+        """
+        Variation specific logic: 
+        After 18:00 BRT until 10:00 AM next day, if current_value is 0 or invalid, 
+        return the last known valid variation (close price).
+        """
+        import datetime
+        
+        # Get current time in UTC-3 (BRT)
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        now_brt = now_utc - datetime.timedelta(hours=3)
+        current_hour = now_brt.hour
+        is_after_hours = current_hour >= 18 or current_hour < 10
+        
+        key = f"{ticker}:variation"
+        
+        def is_reset_to_zero(v):
+            if v is None: return True
+            if isinstance(v, (int, float)) and v == 0: return True
+            if isinstance(v, str):
+                v_clean = v.strip().replace('%', '').replace(',', '.')
+                try:
+                    return float(v_clean) == 0
+                except:
+                    return True
+            return False
+
+        with self.lock:
+            if is_after_hours:
+                # If it's after hours and value is 0/invalid, return cache
+                if is_reset_to_zero(current_value) or not self._is_valid(current_value):
+                    cached = self.store.get(key)
+                    if cached is not None:
+                        return cached
+                    return current_value # Return 0 if no cache
+                else:
+                    # Non-zero value during after hours (maybe manual update or final close)
+                    self.store[key] = current_value
+                    self._save_to_disk()
+                    return current_value
+            else:
+                # During market hours (10:00 - 18:00)
+                # If we get a valid non-zero value, update cache
+                if not is_reset_to_zero(current_value) and self._is_valid(current_value):
+                    self.store[key] = current_value
+                    self._save_to_disk()
                 return current_value
 
 
@@ -161,5 +208,7 @@ def get_cached_value(ticker: str, field: str, current_value):
     Helper function to get a value with fallback to cache.
     Use for volatile fields: falta, min_val, max_val, vol_ano
     """
+    if field == 'variation':
+        return volatile_cache.get_or_update_variation(ticker, current_value)
     return volatile_cache.get_or_update(ticker, field, current_value)
 

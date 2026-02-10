@@ -141,3 +141,66 @@
     padding: 10px;
     border: 1px solid rgba(255, 255, 255, 0.02);
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    .rf-container {
+        padding: 16px;
+        padding-bottom: 80px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .rf-card {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .rf-card-content {
+        padding: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .rf-card-header {
+        padding: 14px;
+        flex-wrap: wrap;
+    }
+
+    .strategy-badge {
+        font-size: 0.7rem;
+        padding: 5px 8px;
+    }
+
+    .profit-box {
+        padding: 12px;
+    }
+
+    .example-box {
+        padding: 12px;
+    }
+
+    .step-item {
+        font-size: 0.8rem;
+    }
+
+    .chart-container-wrapper {
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Fix stats row for mobile */
+    .stats-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .stats-row>div {
+        flex: 1 1 calc(33% - 8px);
+        min-width: 80px;
+    }
+}

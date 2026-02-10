@@ -14,7 +14,11 @@ const Noticias = () => {
                 // Fetch News only (ignoring indicators as requested)
                 const resDash = await fetch(getApiUrl('/api/news/dashboard'));
                 const dataDash = await resDash.json();
-                if (dataDash.news) setNews(dataDash.news);
+                if (dataDash && Array.isArray(dataDash.news)) {
+                    setNews(dataDash.news);
+                } else {
+                    setNews([]);
+                }
             } catch (err) {
                 console.error("Error fetching news data:", err);
             } finally {
@@ -29,20 +33,11 @@ const Noticias = () => {
         <div className="rf-container"> {/* Reusing Fixed Income container style */}
             {/* Header - Styled like Fixed Income/StockList */}
             <header className="rf-header" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <Newspaper size={28} color="#fff" />
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Últimas Notícias</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Newspaper size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Últimas Notícias</h1>
                 </div>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
 
             {/* News Feed - Full Width */}

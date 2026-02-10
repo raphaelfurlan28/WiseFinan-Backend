@@ -18,10 +18,12 @@ import Strategies from './components/Strategies';
 import Calendario from './components/Calendario';
 import SplashScreen from './components/SplashScreen';
 import UserProfileModal from './components/UserProfileModal';
+import LandingPage from './components/LandingPage/LandingPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import './styles/main.css';
+import './components/Dashboard.css'; // Global Dashboard Styles
 
 // Replace with your actual Google Client ID
 // Replace with your actual Google Client ID
@@ -29,6 +31,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "477556815504-
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -39,9 +42,12 @@ const AppContent = () => {
     return <ModernLoader text="Carregando..." />;
   }
 
-  // Splash Screen / Login
+  // Splash Screen / Login / Landing
   if (!user) {
-    return <SplashScreen />;
+    if (showLogin) {
+      return <SplashScreen onBack={() => setShowLogin(false)} />;
+    }
+    return <LandingPage onLoginClick={() => setShowLogin(true)} />;
   }
 
   const handleNavigate = (viewId) => {
@@ -103,7 +109,7 @@ const AppContent = () => {
         currentView={currentView}
       />
 
-      <main className="main-content">
+      <main className="main-content dashboard-container">
         {renderContent()}
       </main>
     </div>

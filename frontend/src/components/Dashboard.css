@@ -1,0 +1,79 @@
+/* Dashboard.css */
+
+/* Container for the dashboard content */
+.dashboard-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    /* Provide some breathing room on small screens */
+}
+
+/* 
+   Renda Fixa Items Grid & Dashboard Grid (Mobile Default)
+   - Mobile First: Vertical Flex
+*/
+.rf-items-grid,
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    /* Spacious on mobile */
+}
+
+/* 
+   Specific tweaks for the cards to prevent stretching 
+*/
+.glass-card {
+    height: 100%;
+    /* Ensure cards fill grid height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 
+   Ensure content inside cards doesn't stretch weirdly 
+*/
+.rf-card-content {
+    flex: 1;
+}
+
+/* 
+   On Desktop (>1024px):
+   - Use a responsive grid with auto-fill
+   - Min-width 350px ensures at least 2 cards on 1024px, 3 on 1200px+ if space permits
+*/
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        /* At least 2 columns */
+        gap: 24px;
+        align-items: start;
+        margin-top: 20px;
+    }
+
+    /* 
+     Grid for Renda Fixa items inside the card 
+    */
+    .rf-items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+
+    /* Generic Responsive Grid for other pages */
+    .responsive-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 24px;
+        width: 100%;
+    }
+
+    /* 
+       Typography adjustments for desktop
+    */
+    .section-header h2 {
+        font-size: 1.5rem;
+    }
+}

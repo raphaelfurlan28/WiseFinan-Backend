@@ -11,12 +11,18 @@ export default function StockList({ onSelectStock }) {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortByDividends, setSortByDividends] = useState(false);
 
   useEffect(() => {
     fetch(getApiUrl('/api/stocks'))
       .then(res => res.json())
       .then(data => {
-        setStocks(data);
+        if (Array.isArray(data)) {
+          setStocks(data);
+        } else {
+          console.error("API did not return an array:", data);
+          setStocks([]);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -25,10 +31,10 @@ export default function StockList({ onSelectStock }) {
       });
   }, []);
 
-  const filteredStocks = stocks.filter(stock =>
-    stock.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.company_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStocks = Array.isArray(stocks) ? stocks.filter(stock =>
+    (stock.ticker || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (stock.company_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   // Helper to map sector to icon
   const getSectorIcon = (sectorName) => {
@@ -62,7 +68,10 @@ export default function StockList({ onSelectStock }) {
   };
 
   // Grouping Logic
-  const uniqueSectors = [...new Set(filteredStocks.map(s => s.sector || 'Outros'))];
+  const uniqueSectors = filteredStocks.length > 0
+    ? [...new Set(filteredStocks.map(s => s.sector || 'Outros'))]
+    : [];
+
   // Sort sectors by their "Best Opportunity"
   const sectors = uniqueSectors.sort((a, b) => {
     const scoreA = getSectorStats(a).maxFalta;
@@ -76,58 +85,86 @@ export default function StockList({ onSelectStock }) {
 
   return (
     <div className="stock-list-container">
-      <header className="header" style={{ display: 'block' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+      <header className="header" style={{ display: 'block', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           {activeSector && (
             <button
               onClick={() => setActiveSector(null)}
-              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
               <ChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
             </button>
           )}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                padding: '10px',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <TrendingUp size={28} color="#fff" />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={20} color="#94a3b8" />
               <h1 style={{
-                fontSize: '1.8rem',
+                fontSize: '1.25rem',
                 margin: 0,
                 lineHeight: 1,
-                background: 'linear-gradient(90deg, #fff, #aaa)',
+                fontWeight: 600,
+                background: 'linear-gradient(90deg, #fff, #cbd5e1)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>Renda Variável</h1>
             </div>
-            {activeSector && <span style={{ fontSize: '14px', color: '#999', display: 'block', marginTop: '4px' }}>{activeSector}</span>}
+            {activeSector && <span style={{ fontSize: '14px', color: '#64748b', display: 'block', marginTop: '4px' }}>{activeSector}</span>}
           </div>
         </div>
 
-        <div style={{ margin: '16px 0', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+        <div style={{ margin: '16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
 
-        <div className="search-bar" style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '10px 16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '0'
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(30, 41, 59, 0.4)',
+          borderRadius: '24px',
+          padding: '6px 12px',
+          border: 'none',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
+          flex: 1
         }}>
-          <Search size={20} color="#94a3b8" />
+          <Search size={16} color="#94a3b8" />
           <input
             type="text"
             placeholder="Buscar ativo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              background: 'transparent', border: 'none', color: '#fff', fontSize: '1rem', flex: 1, outline: 'none'
+              background: 'transparent',
+              border: 'none',
+              color: '#fff',
+              fontSize: '0.9rem',
+              width: '100%',
+              outline: 'none'
             }}
           />
+        </div>
+
+        {/* Dividend Filter Button - New Row, Right Aligned */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+          <button
+            onClick={() => setSortByDividends(!sortByDividends)}
+            style={{
+              background: sortByDividends ? '#4ade80' : 'rgba(30, 41, 59, 0.4)',
+              color: sortByDividends ? '#1e293b' : '#94a3b8',
+              border: '0px solid rgba(255,255,255,0.05)',
+              borderRadius: '24px',
+              padding: '6px 14px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <span>Dividendos</span>
+            {sortByDividends && <span style={{ fontSize: '10px' }}>▼</span>}
+          </button>
         </div>
       </header>
 
@@ -176,10 +213,18 @@ export default function StockList({ onSelectStock }) {
           </div>
         )}
 
-        {/* DETAILED LIST VIEW (Filtered by Sector) */}
         {activeSector && filteredStocks
           .filter(s => (s.sector || 'Outros') === activeSector)
           .sort((a, b) => {
+            if (sortByDividends) {
+              // Sort by Dividends (Highest to Lowest)
+              // Try identifying the dividend field. Usually 'dy' or 'dividend_yield' or 'proventos'
+              // If user has a 'Dividendo' column in sheet, it might come as 'dividend' or 'dy'.
+              // I'll parse both as float just in case.
+              const valA = parseFloat((a.dy || a.dividend || 0).toString().replace(',', '.'));
+              const valB = parseFloat((b.dy || b.dividend || 0).toString().replace(',', '.'));
+              return valB - valA;
+            }
             // Keep existing sort by 'falta' magnitude
             const valA = a.falta_val !== undefined ? a.falta_val : -Infinity;
             const valB = b.falta_val !== undefined ? b.falta_val : -Infinity;

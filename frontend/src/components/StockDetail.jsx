@@ -141,7 +141,7 @@ export default function StockDetail({ stock, onBack }) {
 
             <div className="price-hero">
                 <span className="current-price">R$ {stock.price}</span>
-                <div className={`price-change`} style={{ color: isZero ? '#fff' : (isPositive ? 'var(--success-color)' : 'var(--danger-color)') }}>
+                <div className={`price-change ${isPositive ? 'up' : isNegative ? 'down' : ''}`}>
                     {isPositive && <TrendingUp size={20} />}
                     {isNegative && <TrendingDown size={20} />}
                     {isZero && <div style={{ width: 16, height: 2, background: '#fff', marginRight: 4 }}></div>}
@@ -206,7 +206,7 @@ export default function StockDetail({ stock, onBack }) {
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <DollarSign size={20} color="#fff" />
                         </div>
-                        <span className="label">Último Fechamento</span>
+                        <span className="label">Últ. Fechamento</span>
                     </div>
                     <div className="val-card-content">
                         <span className="value">R$ {stock.price}</span>
@@ -245,7 +245,7 @@ export default function StockDetail({ stock, onBack }) {
                         <span className="label">Dividendo (DY)</span>
                     </div>
                     <div className="val-card-content" style={{ width: '100%', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', gap: '8px' }}>
                             <span className="value">{formatPercentage(stock.dividend)}</span>
                             {(() => {
                                 try {
@@ -258,17 +258,16 @@ export default function StockDetail({ stock, onBack }) {
                                     if (price > 0 && divPct > 0) {
                                         const divValue = price * (divPct / 100);
                                         return (
-                                            <span style={{
-                                                fontSize: '0.9rem',
-                                                color: '#4ade80',
-                                                fontWeight: '600',
-                                                background: 'rgba(74, 222, 128, 0.1)',
-                                                padding: '4px 8px',
-                                                borderRadius: '6px',
-                                                border: '1px solid rgba(74, 222, 128, 0.2)'
-                                            }}>
-                                                {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
+                                            <>
+                                                <span style={{ color: '#64748b', fontSize: '1rem' }}>—</span>
+                                                <span style={{
+                                                    fontSize: '0.9rem',
+                                                    color: '#4ade80',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </span>
+                                            </>
                                         );
                                     }
                                 } catch (e) { return null; }
@@ -295,7 +294,7 @@ export default function StockDetail({ stock, onBack }) {
                         <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                             <Activity size={20} color="#fff" />
                         </div>
-                        <span className="label">Volatilidade (Ano)</span>
+                        <span className="label">Volat. (Ano)</span>
                     </div>
                     <div className="val-card-content">
                         <span className="value">{stock.vol_ano || "--"}</span>

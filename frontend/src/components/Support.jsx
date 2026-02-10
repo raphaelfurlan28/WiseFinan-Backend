@@ -7,18 +7,11 @@ const Support = () => {
         <div className="rf-container">
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <HelpCircle size={28} color="#fff" />
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Suporte</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <HelpCircle size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Suporte</h1>
                 </div>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', maxWidth: '600px', margin: '0 0' }}>

@@ -18,13 +18,15 @@ def get_credentials():
     # Option 1: Env Var (Render/Cloud)
     if os.environ.get('GOOGLE_CREDENTIALS_JSON'):
         try:
+            print("Attempting to load credentials from GOOGLE_CREDENTIALS_JSON env var...")
             info = json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON'))
             return Credentials.from_service_account_info(info, scopes=scopes)
-        except json.JSONDecodeError:
-            print("Error decoding GOOGLE_CREDENTIALS_JSON")
+        except json.JSONDecodeError as e:
+            print(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
+        except Exception as e:
+            print(f"Unexpected error loading credentials from env var: {e}")
     
     # Option 2: Local File Search
-    # Check: Global definition, Backend dir (../), Current Dir
     backend_creds = os.path.abspath(os.path.join(current_dir, '../service_account.json'))
     paths = [
         SERVICE_ACCOUNT_FILE, # Defined globally as ../../ (Root)
@@ -32,16 +34,17 @@ def get_credentials():
         'service_account.json' # CWD
     ]
     
+    print(f"Searching for credentials in local paths: {paths}")
     for path in paths:
         if os.path.exists(path):
             try:
-                # print(f"Loading from: {path}")
+                print(f"Loading credentials from: {path}")
                 return Credentials.from_service_account_file(path, scopes=scopes)
             except Exception as e:
                 print(f"Error loading credentials from {path}: {e}")
     
     # Fallback/Error
-    print(f"Warning: No Google Credentials found. Searched: {paths}")
+    print(f"CRITICAL: No Google Credentials found. Please ensure GOOGLE_CREDENTIALS_JSON or a service_account.json file exists.")
     return None
 
 @cached(ttl_seconds=300)
@@ -72,6 +75,13 @@ def get_sheet_data():
     
     # Try to identify columns dynamically
     def get_col_index(name_options):
+        # 1. Try exact match first (case-insensitive)
+        for name in name_options:
+            name_upper = name.upper()
+            for i, header in enumerate(headers):
+                if name_upper == header: 
+                    return i
+        # 2. Try substring match as fallback
         for name in name_options:
             name_upper = name.upper()
             for i, header in enumerate(headers):
@@ -147,7 +157,7 @@ def get_sheet_data():
             "image_url": get_val(get_col_index(["LOGO", "IMAGEM"])),
             "dividend": get_val(get_col_index(["DIVIDEND", "DY"])),
             "payout": get_val(get_col_index(["PAYOUT"])),
-            "change_day": get_val(get_col_index(["VARIAÇÃO", "CHANGE"])),
+            "change_day": get_cached_value(t, 'variation', get_val(get_col_index(["VARIAÇÃO DIA", "VARIAÇÃO DO DIA", "VARIAÇÃO", "CHANGE"]))),
             "vol_ano": vol_ano_raw,
             "last_close": get_val(get_col_index(["ULTIMO FECHAMENTO", "FECHAMENTO ANTERIOR", "FECHAMENTO"])),
             "about": get_val(get_col_index(["SOBRE", "DESCRIÇÃO"]))
@@ -884,3 +894,37 @@ def update_user_profile(email, new_name=None, new_photo=None):
     except Exception as e:
         return {"error": str(e)}
 
+def append_subscription_request(data):
+    """
+    Appends a new subscription request to the 'User' tab.
+    Data format: {'nome': ..., 'email': ..., 'whatsapp': ..., 'plano': ...}
+    """
+    creds = get_credentials()
+    if not creds: return {"error": "Credentials not found"}
+    service = build('sheets', 'v4', credentials=creds)
+    SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
+    RANGE_NAME = "User!A:E"
+    
+    # Rows: Name, Email, Whatsapp, Plan, Status (Pendente)
+    values = [
+        [
+            data.get('nome', ''),
+            data.get('email', ''),
+            data.get('whatsapp', ''),
+            data.get('plano', ''),
+            'Pendente'
+        ]
+    ]
+    
+    body = {
+        'values': values
+    }
+    
+    try:
+        result = service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME,
+            valueInputOption="RAW", body=body).execute()
+        return {"status": "success", "updatedRange": result.get('updates', {}).get('updatedRange')}
+    except Exception as e:
+        print(f"Error appending subscription request: {e}")
+        return {"error": str(e)}

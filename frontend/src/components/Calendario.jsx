@@ -99,34 +99,31 @@ export default function Calendario() {
 
     return (
         <div className="calendar-page app-fade-in">
-            {/* Header Standardized */}
-            <header className="page-header-std">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                    <div className="header-icon-box">
-                        <CalIcon size={28} color="#fff" />
-                    </div>
-                    <h1 className="header-title">Calendário</h1>
+            {/* Header */}
+            <header className="rf-header" style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <CalIcon size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Calendário Econômico</h1>
                 </div>
-                <div className="header-divider"></div>
-
-                {/* Tabs */}
-                <div className="tabs-std">
-                    <button
-                        className={`tab-btn-std ${activeTab === 'dividends' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('dividends')}
-                    >
-                        <TrendingUp size={18} />
-                        Dividendos
-                    </button>
-                    <button
-                        className={`tab-btn-std ${activeTab === 'results' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('results')}
-                    >
-                        <FileText size={18} />
-                        Resultados
-                    </button>
-                </div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
+            {/* Tabs */}
+            <div className="tabs-std">
+                <button
+                    className={`tab-btn-std ${activeTab === 'dividends' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('dividends')}
+                >
+                    <TrendingUp size={18} />
+                    Dividendos
+                </button>
+                <button
+                    className={`tab-btn-std ${activeTab === 'results' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('results')}
+                >
+                    <FileText size={18} />
+                    Resultados
+                </button>
+            </div>
 
             <div className="calendar-content">
                 {loading ? (
@@ -187,8 +184,7 @@ export default function Calendario() {
                 {activeTab === 'dividends' && !loading && events.dividends.length > 0 && (
                     <div className="annual-summary app-fade-in" style={{ marginTop: '40px' }}>
                         <div className="summary-header">
-                            <h2>Frequência de Pagamentos (Anual)</h2>
-                            <div className="header-divider"></div>
+                            <h2 style={{ fontSize: '1.0rem', color: '#94a3b8', margin: 0, marginBottom: '10px', fontWeight: 600 }}>Frequência de Pagamentos (Anual)</h2>
                         </div>
 
                         <div className="summary-list">
@@ -313,6 +309,6 @@ export default function Calendario() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

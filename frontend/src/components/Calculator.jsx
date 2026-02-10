@@ -172,18 +172,11 @@ const Calculator = () => {
         <div className="rf-container">
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <CalcIcon size={28} color="#fff" />
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Simulador de Renda Fixa</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <CalcIcon size={20} color="#94a3b8" />
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Simulador de Renda Fixa</h1>
                 </div>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0), transparent)' }}></div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
 
             {/* Responsive Styles */}
@@ -385,7 +378,7 @@ const Calculator = () => {
                                 background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
-                                margin: '-16px -16px 16px -16px',
+                                margin: '-16px -16px 12px -16px',
                                 display: 'flex', alignItems: 'center', gap: '12px'
                             }}>
                                 <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -393,8 +386,8 @@ const Calculator = () => {
                                 </div>
                                 <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Total Investido</h3>
                             </div>
-                            <div className="rf-card-content">
-                                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f8fafc' }}>
+                            <div className="rf-card-content" style={{ padding: '4px 16px' }}>
+                                <span style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#f8fafc' }}>
                                     R$ {results ? results.endInvested.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"}
                                 </span>
                             </div>
@@ -405,7 +398,7 @@ const Calculator = () => {
                                 background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
-                                margin: '-16px -16px 16px -16px',
+                                margin: '-16px -16px 12px -16px',
                                 display: 'flex', alignItems: 'center', gap: '12px'
                             }}>
                                 <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -413,8 +406,8 @@ const Calculator = () => {
                                 </div>
                                 <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Total Acumulado</h3>
                             </div>
-                            <div className="rf-card-content">
-                                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4ade80' }}>
+                            <div className="rf-card-content" style={{ padding: '4px 16px' }}>
+                                <span style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#4ade80' }}>
                                     R$ {results ? results.endTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"}
                                 </span>
                             </div>
@@ -425,7 +418,7 @@ const Calculator = () => {
                                 background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
                                 borderRadius: '16px 16px 0 0',
                                 padding: '12px 16px',
-                                margin: '-16px -16px 16px -16px',
+                                margin: '-16px -16px 12px -16px',
                                 display: 'flex', alignItems: 'center', gap: '12px'
                             }}>
                                 <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -433,8 +426,8 @@ const Calculator = () => {
                                 </div>
                                 <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Rendimento</h3>
                             </div>
-                            <div className="rf-card-content">
-                                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                            <div className="rf-card-content" style={{ padding: '4px 16px' }}>
+                                <span style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#38bdf8' }}>
                                     + R$ {results ? results.yield.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"}
                                 </span>
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
@@ -480,9 +473,9 @@ const Calculator = () => {
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 };
 

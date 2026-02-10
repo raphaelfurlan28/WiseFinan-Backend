@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-const SplashScreen = () => {
+const SplashScreen = ({ onBack }) => {
     const { login, authError } = useAuth();
     const [showLogin, setShowLogin] = useState(false);
 
@@ -136,9 +136,23 @@ const SplashScreen = () => {
                 }}
             >
                 <div style={{
-                    display: 'flex', flexDirection: 'column', gap: '20px',
-                    position: 'relative', width: '100%'
+                    display: 'flex', flexDirection: 'column', gap: '30px', /* Increased gap */
+                    position: 'relative', width: '100%',
+                    marginTop: '20px' /* Added margin top to separate from Title */
                 }}>
+                    <button
+                        onClick={onBack}
+                        style={{
+                            alignSelf: 'flex-start',
+                            background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+                            fontSize: '0.9rem', transition: 'color 0.2s',
+                            marginBottom: '0px' /* Gap handles spacing now */
+                        }}
+                    >
+                        <ArrowLeft size={18} />
+                        Voltar
+                    </button>
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                         {/* Title Login positioned left */}
