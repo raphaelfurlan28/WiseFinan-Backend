@@ -762,6 +762,13 @@
         opacity: 0.6;
     }
 
+    /* Fix for Restore/Delete overlapping: Restore is the 2nd to last child in that mode */
+    .leadboard-card .lead-archive-btn:nth-last-child(2) {
+        right: 60px;
+        /* Shift left */
+        opacity: 0.6;
+    }
+
     .leadboard-card:hover .lead-archive-btn {
         opacity: 1;
     }
