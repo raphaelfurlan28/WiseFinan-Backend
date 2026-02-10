@@ -40,6 +40,10 @@ def _get_db():
             app = firebase_admin.initialize_app()
 
     _db = firestore.client()
+    
+    # Debug Auth Config
+    _check_auth_config()
+    
     return _db
 
 def _check_auth_config():
