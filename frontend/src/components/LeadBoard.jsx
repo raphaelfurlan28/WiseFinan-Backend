@@ -10,6 +10,15 @@ const PAYMENT_STATUSES = {
     refunded: { label: 'Estornado', color: '#94a3b8' }
 };
 
+const CRM_STATUSES = {
+    new: { label: 'Novo', color: '#3b82f6' },
+    contacted: { label: 'Em Contato', color: '#f59e0b' },
+    negotiating: { label: 'Negociando', color: '#8b5cf6' },
+    converted: { label: 'Convertido', color: '#10b981' },
+    lost: { label: 'Perdido', color: '#ef4444' },
+    archived: { label: 'Arquivado', color: '#64748b' }
+};
+
 const PLAN_PRICES = {
     'Mensal': 'R$ 49,90',
     'Semestral': 'R$ 239,40',
@@ -17,28 +26,6 @@ const PLAN_PRICES = {
 };
 
 const LeadBoard = () => {
-    // ... (rest of component state and hooks)
-
-    // ... (rest of methods)
-
-    return (
-        // ... (JSX until lead-info)
-        <div className="lead-info">
-            <div className="lead-name">
-                {lead.name}
-                {lead.is_active_user && <span className="active-user-badge"><CheckCircle size={12} /> Ativo</span>}
-            </div>
-            <div className="lead-meta-row">
-                <span className="lead-plan">{lead.plan || 'N/A'}</span>
-                <span className="lead-date">
-                    <Clock size={10} /> {lead.created_at}
-                </span>
-            </div>
-            <div className="lead-price" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                Valor: <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{PLAN_PRICES[lead.plan] || '---'}</span>
-            </div>
-        </div>
-        // ...
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -332,6 +319,9 @@ const LeadBoard = () => {
                                         <span className="lead-date">
                                             <Clock size={10} /> {lead.created_at}
                                         </span>
+                                    </div>
+                                    <div className="lead-price" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        Valor: <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{PLAN_PRICES[lead.plan] || '---'}</span>
                                     </div>
                                 </div>
 
