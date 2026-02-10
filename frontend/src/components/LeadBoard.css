@@ -1,175 +1,181 @@
 /* LeadBoard.css — Premium Mobile-First CRM */
 
-/* ─── Layout & Header ────────────────────── */
-.leadboard-container {
-    padding: 16px 20px;
-    /* Added padding to container */
-    max-width: 1200px;
-    margin: 0 auto;
+/* ─── Variables & Tokens ─────────────────── */
+:root {
+    --crm-bg-glass: rgba(15, 23, 42, 0.9);
+    /* Slightly more solid for better contrast */
+    --crm-border: rgba(255, 255, 255, 0.08);
+    --crm-card-bg: rgba(30, 41, 59, 0.6);
+    --crm-text-primary: #f8fafc;
+    --crm-text-secondary: #94a3b8;
+    --crm-accent: #3b82f6;
+    --crm-radius: 16px;
 }
 
+/* ─── Layout & Container ─────────────────── */
+.leadboard-container {
+    padding: 16px 16px 100px 16px;
+    /* Extra bottom padding for mobile scroll */
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Header ─────────────────────────────── */
 .leadboard-header {
+    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .leadboard-header h1 {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #f8fafc;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--crm-text-primary);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 12px;
     letter-spacing: -0.02em;
-    background: linear-gradient(to right, #ffffff, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
 }
 
 .leadboard-header h1 svg {
-    color: #3b82f6;
-    /* Keep icon colored */
+    color: var(--crm-accent);
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+    flex-shrink: 0;
 }
 
 .leadboard-header p {
-    color: #64748b;
+    color: var(--crm-text-secondary);
     font-size: 0.9rem;
-    margin: 6px 0 0 0;
-    font-weight: 500;
+    margin: 4px 0 0 0;
+    font-weight: 400;
 }
 
-.leadboard-refresh-btn {
-    align-self: flex-start;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    color: #3b82f6;
-    padding: 10px 18px;
+.leadboard-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.leadboard-refresh-btn,
+.leadboard-archive-toggle {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--crm-border);
+    color: var(--crm-text-secondary);
+    padding: 10px 12px;
+    /* Reduced side padding slightly */
     border-radius: 12px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
+    gap: 6px;
+    font-size: 0.8rem;
+    /* Slightly smaller for better fit */
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
+    flex: 1;
+    /* Stretch on mobile */
+    justify-content: center;
+    white-space: nowrap;
+    /* Prevent breaking */
 }
 
-.leadboard-refresh-btn:hover {
-    background: rgba(59, 130, 246, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+.leadboard-refresh-btn:hover,
+.leadboard-archive-toggle:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--crm-accent);
 }
 
-.leadboard-refresh-btn:active {
-    transform: scale(0.98);
+.leadboard-archive-toggle.active {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #eab308;
 }
 
-@media (min-width: 768px) {
-    .leadboard-container {
-        padding: 32px 40px;
-    }
-
-    .leadboard-header {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-end;
-    }
-
-    .leadboard-refresh-btn {
-        align-self: auto;
-    }
-}
-
-/* ─── Stats Row ──────────────────────────── */
+/* ─── Stats Grid ─────────────────────────── */
 .leadboard-stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 24px;
 }
 
 .leadboard-stat-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(12px);
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--crm-card-bg);
+    border: 1px solid var(--crm-border);
+    border-radius: var(--crm-radius);
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    transition: transform 0.2s, background 0.2s;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    /* CRITICAL for grid item overflow */
 }
 
-.leadboard-stat-card:hover {
-    background: rgba(30, 41, 59, 0.6);
-    transform: translateY(-2px);
+.leadboard-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: currentColor;
+    /* Uses color from inline style */
+    opacity: 0.5;
 }
 
 .leadboard-stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
 .leadboard-stat-content {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Enable text overflow inside flex */
 }
 
 .leadboard-stat-value {
-    font-size: 1.5rem;
-    font-weight: 800;
-    line-height: 1;
-    color: #f8fafc;
-    margin-bottom: 4px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--crm-text-primary);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .leadboard-stat-label {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    font-weight: 600;
+    font-size: 0.7rem;
+    color: var(--crm-text-secondary);
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-@media (min-width: 768px) {
-    .leadboard-stats {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-    }
-
-    .leadboard-stat-card {
-        flex-direction: row;
-        align-items: center;
-        padding: 20px;
-    }
-
-    .leadboard-stat-value {
-        font-size: 1.75rem;
-    }
-}
-
-/* ─── Filters ────────────────────────────── */
+/* ─── Filters & Search ───────────────────── */
 .leadboard-filters {
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-bottom: 20px;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 16px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .leadboard-search {
@@ -179,30 +185,160 @@
 
 .leadboard-search-icon {
     position: absolute;
-    left: 14px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #64748b;
+    color: var(--crm-text-secondary);
     pointer-events: none;
 }
 
 .leadboard-search input {
     width: 100%;
-    padding: 12px 12px 12px 42px;
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    color: #f8fafc;
-    font-size: 0.9rem;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    /* Reduced padding */
+    background: var(--crm-card-bg);
+    border: 1px solid var(--crm-border);
+    border-radius: 14px;
+    color: var(--crm-text-primary);
+    font-size: 0.95rem;
     outline: none;
-    box-sizing: border-box;
     transition: all 0.2s;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .leadboard-search input:focus {
+    border-color: var(--crm-accent);
     background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ─── User Creation Actions ──────────────── */
+.lead-user-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+.user-action-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--crm-border), transparent);
+    width: 100%;
+}
+
+.btn-generate-password {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    transition: all 0.2s;
+}
+
+.btn-generate-password:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+}
+
+.password-display-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.password-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--crm-border);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: monospace;
+}
+
+.password-box span {
+    color: var(--crm-text-secondary);
+    font-size: 0.8rem;
+}
+
+.password-box code {
+    color: #4ade80;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.password-box button {
+    background: transparent;
+    border: none;
+    color: var(--crm-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.password-box button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-create-firebase {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    transition: all 0.2s;
+}
+
+.btn-create-firebase:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+/* Active User Glow */
+.leadboard-card.active-user {
+    border-color: rgba(74, 222, 128, 0.5);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.1), inset 0 0 20px rgba(74, 222, 128, 0.05);
+}
+
+.active-user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-weight: 600;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .leadboard-filter-selects {
@@ -212,281 +348,404 @@
 
 .leadboard-filter-select {
     flex: 1;
-    padding: 12px 14px;
-    background: rgba(30, 41, 59, 0.5);
+    height: 44px;
+    padding: 0 12px;
+    background: rgba(30, 41, 59, 0.7);
+    /* Slightly more opaque for better contrast */
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    color: #cbd5e1;
+    color: var(--crm-text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     outline: none;
-    cursor: pointer;
-    appearance: none;
     -webkit-appearance: none;
+    appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 14px center;
-    padding-right: 36px;
-    transition: all 0.2s;
+    background-size: 14px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .leadboard-filter-select:hover {
-    background: rgba(30, 41, 59, 0.7);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(59, 130, 246, 0.1);
+    /* Subtle blue tint on hover */
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--crm-text-primary);
 }
 
-@media (min-width: 768px) {
-    .leadboard-filters {
-        flex-direction: row;
-        align-items: center;
-        padding: 8px;
-        /* Slimmer on desktop */
-        background: transparent;
-        border: none;
-        gap: 16px;
-    }
-
-    .leadboard-search {
-        flex: 1;
-    }
-
-    .leadboard-search input {
-        background: rgba(15, 23, 42, 0.6);
-        border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    .leadboard-filter-selects {
-        flex: 0 0 auto;
-    }
-
-    .leadboard-filter-select {
-        min-width: 180px;
-        background: rgba(15, 23, 42, 0.6);
-    }
+.leadboard-filter-select:focus {
+    border-color: var(--crm-accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-/* ─── Results Count ──────────────────────── */
-.leadboard-count {
-    color: #64748b;
-    font-size: 0.8rem;
-    margin-bottom: 16px;
-    font-weight: 500;
-    padding-left: 4px;
+/* Modernize the dropdown options */
+.leadboard-filter-select option {
+    background-color: #1e293b;
+    /* Solid dark background */
+    color: #f8fafc;
+    padding: 12px;
 }
 
-/* ─── Lead Cards ─────────────────────────── */
+/* ─── Lead List ──────────────────────────── */
 .leadboard-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
+.leadboard-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--crm-text-secondary);
+}
+
+/* ─── Lead Card (Redesigned) ─────────────── */
 .leadboard-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(16px);
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: all 0.25s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.leadboard-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.1);
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.leadboard-card:hover {
-    background: rgba(30, 41, 59, 0.6);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.leadboard-card:hover::before {
-    opacity: 1;
-}
-
-.leadboard-card.updating {
-    opacity: 0.6;
-    pointer-events: none;
-    transform: scale(0.99);
-}
-
-/* Card Top: Name + Plan + Date */
-.lead-card-top {
+    background: var(--crm-bg-glass);
+    border: 1px solid var(--crm-border);
+    border-radius: 18px;
+    padding: 16px;
+    /* Reduced padding mobile */
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 16px;
+    position: relative;
+    transition: transform 0.2s;
+    overflow: hidden;
+    /* Contain inner elements */
 }
 
-.lead-card-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #f8fafc;
-    line-height: 1.3;
+/* Header: Name + Archive Action */
+.lead-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
 }
 
-.lead-card-meta {
+.lead-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    /* CRITICAL for text truncation */
+}
+
+.lead-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--crm-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lead-meta-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
+    /* Safe wrapping */
 }
 
-.lead-plan-badge {
-    font-size: 0.7rem;
+.lead-plan {
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 8px;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--crm-text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .lead-date {
     font-size: 0.75rem;
     color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 4px;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 2px 8px;
-    border-radius: 6px;
 }
 
-/* Card Contact Row */
-.lead-card-contact {
+.lead-archive-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* Never squash the button */
+}
+
+.lead-archive-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Contact Strip */
+.lead-contact-strip {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 12px;
     padding: 12px;
-    background: rgba(15, 23, 42, 0.3);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
+    min-width: 0;
 }
 
-.lead-contact-item {
+.contact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* Label */
+.contact-row span:first-child {
+    flex-shrink: 0;
+}
+
+/* Value */
+.contact-value {
+    color: #cbd5e1;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.lead-whatsapp-primary {
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #94a3b8;
-    font-size: 0.85rem;
-    overflow: hidden;
-}
-
-.lead-contact-item span {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+    cursor: pointer;
+    transition: filter 0.2s;
     white-space: nowrap;
 }
 
-.lead-whatsapp-btn {
-    background: linear-gradient(135deg, rgba(37, 211, 102, 0.1), rgba(37, 211, 102, 0.2));
-    border: 1px solid rgba(37, 211, 102, 0.3);
-    color: #4ade80;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    flex-shrink: 0;
-    transition: all 0.2s;
-}
-
-.lead-whatsapp-btn:hover {
-    background: rgba(37, 211, 102, 0.25);
-    border-color: rgba(37, 211, 102, 0.5);
-    transform: translateY(-1px);
-}
-
-@media (min-width: 768px) {
-    .lead-card-top {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .lead-card-contact {
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        gap: 24px;
-        padding: 12px 16px;
-    }
-}
-
-/* Card Status Row */
-.lead-card-statuses {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.lead-status-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.lead-status-label {
-    font-size: 0.7rem;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-left: 2px;
-}
-
-.lead-status-select {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    outline: none;
-    font-family: inherit;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 26px;
-    transition: filter 0.2s;
-}
-
-.lead-status-select:hover {
+.lead-whatsapp-primary:hover {
     filter: brightness(1.1);
 }
 
+/* Actions Grid (Status Filters) */
+.lead-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    min-width: 0;
+}
+
+.status-box {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.status-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-select {
+    background: transparent;
+    border: none;
+    color: var(--crm-text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Notes Textarea */
+.lead-notes {
+    width: 100%;
+    min-height: 60px;
+    background: transparent;
+    border: 1px dashed var(--crm-border);
+    border-radius: 12px;
+    padding: 10px;
+    color: var(--crm-text-secondary);
+    font-size: 0.85rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.lead-notes:focus {
+    border-color: var(--crm-accent);
+    color: var(--crm-text-primary);
+    background: rgba(30, 41, 59, 0.3);
+}
+
+/* ─── Desktop Breakpoint ─────────────────── */
 @media (min-width: 768px) {
-    .lead-card-statuses {
-        display: flex;
+    .leadboard-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .leadboard-actions {
+        width: auto;
+    }
+
+    .leadboard-refresh-btn,
+    .leadboard-archive-toggle {
+        flex: 0 0 auto;
+        padding: 10px 16px;
+    }
+
+    .leadboard-stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .leadboard-stat-card {
+        padding: 20px;
+        flex-direction: column;
+        /* Keep column for stats but larger */
+        align-items: flex-start;
+    }
+
+    .leadboard-stat-value {
+        font-size: 1.8rem;
+    }
+
+    .leadboard-filters {
+        flex-direction: row;
+        background: transparent;
+        padding: 0;
+        border: none;
+    }
+
+    .leadboard-search {
+        flex: 2;
+    }
+
+    .leadboard-filter-selects {
+        flex: 1;
+    }
+
+    /* Desktop Card Layout: Horizontal Strip */
+    .leadboard-card {
         flex-direction: row;
         align-items: center;
+        padding: 16px 24px;
         gap: 24px;
-        margin-bottom: 0px;
+        background: rgba(30, 41, 59, 0.3);
+        /* Lighter on desktop */
     }
 
-    .lead-status-group {
+    .lead-card-header {
+        flex: 2;
         flex-direction: row;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .lead-info {
+        gap: 2px;
+    }
+
+    .lead-archive-btn {
+        order: 99;
+        /* Move to far right */
+        opacity: 0;
+    }
+
+    .leadboard-card:hover .lead-archive-btn {
+        opacity: 1;
+    }
+
+    .lead-contact-strip {
+        flex: 2;
+        background: transparent;
+        padding: 0;
+        flex-direction: row;
+        gap: 20px;
         align-items: center;
     }
 
-    .lead-status-select {
-        min-width: 140px;
+    .contact-row {
+        gap: 8px;
+        justify-content: flex-start;
+    }
+
+    .contact-value {
+        text-align: left;
+    }
+
+    .lead-whatsapp-primary {
+        width: auto;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+
+    .lead-actions-grid {
+        flex: 2;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .lead-notes {
+        flex: 2;
+        min-height: 48px;
+    }
+
+    /* Reveal actions on hover for cleanliness */
+    .leadboard-card .lead-archive-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 16px;
     }
 }

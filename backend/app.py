@@ -432,6 +432,34 @@ def update_lead_endpoint(lead_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/admin/leads/<lead_id>/generate-password', methods=['POST'])
+def generate_password_endpoint(lead_id):
+    try:
+        from services.crm_service import generate_password_for_lead
+        res = generate_password_for_lead(lead_id)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/leads/<lead_id>/create-user', methods=['POST'])
+def create_user_endpoint(lead_id):
+    try:
+        from services.crm_service import create_firebase_user
+        res = create_firebase_user(lead_id)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
     app.run(host='0.0.0.0', port=port, debug=True)

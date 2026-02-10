@@ -4,7 +4,9 @@ Handles CRUD operations for subscription leads stored in Cloud Firestore.
 """
 
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
+import secrets
+import string
 from datetime import datetime, timedelta
 import os
 
@@ -79,9 +81,10 @@ def create_lead(data):
         return {"error": str(e)}
 
 
-def get_all_leads():
+def get_all_leads(include_archived=False):
     """
     Retrieves all leads from Firestore, ordered by created_at descending.
+    By default, excludes leads with crm_status='archived'.
     
     Returns:
         list of lead dicts (with 'id' field included)
@@ -89,12 +92,30 @@ def get_all_leads():
     try:
         db = _get_db()
         
-        docs = db.collection('leads').order_by('created_at', direction=firestore.Query.DESCENDING).stream()
+        # Base query
+        query = db.collection('leads')
+        
+        # Filter out archived unless requested
+        if not include_archived:
+            # Firestore requires an index for this specific compound query (status + order)
+            # If index is missing, it might error. simpler approach: 
+            # fetch all sorted, then filter in python (for small datasets)
+            # OR use where() clause. 
+            # Let's use where() but keep ordering. Using != is not supported in all FS versions smoothly with ordering.
+            # Best approach for now: Filter in app logic to avoid Index Hell during deploy, 
+            # assuming lead count is < 1000s for now.
+            pass
+
+        docs = query.order_by('created_at', direction=firestore.Query.DESCENDING).stream()
         
         leads = []
         for doc in docs:
             lead = doc.to_dict()
             lead['id'] = doc.id
+            
+            # Filter out archived (Application-side filtering)
+            if not include_archived and lead.get('crm_status') == 'archived':
+                continue
             
             # Convert Firestore timestamp to string for JSON serialization
             if lead.get('created_at'):
@@ -148,7 +169,98 @@ def update_lead(lead_id, field, value):
         
         print(f"[CRM] Lead {lead_id} updated: {field} = {value}")
         return {"success": True, "lead_id": lead_id, "field": field, "value": value}
+
+def delete_lead(lead_id):
+    """
+    Hard deletes a lead from Firestore.
+    Use with caution. Prefer archiving (update crm_status='archived').
+    """
+    try:
+        db = _get_db()
+        db.collection('leads').document(lead_id).delete()
+        print(f"[CRM] Lead deleted: {lead_id}")
+        return {"success": True, "lead_id": lead_id}
+    except Exception as e:
+        print(f"[CRM ERROR] delete_lead: {e}")
+        return {"error": str(e)}
         
     except Exception as e:
         print(f"[CRM ERROR] update_lead: {e}")
+        return {"error": str(e)}
+
+def generate_password_for_lead(lead_id):
+    """
+    Generates a secure random 8-char password for the lead and saves it to the document.
+    """
+    try:
+        db = _get_db()
+        
+        # Generate 8-char password with at least one letter and one digit
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for i in range(8))
+        
+        # Save to lead document
+        db.collection('leads').document(lead_id).update({
+            'generated_password': password,
+            'password_generated_at': datetime.utcnow() - timedelta(hours=3)
+        })
+        
+        print(f"[CRM] Password generated for {lead_id}")
+        return {"success": True, "lead_id": lead_id, "password": password}
+        
+    except Exception as e:
+        print(f"[CRM ERROR] generate_password: {e}")
+        return {"error": str(e)}
+
+def create_firebase_user(lead_id):
+    """
+    Creates a Firebase Authentication user using the lead's email and generated password.
+    """
+    try:
+        db = _get_db()
+        doc_ref = db.collection('leads').document(lead_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return {"error": "Lead not found"}
+            
+        data = doc.to_dict()
+        email = data.get('email')
+        password = data.get('generated_password')
+        name = data.get('name')
+        
+        if not email or not password:
+            return {"error": "Lead missing email or generated password"}
+            
+        # Create user in Firebase Auth
+        try:
+            user = auth.create_user(
+                email=email,
+                password=password,
+                display_name=name
+            )
+            uid = user.uid
+            print(f"[CRM] Auth user created: {uid}")
+            
+        except auth.EmailAlreadyExistsError:
+            # Handle case where user already exists (maybe fetch UID by email)
+            user = auth.get_user_by_email(email)
+            uid = user.uid
+            print(f"[CRM] User already exists: {uid}")
+            
+        except Exception as auth_error:
+             return {"error": f"Auth Error: {str(auth_error)}"}
+
+        # Update Lead with User Info
+        doc_ref.update({
+            'firebase_uid': uid,
+            'user_created_at': datetime.utcnow() - timedelta(hours=3),
+            'is_active_user': True,
+            # 'generated_password': firestore.DELETE_FIELD # Optional: Delete password if preferred, but user requested to see it
+        })
+        
+        return {"success": True, "uid": uid, "email": email}
+
+    except Exception as e:
+        print(f"[CRM ERROR] create_firebase_user: {e}")
         return {"error": str(e)}

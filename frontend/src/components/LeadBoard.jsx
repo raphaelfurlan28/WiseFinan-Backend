@@ -1,55 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Users, Search, Phone, Mail, Calendar,
-    CheckCircle, Clock, AlertTriangle, MessageSquare,
-    RefreshCw, Edit3, Save
-} from 'lucide-react';
+import { Users, Search, RefreshCw, Trash2, Filter, AlertTriangle, CheckCircle, Clock, Archive } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import './LeadBoard.css';
 
 const PAYMENT_STATUSES = {
-    pending: { label: 'Pendente', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-    approved: { label: 'Aprovado', color: '#4ade80', bg: 'rgba(74,222,128,0.12)' },
-    failed: { label: 'Falhou', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-    refunded: { label: 'Reembolsado', color: '#a855f7', bg: 'rgba(168,85,247,0.12)' }
+    pending: { label: 'Pendente', color: '#f59e0b' },
+    approved: { label: 'Aprovado', color: '#4ade80' },
+    failed: { label: 'Falhou', color: '#ef4444' },
+    refunded: { label: 'Estornado', color: '#94a3b8' }
 };
 
 const CRM_STATUSES = {
-    new: { label: 'Novo', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
-    contacted: { label: 'Contatado', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-    negotiating: { label: 'Negociando', color: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
-    converted: { label: 'Convertido', color: '#4ade80', bg: 'rgba(74,222,128,0.12)' },
-    lost: { label: 'Perdido', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' }
+    new: { label: 'Novo', color: '#3b82f6' },
+    contacted: { label: 'Em Contato', color: '#f59e0b' },
+    negotiating: { label: 'Negociando', color: '#8b5cf6' },
+    converted: { label: 'Convertido', color: '#10b981' },
+    lost: { label: 'Perdido', color: '#ef4444' },
+    archived: { label: 'Arquivado', color: '#64748b' }
 };
-
-const PLAN_COLORS = { 'Mensal': '#3b82f6', 'Semestral': '#a855f7', 'Anual': '#4ade80' };
 
 const LeadBoard = () => {
     const [leads, setLeads] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterPayment, setFilterPayment] = useState('all');
     const [filterCRM, setFilterCRM] = useState('all');
-    const [editingNotes, setEditingNotes] = useState(null);
-    const [notesValue, setNotesValue] = useState('');
+    const [showArchived, setShowArchived] = useState(false);
     const [updating, setUpdating] = useState(null);
+
+    useEffect(() => {
+        fetchLeads();
+    }, [showArchived]);
 
     const fetchLeads = async () => {
         setLoading(true);
         try {
-            const res = await fetch(getApiUrl('/api/admin/leads'));
+            // Fetch leads with archived filter logic handled either by backend or client
+            const res = await fetch(getApiUrl(`/api/admin/leads?include_archived=${showArchived}`));
             const data = await res.json();
-            setLeads(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Error fetching leads:', err);
-            setLeads([]);
+            if (Array.isArray(data)) {
+                // Client-side filtering as fallback if backend logic is transitional
+                const filtered = showArchived
+                    ? data
+                    : data.filter(l => l.crm_status !== 'archived');
+                setLeads(filtered);
+            }
+        } catch (error) {
+            console.error('Error fetching leads:', error);
         } finally {
             setLoading(false);
         }
     };
-
-    useEffect(() => { fetchLeads(); }, []);
 
     const handleStatusChange = async (leadId, field, value) => {
         setUpdating(leadId);
@@ -70,9 +71,42 @@ const LeadBoard = () => {
         }
     };
 
-    const handleSaveNotes = async (leadId) => {
-        await handleStatusChange(leadId, 'notes', notesValue);
-        setEditingNotes(null);
+    const handleArchive = async (leadId) => {
+        if (!window.confirm('Deseja arquivar este lead? Ele sairá da lista principal.')) return;
+
+        setUpdating(leadId);
+        try {
+            const res = await fetch(getApiUrl(`/api/admin/leads/${leadId}`), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: 'crm_status', value: 'archived' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Remove from view smoothly
+                setLeads(prev => prev.filter(l => l.id !== leadId));
+            }
+        } catch (err) {
+            console.error('Error archiving lead:', err);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
+    const handleRestore = async (leadId) => {
+        setUpdating(leadId);
+        try {
+            const res = await fetch(getApiUrl(`/api/admin/leads/${leadId}`), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: 'crm_status', value: 'new' })
+            });
+            if (res.ok) {
+                setLeads(prev => prev.map(l => l.id === leadId ? { ...l, crm_status: 'new' } : l));
+            }
+        } finally {
+            setUpdating(null);
+        }
     };
 
     const openWhatsApp = (phone, name) => {
@@ -82,19 +116,68 @@ const LeadBoard = () => {
         window.open(`https://wa.me/${full}?text=${msg}`, '_blank');
     };
 
+    const handleGeneratePassword = async (leadId) => {
+        setUpdating(leadId);
+        try {
+            const res = await fetch(getApiUrl(`/api/admin/leads/${leadId}/generate-password`), {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLeads(prev => prev.map(l => l.id === leadId ? { ...l, generated_password: data.password } : l));
+            } else {
+                alert('Erro ao gerar senha: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Error generating password:', err);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
+    const handleCreateUser = async (leadId) => {
+        setUpdating(leadId);
+        try {
+            const res = await fetch(getApiUrl(`/api/admin/leads/${leadId}/create-user`), {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_active_user: true } : l));
+            } else {
+                alert('Erro ao criar usuário: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Error creating user:', err);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        alert('Senha copiada!');
+    };
+
+    // Filter Logic
     const filteredLeads = leads.filter(lead => {
-        const s = searchTerm.toLowerCase();
-        const matchSearch = !s || (lead.name || '').toLowerCase().includes(s) || (lead.email || '').toLowerCase().includes(s) || (lead.phone || '').includes(searchTerm);
-        const matchPay = filterPayment === 'all' || lead.payment_status === filterPayment;
-        const matchCrm = filterCRM === 'all' || lead.crm_status === filterCRM;
-        return matchSearch && matchPay && matchCrm;
+        const matchesSearch =
+            lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.phone.includes(searchTerm);
+
+        const matchesPayment = filterPayment === 'all' || lead.payment_status === filterPayment;
+        const matchesCRM = filterCRM === 'all' || lead.crm_status === filterCRM;
+
+        return matchesSearch && matchesPayment && matchesCRM;
     });
 
+    // Stats Calculation
     const stats = {
         total: leads.length,
         new: leads.filter(l => l.crm_status === 'new').length,
         pending: leads.filter(l => l.payment_status === 'pending').length,
-        converted: leads.filter(l => l.crm_status === 'converted').length
+        converted: leads.filter(l => l.payment_status === 'approved').length
     };
 
     return (
@@ -105,36 +188,70 @@ const LeadBoard = () => {
                     <h1><Users size={28} /> CRM Leads</h1>
                     <p>Gerencie seus leads e acompanhe o funil de vendas</p>
                 </div>
-                <button className="leadboard-refresh-btn" onClick={fetchLeads}>
-                    <RefreshCw size={16} className={loading ? 'lead-spin' : ''} />
-                    Atualizar Lista
-                </button>
+
+                <div className="leadboard-actions">
+                    <button
+                        className={`leadboard-archive-toggle ${showArchived ? 'active' : ''}`}
+                        onClick={() => setShowArchived(!showArchived)}
+                    >
+                        <Archive size={16} />
+                        {showArchived ? 'Ver Ativos' : 'Ver Arquivados'}
+                    </button>
+
+                    <button className="leadboard-refresh-btn" onClick={fetchLeads}>
+                        <RefreshCw size={16} className={loading ? 'lead-spin' : ''} />
+                        Atualizar
+                    </button>
+                </div>
             </div>
 
             {/* Stats */}
             <div className="leadboard-stats">
-                {[
-                    { label: 'Total', value: stats.total, color: '#3b82f6', Icon: Users },
-                    { label: 'Novos', value: stats.new, color: '#f59e0b', Icon: AlertTriangle },
-                    { label: 'Pendentes', value: stats.pending, color: '#ef4444', Icon: Clock },
-                    { label: 'Convertidos', value: stats.converted, color: '#4ade80', Icon: CheckCircle }
-                ].map((s, i) => (
-                    <div className="leadboard-stat-card" key={i}>
-                        <div className="leadboard-stat-icon" style={{ background: `${s.color}15`, color: s.color }}>
-                            <s.Icon size={20} />
-                        </div>
-                        <div className="leadboard-stat-content">
-                            <div className="leadboard-stat-value" style={{ color: s.color }}>{s.value}</div>
-                            <div className="leadboard-stat-label">{s.label}</div>
-                        </div>
+                <div className="leadboard-stat-card" style={{ color: '#3b82f6' }}>
+                    <div className="leadboard-stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
+                        <Users size={20} />
                     </div>
-                ))}
+                    <div className="leadboard-stat-content">
+                        <div className="leadboard-stat-value">{stats.total}</div>
+                        <div className="leadboard-stat-label">Total Leads</div>
+                    </div>
+                </div>
+
+                <div className="leadboard-stat-card" style={{ color: '#f59e0b' }}>
+                    <div className="leadboard-stat-icon" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
+                        <AlertTriangle size={20} />
+                    </div>
+                    <div className="leadboard-stat-content">
+                        <div className="leadboard-stat-value">{stats.new}</div>
+                        <div className="leadboard-stat-label">Novos</div>
+                    </div>
+                </div>
+
+                <div className="leadboard-stat-card" style={{ color: '#ef4444' }}>
+                    <div className="leadboard-stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)' }}>
+                        <Clock size={20} />
+                    </div>
+                    <div className="leadboard-stat-content">
+                        <div className="leadboard-stat-value">{stats.pending}</div>
+                        <div className="leadboard-stat-label">Pagamento Pendente</div>
+                    </div>
+                </div>
+
+                <div className="leadboard-stat-card" style={{ color: '#10b981' }}>
+                    <div className="leadboard-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+                        <CheckCircle size={20} />
+                    </div>
+                    <div className="leadboard-stat-content">
+                        <div className="leadboard-stat-value">{stats.converted}</div>
+                        <div className="leadboard-stat-label">Convertidos</div>
+                    </div>
+                </div>
             </div>
 
             {/* Filters */}
             <div className="leadboard-filters">
                 <div className="leadboard-search">
-                    <Search size={16} className="leadboard-search-icon" />
+                    <Search size={18} className="leadboard-search-icon" />
                     <input
                         type="text"
                         placeholder="Buscar por nome, email ou telefone..."
@@ -144,141 +261,148 @@ const LeadBoard = () => {
                 </div>
                 <div className="leadboard-filter-selects">
                     <select className="leadboard-filter-select" value={filterPayment} onChange={e => setFilterPayment(e.target.value)}>
-                        <option value="all">💳 Todos Pagamentos</option>
+                        <option value="all">Filtro: Pagamento</option>
                         {Object.entries(PAYMENT_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                     <select className="leadboard-filter-select" value={filterCRM} onChange={e => setFilterCRM(e.target.value)}>
-                        <option value="all">📊 Todos Status</option>
+                        <option value="all">Filtro: Status CRM</option>
                         {Object.entries(CRM_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                 </div>
             </div>
 
-            <div className="leadboard-count">
-                Exibindo {filteredLeads.length} de {leads.length} leads
-            </div>
-
-            {/* Content */}
-            {loading ? (
-                <div className="leadboard-loading">
-                    <RefreshCw size={28} className="lead-spin" />
-                    <p>Carregando leads...</p>
-                </div>
-            ) : filteredLeads.length === 0 ? (
-                <div className="leadboard-empty">
-                    <Users size={40} style={{ opacity: 0.25 }} />
-                    <p>Nenhum lead encontrado</p>
-                </div>
-            ) : (
-                <div className="leadboard-list">
-                    <AnimatePresence>
-                        {filteredLeads.map((lead, idx) => {
-                            const pay = PAYMENT_STATUSES[lead.payment_status] || PAYMENT_STATUSES.pending;
-                            const crm = CRM_STATUSES[lead.crm_status] || CRM_STATUSES.new;
-                            const planColor = PLAN_COLORS[lead.plan] || '#94a3b8';
-                            const isEditing = editingNotes === lead.id;
-                            const isUpdating = updating === lead.id;
-
-                            return (
-                                <motion.div
-                                    key={lead.id}
-                                    className={`leadboard-card ${isUpdating ? 'updating' : ''}`}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ delay: idx * 0.025 }}
-                                >
-                                    {/* Top */}
-                                    <div className="lead-card-top">
-                                        <div className="lead-card-name">{lead.name || 'Sem nome'}</div>
-                                        <div className="lead-card-meta">
-                                            <span className="lead-plan-badge" style={{ background: `${planColor}18`, color: planColor }}>
-                                                {lead.plan || 'N/A'}
-                                            </span>
-                                            <span className="lead-date">
-                                                <Calendar size={11} /> {lead.created_at || '—'}
-                                            </span>
-                                        </div>
+            {/* List */}
+            <div className="leadboard-list">
+                {filteredLeads.length === 0 ? (
+                    <div className="leadboard-empty">
+                        <p>Nenhum lead encontrado.</p>
+                    </div>
+                ) : (
+                    filteredLeads.map(lead => (
+                        <div className={`leadboard-card ${updating === lead.id ? 'updating' : ''} ${lead.is_active_user ? 'active-user' : ''}`} key={lead.id}>
+                            {/* Header Row */}
+                            <div className="lead-card-header">
+                                <div className="lead-info">
+                                    <div className="lead-name">
+                                        {lead.name}
+                                        {lead.is_active_user && <span className="active-user-badge"><CheckCircle size={12} /> Ativo</span>}
                                     </div>
-
-                                    {/* Contact */}
-                                    <div className="lead-card-contact">
-                                        <div className="lead-contact-item">
-                                            <Mail size={14} color="#64748b" />
-                                            <span>{lead.email || '—'}</span>
-                                        </div>
-                                        <div className="lead-contact-item">
-                                            <Phone size={14} color="#64748b" />
-                                            <span>{lead.phone || '—'}</span>
-                                            {lead.phone && (
-                                                <button className="lead-whatsapp-btn" onClick={() => openWhatsApp(lead.phone, lead.name)}>
-                                                    <MessageSquare size={12} /> WhatsApp
-                                                </button>
-                                            )}
-                                        </div>
+                                    <div className="lead-meta-row">
+                                        <span className="lead-plan">{lead.plan || 'N/A'}</span>
+                                        <span className="lead-date">
+                                            <Clock size={10} /> {lead.created_at}
+                                        </span>
                                     </div>
+                                </div>
 
-                                    {/* Statuses */}
-                                    <div className="lead-card-statuses">
-                                        <div className="lead-status-group">
-                                            <span className="lead-status-label">Pagamento:</span>
-                                            <select
-                                                className="lead-status-select"
-                                                value={lead.payment_status || 'pending'}
-                                                onChange={e => handleStatusChange(lead.id, 'payment_status', e.target.value)}
-                                                disabled={isUpdating}
-                                                style={{ background: pay.bg, border: `1px solid ${pay.color}30`, color: pay.color }}
-                                            >
-                                                {Object.entries(PAYMENT_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="lead-status-group">
-                                            <span className="lead-status-label">CRM:</span>
-                                            <select
-                                                className="lead-status-select"
-                                                value={lead.crm_status || 'new'}
-                                                onChange={e => handleStatusChange(lead.id, 'crm_status', e.target.value)}
-                                                disabled={isUpdating}
-                                                style={{ background: crm.bg, border: `1px solid ${crm.color}30`, color: crm.color }}
-                                            >
-                                                {Object.entries(CRM_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
+                                {showArchived ? (
+                                    <button
+                                        className="lead-archive-btn"
+                                        title="Restaurar Lead"
+                                        onClick={() => handleRestore(lead.id)}
+                                    >
+                                        <RefreshCw size={18} />
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="lead-archive-btn"
+                                        title="Arquivar Lead"
+                                        onClick={() => handleArchive(lead.id)}
+                                    >
+                                        <Archive size={18} />
+                                    </button>
+                                )}
+                            </div>
 
-                                    {/* Notes */}
-                                    <div className="lead-notes-row">
-                                        {isEditing ? (
-                                            <>
-                                                <input
-                                                    className="lead-notes-input"
-                                                    type="text"
-                                                    value={notesValue}
-                                                    onChange={e => setNotesValue(e.target.value)}
-                                                    placeholder="Adicionar nota..."
-                                                    autoFocus
-                                                    onKeyDown={e => e.key === 'Enter' && handleSaveNotes(lead.id)}
-                                                />
-                                                <button className="lead-notes-save-btn" onClick={() => handleSaveNotes(lead.id)}>
-                                                    <Save size={14} />
-                                                </button>
-                                            </>
-                                        ) : (
+                            {/* Contact Info */}
+                            <div className="lead-contact-strip">
+                                <div className="contact-row">
+                                    <span>Email</span>
+                                    <span className="contact-value">{lead.email}</span>
+                                </div>
+                                <div className="contact-row">
+                                    <span>Telefone</span>
+                                    <span className="contact-value" style={{ userSelect: 'all' }}>{lead.phone}</span>
+                                </div>
+                                <button className="lead-whatsapp-primary" onClick={() => openWhatsApp(lead.phone, lead.name)}>
+                                    <span style={{ fontSize: '1.2em' }}>💬</span> Chamar no WhatsApp
+                                </button>
+                            </div>
+
+                            {/* Action Grid */}
+                            <div className="lead-actions-grid">
+                                <div className="status-box">
+                                    <span className="status-label">Pagamento</span>
+                                    <select
+                                        className="status-select"
+                                        value={lead.payment_status}
+                                        style={{ color: PAYMENT_STATUSES[lead.payment_status]?.color || '#fff' }}
+                                        onChange={(e) => handleStatusChange(lead.id, 'payment_status', e.target.value)}
+                                    >
+                                        {Object.entries(PAYMENT_STATUSES).map(([k, v]) => (
+                                            <option key={k} value={k}>{v.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="status-box">
+                                    <span className="status-label">Status CRM</span>
+                                    <select
+                                        className="status-select"
+                                        value={lead.crm_status}
+                                        style={{ color: CRM_STATUSES[lead.crm_status]?.color || '#fff' }}
+                                        onChange={(e) => handleStatusChange(lead.id, 'crm_status', e.target.value)}
+                                    >
+                                        {Object.entries(CRM_STATUSES).map(([k, v]) => (
+                                            <option key={k} value={k}>{v.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            <textarea
+                                className="lead-notes"
+                                placeholder="Adicionar anotação..."
+                                value={lead.notes || ''}
+                                onChange={(e) => {
+                                    /* Local update first for smoothness */
+                                    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, notes: e.target.value } : l));
+                                }}
+                                onBlur={(e) => handleStatusChange(lead.id, 'notes', e.target.value)}
+                            />
+
+                            {/* User Creation Section */}
+                            {lead.payment_status === 'approved' && lead.crm_status === 'converted' && !lead.is_active_user && (
+                                <div className="lead-user-actions">
+                                    <div className="user-action-divider"></div>
+                                    {!lead.generated_password ? (
+                                        <button
+                                            className="btn-generate-password"
+                                            onClick={() => handleGeneratePassword(lead.id)}
+                                        >
+                                            🔑 Gerar Senha/Acesso
+                                        </button>
+                                    ) : (
+                                        <div className="password-display-area">
+                                            <div className="password-box">
+                                                <span>Senha:</span>
+                                                <code>{lead.generated_password}</code>
+                                                <button onClick={() => copyToClipboard(lead.generated_password)} title="Copiar">📋</button>
+                                            </div>
                                             <button
-                                                className={`lead-notes-btn ${lead.notes ? 'has-note' : ''}`}
-                                                onClick={() => { setEditingNotes(lead.id); setNotesValue(lead.notes || ''); }}
+                                                className="btn-create-firebase"
+                                                onClick={() => handleCreateUser(lead.id)}
                                             >
-                                                <Edit3 size={12} />
-                                                {lead.notes || 'Adicionar nota...'}
+                                                🚀 Cadastrar no Firebase
                                             </button>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
-            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 };
