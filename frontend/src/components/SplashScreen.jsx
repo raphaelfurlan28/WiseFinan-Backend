@@ -122,6 +122,14 @@ const SplashScreen = ({ onBack }) => {
                     >
                         WiseFinan
                     </motion.h1>
+                    <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1, delay: 0.8 }}
+                        style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}
+                    >
+                        v2.0
+                    </motion.span>
                 </motion.div>
             </AnimatePresence>
 
