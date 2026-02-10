@@ -27,8 +27,14 @@ def _get_db():
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
             app = firebase_admin.initialize_app(cred)
+        elif os.environ.get('FIREBASE_CREDENTIALS'):
+            # Production (Render): Credentials from environment variable
+            import json
+            cred_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
+            cred = credentials.Certificate(cred_dict)
+            app = firebase_admin.initialize_app(cred)
         else:
-            # Fallback: use Application Default Credentials (Cloud Run)
+            # Fallback: use Application Default Credentials (Cloud Run/GCP)
             app = firebase_admin.initialize_app()
 
     _db = firestore.client()
