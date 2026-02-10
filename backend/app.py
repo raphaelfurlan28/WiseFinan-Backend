@@ -158,11 +158,24 @@ def update_rf():
 def get_news_dashboard():
     try:
         from services.market_data import get_market_indicators, get_rss_news
-        indicators = get_market_indicators()
-        news = get_rss_news()
+        
+        # Fetch loosely to avoid one failure blocking the other
+        try:
+            indicators = get_market_indicators()
+        except Exception as e:
+            print(f"Indicators failed: {e}")
+            indicators = {}
+
+        try:
+            news = get_rss_news()
+        except Exception as e:
+            print(f"News failed: {e}")
+            news = []
+
         return jsonify({"indicators": indicators, "news": news})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Fallback to empty structure instead of 500
+        return jsonify({"indicators": {}, "news": [], "error": str(e)})
 
 @app.route('/api/news/movers', methods=['GET'])
 def get_market_movers():

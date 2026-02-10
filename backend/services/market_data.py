@@ -282,44 +282,61 @@ def get_market_indicators():
     # 1. Selic (Meta) - BCB Series 432
     try:
         url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json"
-        r = requests.get(url, headers=headers, timeout=5)
+        r = requests.get(url, headers=headers, timeout=2) # Reduced timeout
         if r.status_code == 200:
             data = r.json()
             if data:
-                # Latest value
                 indicators["selic"] = float(data[-1]['valor'])
     except Exception as e:
         print(f"Error fetching Selic: {e}")
-        # Fallback to current approximations if API fails
-        indicators["selic"] = 12.25
+        indicators["selic"] = 12.25 # Fallback
 
     # 2. IPCA (12 Months) - BCB Series 13522
     try:
         url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados?formato=json"
-        r = requests.get(url, headers=headers, timeout=5)
+        r = requests.get(url, headers=headers, timeout=2) # Reduced timeout
         if r.status_code == 200:
             data = r.json()
             if data:
                 indicators["ipca"] = float(data[-1]['valor'])
     except Exception as e:
         print(f"Error fetching IPCA: {e}")
-        if not indicators["ipca"]: indicators["ipca"] = 4.50 # Fallback
+        if not indicators["ipca"]: indicators["ipca"] = 4.50
 
-    # 3. Dollar (BRL=X) & Bitcoin (BTC-BRL)
+    # 3. Dollar (BRL=X)
     try:
-        # Fetch separately
         dollar_ticker = yf.Ticker("BRL=X")
+        # Use fast info or short history
         dollar_hist = dollar_ticker.history(period="1d")
         if not dollar_hist.empty:
             indicators["dollar"] = round(float(dollar_hist['Close'].iloc[-1]), 2)
-            
-        btc_ticker = yf.Ticker("BTC-BRL")
-        btc_hist = btc_ticker.history(period="1d")
-        if not btc_hist.empty:
-             indicators["bitcoin"] = round(float(btc_hist['Close'].iloc[-1]), 2)
-            
     except Exception as e:
-        print(f"Error fetching YF Indicators: {e}")
+        print(f"Error fetching Dollar: {e}")
+        indicators["dollar"] = 5.00 # Fallback
+
+    # 4. Bitcoin (BTC-USD converted or BTC-BRL if available)
+    try:
+        # BTC-BRL is often delisted/unstable on YF. Using BTC-USD is safer.
+        # We can try BTC-BRL first, if fails, fallback to USD * Dollar
+        try:
+            btc_ticker = yf.Ticker("BTC-BRL")
+            btc_hist = btc_ticker.history(period="1d")
+            if not btc_hist.empty:
+                indicators["bitcoin"] = round(float(btc_hist['Close'].iloc[-1]), 2)
+            else:
+                raise Exception("No data for BTC-BRL")
+        except:
+             # Fallback to BTC-USD
+             btc_usd = yf.Ticker("BTC-USD")
+             btc_hist = btc_usd.history(period="1d")
+             if not btc_hist.empty:
+                 usd_val = float(btc_hist['Close'].iloc[-1])
+                 d_val = indicators.get("dollar", 5.00) or 5.00
+                 indicators["bitcoin"] = round(usd_val * d_val, 2)
+
+    except Exception as e:
+        print(f"Error fetching Bitcoin: {e}")
+        indicators["bitcoin"] = 0.0
 
     return indicators
 
@@ -333,7 +350,8 @@ def get_rss_news():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-        r = requests.get(url, headers=headers, timeout=5)
+        # Reduced timeout to prevent worker kill
+        r = requests.get(url, headers=headers, timeout=2)
         if r.status_code == 200:
             try:
                 # ET.fromstring handles bytes usually
@@ -368,5 +386,6 @@ def get_rss_news():
                 count += 1
     except Exception as e:
         print(f"Error fetching RSS: {e}")
+        # Return empty list on error, do not crash
     
     return news_items
