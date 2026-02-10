@@ -398,12 +398,31 @@ def subscription_request():
 @app.route('/api/admin/leads', methods=['GET'])
 def get_leads():
     try:
+        from flask import request
         from services.crm_service import get_all_leads
-        leads = get_all_leads()
+        
+        # Parse boolean param
+        include_archived = request.args.get('include_archived', 'false').lower() == 'true'
+        
+        leads = get_all_leads(include_archived=include_archived)
         
         if isinstance(leads, dict) and "error" in leads:
             return jsonify(leads), 500
         return jsonify(leads)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/leads/<lead_id>', methods=['DELETE'])
+def delete_lead_endpoint(lead_id):
+    try:
+        from services.crm_service import delete_lead
+        res = delete_lead(lead_id)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -109,6 +109,27 @@ const LeadBoard = () => {
         }
     };
 
+    const handleDelete = async (leadId) => {
+        if (!window.confirm('Tem certeza que deseja excluir permanentemente este lead?')) return;
+
+        setUpdating(leadId);
+        try {
+            const res = await fetch(getApiUrl(`/api/admin/leads/${leadId}`), {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLeads(prev => prev.filter(l => l.id !== leadId));
+            } else {
+                alert('Erro ao excluir: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Error deleting lead:', err);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
     const openWhatsApp = (phone, name) => {
         const clean = phone.replace(/\D/g, '');
         const full = clean.startsWith('55') ? clean : `55${clean}`;
@@ -296,13 +317,23 @@ const LeadBoard = () => {
                                 </div>
 
                                 {showArchived ? (
-                                    <button
-                                        className="lead-archive-btn"
-                                        title="Restaurar Lead"
-                                        onClick={() => handleRestore(lead.id)}
-                                    >
-                                        <RefreshCw size={18} />
-                                    </button>
+                                    <>
+                                        <button
+                                            className="lead-archive-btn"
+                                            title="Restaurar Lead"
+                                            onClick={() => handleRestore(lead.id)}
+                                        >
+                                            <RefreshCw size={18} />
+                                        </button>
+                                        <button
+                                            className="lead-archive-btn delete-btn"
+                                            title="Excluir Permanentemente"
+                                            onClick={() => handleDelete(lead.id)}
+                                            style={{ marginLeft: '8px', color: '#ef4444' }}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </>
                                 ) : (
                                     <button
                                         className="lead-archive-btn"

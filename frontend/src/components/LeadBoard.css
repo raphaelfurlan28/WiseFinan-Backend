@@ -500,6 +500,11 @@
     color: #ef4444;
 }
 
+.lead-archive-btn.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
 /* Contact Strip */
 .lead-contact-strip {
     display: flex;
