@@ -245,18 +245,27 @@ export default function StockList({ onSelectStock }) {
             const isCheap = faltaVal >= 0;
 
             let barWidth = 0;
-            let barColor = '#4ade80';
+            let barGradient = '#4ade80';
+            let barGlow = 'none';
 
             if (isCheap) {
               barWidth = 100;
-              barColor = '#4ade80';
+              barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
+              barGlow = '0 0 10px rgba(74, 222, 128, 0.4)';
             } else {
               const distance = Math.abs(faltaVal);
               barWidth = Math.max(0, 100 - distance);
 
-              if (distance <= 15) barColor = '#4ade80';
-              else if (distance <= 30) barColor = '#facc15';
-              else barColor = '#ef4444';
+              if (distance <= 15) {
+                barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
+                barGlow = '0 0 10px rgba(74, 222, 128, 0.4)';
+              } else if (distance <= 30) {
+                barGradient = 'linear-gradient(90deg, #facc15, #eab308)';
+                barGlow = '0 0 10px rgba(250, 204, 21, 0.3)';
+              } else {
+                barGradient = 'linear-gradient(90deg, #f87171, #ef4444)';
+                barGlow = '0 0 10px rgba(239, 68, 68, 0.4)';
+              }
             }
 
             return (
@@ -308,11 +317,12 @@ export default function StockList({ onSelectStock }) {
                         className="progress-fill"
                         style={{
                           width: `${barWidth}%`,
-                          backgroundColor: barColor
+                          background: barGradient,
+                          boxShadow: barGlow
                         }}
                       ></div>
                     </div>
-                    <span className="progress-label" style={{ color: barColor }}>
+                    <span className="progress-label" style={{ color: !isCheap && Math.abs(faltaVal) > 30 ? '#f87171' : (!isCheap && Math.abs(faltaVal) > 15 ? '#facc15' : '#4ade80') }}>
                       Falta: {stock.falta_pct}
                     </span>
                   </div>

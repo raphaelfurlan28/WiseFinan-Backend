@@ -257,6 +257,16 @@
     color: transparent;
 }
 
+.brand-highlight {
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #fff 0%, #4ade80 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
 .hero-subtitle {
     font-size: 1.25rem;
     color: var(--slate-400);

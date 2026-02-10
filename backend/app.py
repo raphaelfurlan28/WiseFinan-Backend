@@ -384,11 +384,48 @@ def subscription_request():
         if not data.get('nome') or not data.get('email') or not data.get('whatsapp'):
             return jsonify({"error": "Missing required fields"}), 400
             
-        from services.sheets import append_subscription_request
-        res = append_subscription_request(data)
+        from services.crm_service import create_lead
+        res = create_lead(data)
         
         if "error" in res:
             return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/leads', methods=['GET'])
+def get_leads():
+    try:
+        from services.crm_service import get_all_leads
+        leads = get_all_leads()
+        
+        if isinstance(leads, dict) and "error" in leads:
+            return jsonify(leads), 500
+        return jsonify(leads)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/leads/<lead_id>', methods=['PATCH'])
+def update_lead_endpoint(lead_id):
+    try:
+        from flask import request
+        data = request.json
+        
+        field = data.get('field')
+        value = data.get('value')
+        
+        if not field or value is None:
+            return jsonify({"error": "Missing 'field' and 'value' in request body"}), 400
+        
+        from services.crm_service import update_lead
+        res = update_lead(lead_id, field, value)
+        
+        if "error" in res:
+            return jsonify(res), 400
         return jsonify(res)
         
     except Exception as e:

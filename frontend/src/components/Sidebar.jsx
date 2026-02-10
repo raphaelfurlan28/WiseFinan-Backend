@@ -13,7 +13,8 @@ import {
     Landmark,
     MessageSquare,
     BookOpen,
-    Calendar
+    Calendar,
+    Users
 } from 'lucide-react';
 import './Sidebar.css';
 import { useNotification } from '../context/NotificationContext';
@@ -32,6 +33,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'news', label: 'Notícias', icon: Newspaper },
         { id: 'calendar', label: 'Calendário', icon: Calendar },
         { id: 'chat', label: 'Chat', icon: MessageSquare },
+        { id: 'admin-leads', label: 'CRM Leads', icon: Users },
         { id: 'support', label: 'Suporte', icon: HelpCircle },
     ];
 

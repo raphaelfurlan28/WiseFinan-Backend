@@ -3,9 +3,9 @@ chcp 65001 >NUL
 setlocal enabledelayedexpansion
 
 REM === CONFIG ===
-set "PROJECT_DIR=C:\Users\Raphael Furlan\Desktop\Projetos\Dash - DOC"
-set "PYTHON_EXE=%PROJECT_DIR%\.venv\Scripts\python.exe"
-set "SCRIPT_TD=%PROJECT_DIR%\td_to_sheets.py"
+set "PROJECT_DIR=%~dp0"
+set "PYTHON_EXE=%PROJECT_DIR%.venv\Scripts\python.exe"
+set "SCRIPT_TD=%PROJECT_DIR%backend\scripts\td_to_sheets.py"
 
 REM *** Nomes com acento OK com UTF-8 ***
 set "SHEET_NAME=Fundamentos Ações"

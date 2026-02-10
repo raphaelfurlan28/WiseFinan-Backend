@@ -31,7 +31,7 @@ const formatCurrency = (val) => {
     return `R$ ${parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const Card = ({ title, data, icon: Icon, colorClass, ipcaValue }) => {
+const Card = ({ title, data, icon: Icon, colorClass, ipcaValue, selicValue }) => {
 
 
     // Helper to calculate total yield for IPCA
@@ -99,11 +99,30 @@ const Card = ({ title, data, icon: Icon, colorClass, ipcaValue }) => {
             }
         }
 
-        // SPECIAL REQUEST: Selic (Lft) -> Add "(dia útil)"
+        // SPECIAL REQUEST: Selic (Lft) -> Add "(dia útil)" + Sum Selic Index
         if (titleUpper.includes("SELIC")) {
+            let totalRate = displayRate;
+            try {
+                // Parse Fixed Part
+                const fixedPartStr = rateStr.toString().replace(/[^\d,.]/g, "").replace(",", ".");
+                const fixedPart = parseFloat(fixedPartStr) || 0;
+
+                // Parse Selic from prop (passed as selicValue)
+                // Note: Card needs to receive selicValue prop
+                const selicClean = selicValue ? selicValue.toString().replace(/[^\d,.]/g, "").replace(",", ".") : "0";
+                const selicNum = parseFloat(selicClean) || 0;
+
+                if (selicNum > 0) {
+                    const total = fixedPart + selicNum;
+                    totalRate = `${total.toFixed(2).replace('.', ',')}%`;
+                }
+            } catch (e) {
+                console.error("Error summing Selic", e);
+            }
+
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: '700', color: '#4ade80' }}>{displayRate}</span>
+                    <span style={{ fontSize: '1rem', fontWeight: '700', color: '#4ade80' }}>{totalRate}</span>
                     <span style={{ fontSize: '0.7rem', color: '#aaa' }}>(dia útil)</span>
                 </div>
             );
@@ -445,6 +464,7 @@ export default function FixedIncome() {
                     icon={AlertTriangle}
                     colorClass="card-reserva"
                     ipcaValue={indices.ipca}
+                    selicValue={indices.selic}
                 />
 
                 <Card

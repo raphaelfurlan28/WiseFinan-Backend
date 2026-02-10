@@ -4,8 +4,9 @@ import ModernLoader from './ModernLoader';
 import '../components/FixedIncome.css';
 import './OptionsModule.css'; // Import Options Styles
 import './Dashboard.css'; // Import Dashboard Styles
+import './News.css';
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
@@ -52,6 +53,9 @@ const Home = ({ onNavigate }) => {
     const [topGainers, setTopGainers] = useState([]);
     const [topLosers, setTopLosers] = useState([]);
 
+    // Indices State
+    const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
+
     // Fetch Home Highlights
     useEffect(() => {
         const fetchHighlights = async () => {
@@ -60,6 +64,15 @@ const Home = ({ onNavigate }) => {
                 const resNews = await fetch(getApiUrl('/api/news/dashboard'));
                 const jsonNews = await resNews.json();
                 if (jsonNews.news) setHomeNews(jsonNews.news.slice(0, 2));
+
+                // Indices (for Selic calcs)
+                try {
+                    const resIndices = await fetch(getApiUrl('/api/indices'));
+                    const jsonIndices = await resIndices.json();
+                    setIndices(jsonIndices);
+                } catch (e) {
+                    console.error("Error fetching indices in Home", e);
+                }
 
                 // Stocks Map & Market Movers
                 const resStocks = await fetch(getApiUrl('/api/stocks'));
@@ -179,39 +192,130 @@ const Home = ({ onNavigate }) => {
                 background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(15px)'
             }} onClick={onClose}>
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    initial={{ scale: 0.95, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    transition={{ type: "spring", duration: 0.4 }}
+                    transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
                     onClick={e => e.stopPropagation()}
                     style={{
                         position: 'relative',
-                        width: '92%', maxWidth: '420px',
+                        width: '94%', maxWidth: '440px',
                         display: 'flex', flexDirection: 'column'
                     }}
                 >
-                    <button onClick={onClose} style={{ position: 'absolute', top: -30, right: 0, background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: '300', padding: '0', zIndex: 10 }}>Fechar</button>
-
                     <div style={{
-                        background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
-                        borderRadius: '24px', padding: '24px',
+                        background: 'linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(15, 23, 42, 1) 100%)',
+                        borderRadius: '28px',
+                        padding: '32px 24px',
                         border: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+                        boxShadow: '0 25px 70px -10px rgba(0,0,0,0.9)',
                         overflowY: 'auto',
-                        maxHeight: '85vh'
+                        maxHeight: '85vh',
+                        backdropFilter: 'blur(20px)',
+                        position: 'relative'
                     }}>
+                        {/* Improved Close Button */}
+                        <button
+                            onClick={onClose}
+                            style={{
+                                position: 'absolute',
+                                top: '24px',
+                                right: '24px',
+                                background: 'transparent',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                zIndex: 100,
+                                padding: 0,
+                                color: 'rgba(255,255,255,0.5)'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                                e.currentTarget.style.color = '#fff';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+                            }}
+                        >
+                            <CloseIcon size={20} />
+                        </button>
+
                         {/* Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '40px', height: '40px', borderRadius: '12px',
-                                    background: `${strategyColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <Crosshair size={20} color={strategyColor} />
-                                </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '24px', paddingRight: '40px' }}>
+                            {/* Icon Container */}
+                            <div style={{
+                                width: '48px', height: '48px', borderRadius: '14px',
+                                background: `linear-gradient(135deg, ${strategyColor}30 0%, ${strategyColor}10 100%)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: `1px solid ${strategyColor}40`,
+                                boxShadow: `0 0 20px ${strategyColor}15`
+                            }}>
+                                <Crosshair size={24} color={strategyColor} />
+                            </div>
+
+                            {/* Text and Button Container */}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div>
-                                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>{strategyName}</h3>
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{option.ticker} • {stock?.ticker}</span>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff', fontWeight: 700, letterSpacing: '-0.3px' }}>{strategyName}</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>{option.ticker}</span>
+                                        <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#475569' }}></span>
+                                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{stock?.ticker}</span>
+                                    </div>
                                 </div>
+
+                                <button
+                                    onClick={() => {
+                                        const strategyMap = {
+                                            'venda_put': 'venda-de-put-cash-secured',
+                                            'venda_call': 'lancamento-coberto',
+                                            'compra_put': 'compra-a-seco-pozinho',
+                                            'compra_call': 'compra-a-seco-pozinho'
+                                        };
+                                        const anchor = strategyMap[strategy] || '';
+                                        if (anchor) window.location.hash = anchor;
+                                        onNavigate('strategies');
+                                        onClose();
+                                    }}
+                                    style={{
+                                        alignSelf: 'flex-start',
+                                        background: `linear-gradient(90deg, ${strategyColor}15, transparent)`,
+                                        border: `1px solid ${strategyColor}30`,
+                                        borderRadius: '8px',
+                                        padding: '6px 14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: 'pointer',
+                                        color: strategyColor,
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        marginTop: '4px',
+                                        backdropFilter: 'blur(5px)'
+                                    }}
+                                    className="strategy-link-btn"
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = `linear-gradient(90deg, ${strategyColor}25, ${strategyColor}05)`;
+                                        e.currentTarget.style.border = `1px solid ${strategyColor}60`;
+                                        e.currentTarget.style.transform = 'translateX(4px)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = `linear-gradient(90deg, ${strategyColor}15, transparent)`;
+                                        e.currentTarget.style.border = `1px solid ${strategyColor}30`;
+                                        e.currentTarget.style.transform = 'translateX(0)';
+                                    }}
+                                >
+                                    <BookOpen size={14} />
+                                    <span>Aprender sobre esta estratégia</span>
+                                    <ChevronRight size={12} style={{ opacity: 0.6 }} />
+                                </button>
                             </div>
                         </div>
 
@@ -219,229 +323,200 @@ const Home = ({ onNavigate }) => {
 
                         {/* Dados da Operação */}
                         <div style={{
-                            background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '16px', marginBottom: '20px',
-                            border: '1px solid rgba(255,255,255,0.05)'
+                            background: 'rgba(255,255,255,0.02)',
+                            borderRadius: '20px',
+                            padding: '20px',
+                            marginBottom: '28px',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <div>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Ação Atual</span>
-                                    <div style={{ fontSize: '1rem', color: '#fff', fontWeight: 600 }}>R$ {stockPrice.toFixed(2).replace('.', ',')}</div>
-                                </div>
-                                <div>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Strike</span>
-                                    <div style={{ fontSize: '1rem', color: '#fff', fontWeight: 600 }}>R$ {option.strike}</div>
-                                </div>
-                                <div>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>{isVenda ? 'Prêmio/Opção' : 'Custo/Opção'}</span>
-                                    <div style={{ fontSize: '1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 600 }}>R$ {premium.toFixed(2).replace('.', ',')}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#64748b' }}></div>
+                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>Ação Atual</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 700 }}>R$ {stockPrice.toFixed(2).replace('.', ',')}</div>
                                 </div>
                                 <div>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>{isVenda ? 'Prêmio/Lote' : 'Custo/Lote'}</span>
-                                    <div style={{ fontSize: '1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 600 }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: strategyColor }}></div>
+                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>Strike</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 700 }}>R$ {option.strike}</div>
                                 </div>
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Vencimento</span>
-                                    <div style={{ fontSize: '0.9rem', color: '#fff' }}>{formatDate(option.expiration)}</div>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isVenda ? '#4ade80' : '#ef4444' }}></div>
+                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>{isVenda ? 'Prêmio/Opção' : 'Custo/Opção'}</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 700 }}>R$ {premium.toFixed(2).replace('.', ',')}</div>
                                 </div>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isVenda ? '#4ade80' : '#ef4444' }}></div>
+                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>{isVenda ? 'Prêmio/Lote' : 'Custo/Lote'}</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 700 }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</div>
+                                </div>
+                            </div>
+
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', width: '100%' }}></div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Calendar size={14} color="#64748b" />
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vencimento:</span>
+                                <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>{formatDate(option.expiration)}</span>
                             </div>
                         </div>
 
                         {/* Explicação da Estratégia */}
-                        {
-                            strategy === 'venda_put' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {strategy === 'venda_put' && (
                                 <>
-                                    {/* Venda de Put Cash Secured */}
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#4ade80' }}>1.</span> Garantia Necessária
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Tenha <strong style={{ color: '#fff' }}>R$ {guaranteeNeeded.toFixed(2).replace('.', ',')}</strong> em garantia (1 lote).
-                                            <br />Preferencialmente em <strong style={{ color: '#38bdf8' }}>LFTS11</strong> para render enquanto garantia.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#4ade80' }}>2.</span> Execute a Venda
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Venda a PUT <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
-                                            <br />Você receberá <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> de prêmio imediatamente.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#4ade80' }}>3.</span> Cenários no Vencimento
-                                        </h4>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                                            <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
-                                                <strong style={{ color: '#4ade80' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
-                                                Opção vira pó. Você fica com o prêmio total. ✓
-                                            </div>
-                                            <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
-                                                <strong style={{ color: '#ef4444' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
-                                                Você será exercido e comprará 100 ações por R$ {option.strike} cada.
-                                            </div>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Garantia Necessária</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Prepare <strong style={{ color: '#fff' }}>R$ {guaranteeNeeded.toFixed(2).replace('.', ',')}</strong>. Use <strong style={{ color: '#38bdf8' }}>LFTS11</strong> para que seu dinheiro renda enquanto serve de garantia.
+                                            </p>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>↻</span> Rolagem (Ajuste)
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Se a ação cair muito, você pode <strong style={{ color: '#fff' }}>rolar</strong> recomprando a PUT vendida e vendendo outra com strike menor ou vencimento mais longo.
-                                        </p>
-                                    </div>
-                                </>
-                            )
-                        }
 
-                        {
-                            strategy === 'venda_call' && (
-                                <>
-                                    {/* Lançamento Coberto (Venda de Call) */}
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>1.</span> Requisito: Ter as Ações
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Tenha <strong style={{ color: '#fff' }}>100 ações de {stock?.ticker}</strong> em carteira para cada lote.
-                                            <br />Suas ações serão a garantia da operação.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>2.</span> Execute a Venda
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Venda a CALL <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
-                                            <br />Você receberá <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> de prêmio imediatamente.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>3.</span> Cenários no Vencimento
-                                        </h4>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                                            <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
-                                                <strong style={{ color: '#4ade80' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
-                                                Opção vira pó. Você fica com prêmio + ações. ✓
-                                            </div>
-                                            <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
-                                                <strong style={{ color: '#ef4444' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
-                                                Você será exercido e venderá suas ações por R$ {option.strike} cada.
-                                            </div>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Execute a Venda</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Venda a PUT <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}. Receba <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> na hora.
+                                            </p>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>↻</span> Rolagem (Ajuste)
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Se a ação subir muito, você pode <strong style={{ color: '#fff' }}>rolar</strong> recomprando a CALL vendida e vendendo outra com strike maior ou vencimento mais longo.
-                                        </p>
-                                    </div>
-                                </>
-                            )
-                        }
 
-                        {
-                            strategy === 'compra_call' && (
-                                <>
-                                    {/* Compra de Call a Seco */}
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>1.</span> Capital Necessário
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Você precisará de <strong style={{ color: '#ef4444' }}>R$ {costTotal.toFixed(2).replace('.', ',')}</strong> para comprar 1 lote (100 opções).
-                                            <br />Este é o valor máximo que você pode perder.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>2.</span> Execute a Compra
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Compre a CALL <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
-                                            <br />Você está apostando que a ação <strong style={{ color: '#4ade80' }}>SUBIRÁ</strong> acima do strike até o vencimento.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#38bdf8' }}>3.</span> Cenários no Vencimento
-                                        </h4>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                                            <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
-                                                <strong style={{ color: '#4ade80' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
-                                                Você lucra a diferença × 100 ações. Lucro potencial ilimitado! ✓
-                                            </div>
-                                            <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
-                                                <strong style={{ color: '#ef4444' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
-                                                Opção vira pó. Você perde o prêmio pago (R$ {costTotal.toFixed(2).replace('.', ',')}).
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Cenários no Vencimento</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div style={{ padding: '12px', background: 'rgba(74,222,128,0.05)', borderRadius: '12px', border: '1px solid rgba(74,222,128,0.1)', borderLeft: '3px solid #4ade80' }}>
+                                                    <div style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Acima de R$ {option.strike}</div>
+                                                    <div style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>A opção vira pó e você embolsa o lucro total! ✓</div>
+                                                </div>
+                                                <div style={{ padding: '12px', background: 'rgba(239,68,68,0.05)', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.1)', borderLeft: '3px solid #ef4444' }}>
+                                                    <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Abaixo de R$ {option.strike}</div>
+                                                    <div style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Você compra a ação pelo preço do strike (desconto real).</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#ef4444' }}>⚠</span> Risco Máximo
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Perda limitada ao prêmio pago. Operação especulativa de <strong style={{ color: '#fff' }}>alto risco</strong>.
-                                        </p>
-                                    </div>
                                 </>
-                            )
-                        }
+                            )}
 
-                        {
-                            strategy === 'compra_put' && (
+                            {strategy === 'venda_call' && (
                                 <>
-                                    {/* Compra de Put a Seco */}
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#ef4444' }}>1.</span> Capital Necessário
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Você precisará de <strong style={{ color: '#ef4444' }}>R$ {costTotal.toFixed(2).replace('.', ',')}</strong> para comprar 1 lote (100 opções).
-                                            <br />Este é o valor máximo que você pode perder.
-                                        </p>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Requisito: Ter as Ações</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Tenha <strong style={{ color: '#fff' }}>100 ações de {stock?.ticker}</strong>. Elas servirão como a garantia real da sua operação.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#ef4444' }}>2.</span> Execute a Compra
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Compre a PUT <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}.
-                                            <br />Você está apostando que a ação <strong style={{ color: '#ef4444' }}>CAIRÁ</strong> abaixo do strike até o vencimento.
-                                        </p>
+
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Execute a Venda</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Venda a CALL <strong style={{ color: '#fff' }}>{option.ticker}</strong> no strike R$ {option.strike}. O prêmio de <strong style={{ color: '#4ade80' }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</strong> cai na hora.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#ef4444' }}>3.</span> Cenários no Vencimento
-                                        </h4>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                                            <div style={{ marginBottom: '8px', padding: '8px', background: 'rgba(74,222,128,0.1)', borderRadius: '8px', borderLeft: '3px solid #4ade80' }}>
-                                                <strong style={{ color: '#4ade80' }}>Ação ABAIXO de R$ {option.strike}:</strong><br />
-                                                Você lucra a diferença × 100 ações. Lucro potencial até R$ {(strikeVal * 100).toFixed(0)}! ✓
-                                            </div>
-                                            <div style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', borderLeft: '3px solid #ef4444' }}>
-                                                <strong style={{ color: '#ef4444' }}>Ação ACIMA de R$ {option.strike}:</strong><br />
-                                                Opção vira pó. Você perde o prêmio pago (R$ {costTotal.toFixed(2).replace('.', ',')}).
+
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Cenários no Vencimento</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div style={{ padding: '12px', background: 'rgba(74,222,128,0.05)', borderRadius: '12px', border: '1px solid rgba(74,222,128,0.1)', borderLeft: '3px solid #4ade80' }}>
+                                                    <div style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Abaixo de R$ {option.strike}</div>
+                                                    <div style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Opção expira. Você fica com o prêmio e continua com as ações.</div>
+                                                </div>
+                                                <div style={{ padding: '12px', background: 'rgba(239,68,68,0.05)', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.1)', borderLeft: '3px solid #ef4444' }}>
+                                                    <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Acima de R$ {option.strike}</div>
+                                                    <div style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Você entrega as ações pelo valor do strike (+ lucro da alta).</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ color: '#ef4444' }}>⚠</span> Risco Máximo
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                            Perda limitada ao prêmio pago. Operação especulativa de <strong style={{ color: '#fff' }}>alto risco</strong>.
-                                        </p>
+                                </>
+                            )}
+
+                            {(strategy === 'compra_call' || strategy === 'compra_put') && (
+                                <>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Capital em Risco</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Você precisará de <strong style={{ color: '#ef4444' }}>R$ {costTotal.toFixed(2).replace('.', ',')}</strong>. Este valor representa sua perda máxima caso a tese não se confirme.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
+                                            <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
+                                        </div>
+                                        <div style={{ flex: 1, paddingBottom: '12px' }}>
+                                            <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Tese de Mercado</h4>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                                                Compre a {strategy === 'compra_call' ? 'CALL' : 'PUT'} <strong style={{ color: '#fff' }}>{option.ticker}</strong>. Você aposta que o ativo {strategy === 'compra_call' ? <strong style={{ color: '#4ade80' }}>SUBIRÁ</strong> : <strong style={{ color: '#ef4444' }}>CAIRÁ</strong>} de forma brusca até o vencimento.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Expectativa</h4>
+                                            <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <AlertTriangle size={20} color="#facc15" />
+                                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                                                    Operação especulativa de alta volatilidade. Lucro ilimitado se o movimento ocorrer, mas risco de perda total do prêmio pago.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </>
-                            )
-                        }
+                            )}
+                        </div>
                     </div>
                 </motion.div >
             </div >
@@ -892,13 +967,16 @@ const Home = ({ onNavigate }) => {
                                                 </div>
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem' }}>{stock.ticker}</span>
-                                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{stock.company_name}</span>
+                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
+                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '1rem' }}>
-                                            <TrendingUp size={16} />
-                                            {formatVariation(stock.change_day)}
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Var. dia</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '1rem' }}>
+                                                <TrendingUp size={16} />
+                                                {formatVariation(stock.change_day)}
+                                            </div>
                                         </div>
                                     </div>
                                     {idx < topGainers.length - 1 && (
@@ -949,13 +1027,16 @@ const Home = ({ onNavigate }) => {
                                                 </div>
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem' }}>{stock.ticker}</span>
-                                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{stock.company_name}</span>
+                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
+                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '1rem' }}>
-                                            <TrendingDown size={16} />
-                                            {formatVariation(stock.change_day)}
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Var. dia</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '1rem' }}>
+                                                <TrendingDown size={16} />
+                                                {formatVariation(stock.change_day)}
+                                            </div>
                                         </div>
                                     </div>
                                     {idx < topLosers.length - 1 && (
@@ -1028,7 +1109,22 @@ const Home = ({ onNavigate }) => {
 
                                 // Logic per type
                                 if (isSelic) {
-                                    // Remove prefix, change period
+                                    // Calculate Total: Fixed + Selic Index
+                                    try {
+                                        const fixedPartStr = rawRate.replace(/[^\d,.]/g, "").replace(",", ".");
+                                        const fixedPart = parseFloat(fixedPartStr) || 0;
+
+                                        const selicIndexStr = indices.selic ? indices.selic.replace(/[^\d,.]/g, "").replace(",", ".") : "0";
+                                        const selicIndex = parseFloat(selicIndexStr) || 0;
+
+                                        if (selicIndex > 0) {
+                                            const total = fixedPart + selicIndex;
+                                            displayRate = `${total.toFixed(2).replace('.', ',')}%`;
+                                        }
+                                    } catch (e) {
+                                        console.error("Error calculating Selic total", e);
+                                    }
+
                                     periodLabel = "ao dia útil";
                                 } else if (isIPCA) {
                                     displayRate = `IPCA + ${displayRate}`;
@@ -1255,7 +1351,7 @@ const Home = ({ onNavigate }) => {
                                     }}
                                 >
                                     Fechar
-                                    <X size={16} />
+                                    <CloseIcon size={16} />
                                 </button>
                             </div>
 
@@ -1560,28 +1656,19 @@ const Home = ({ onNavigate }) => {
             <div className="dashboard-grid">
                 {homeNews.length > 0 ? (
                     homeNews.map((item, idx) => (
-                        <div key={idx} className="glass-card news-card-hover" style={{
-                            padding: '20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '10px',
-                            cursor: 'pointer',
-                            textDecoration: 'none',
-                            color: 'inherit',
-                            height: '100%'
-                        }}
-                            onClick={() => window.open(item.link, '_blank')}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.source}</span>
-                                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
+                        <div key={idx} className="news-card" onClick={() => window.open(item.link, '_blank')} style={{ cursor: 'pointer' }}>
+                            <div className="news-card-header">
+                                <span className="news-badge">{item.source}</span>
+                                <span className="news-date">{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
                             </div>
-                            <h3 style={{ fontSize: '1rem', lineHeight: '1.4', fontWeight: '600', color: '#f1f5f9', flex: 1 }}>
+                            <h3 className="news-title">
                                 {item.title}
                             </h3>
-                            <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                Ler mais <ChevronRight size={14} />
-                            </span>
+                            <div className="news-footer">
+                                <span className="news-read-more">
+                                    Ler mais <ChevronRight size={14} />
+                                </span>
+                            </div>
                         </div>
                     ))
                 ) : (
@@ -1623,8 +1710,8 @@ const Home = ({ onNavigate }) => {
                                                 {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 'bold', color: '#fff', lineHeight: '1.2' }}>{evt.ticker}</div>
-                                                <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{stock.company_name || ''}</div>
+                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -1662,8 +1749,8 @@ const Home = ({ onNavigate }) => {
                                                 {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 'bold', color: '#fff', lineHeight: '1.2' }}>{evt.ticker}</div>
-                                                <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{stock.company_name || ''}</div>
+                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>

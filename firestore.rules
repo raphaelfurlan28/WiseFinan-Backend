@@ -8,6 +8,15 @@ service cloud.firestore {
       allow read, write: if true;
     }
     
+    // User Specific Financial Goals
+    match /user_goals/{goalId} {
+      allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Also allow deletion if the document belongs to the user
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Allow read if the document belongs to the user
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
     // Default: Deny other access
     match /{document=**} {
       allow read, write: if false;

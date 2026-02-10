@@ -1,0 +1,621 @@
+{
+  "app_name": "WiseFinan",
+  "description": "Plataforma brasileira de análise e gestão de investimentos pessoais, cobrindo renda variável (ações B3), renda fixa (Tesouro Direto, CDBs, LCIs/LCAs), opções, ETFs, e planejamento financeiro. App completo com dashboard, simuladores, calendário de proventos, notícias, chat interno, estratégias de investimento e sistema de assinatura.",
+  "language": "pt-BR",
+  "last_updated": "2026-02-10",
+
+  "tech_stack": {
+    "frontend": {
+      "framework": "React 18+ (Vite)",
+      "language": "JavaScript (JSX)",
+      "styling": "Vanilla CSS + Inline Styles (Glassmorphism, Dark Theme)",
+      "charts": "Recharts (LineChart, AreaChart, BarChart, ComposedChart, PieChart)",
+      "icons": "Lucide React",
+      "animations": "Framer Motion",
+      "http_client": "Axios + Native fetch",
+      "auth": "Firebase Auth (Email/Password + Google OAuth via @react-oauth/google)",
+      "database_client": "Firebase Firestore (for Investment Goals per user)",
+      "build_tool": "Vite",
+      "deployment": "Firebase Hosting (static build deployed to https://wisefinan-af83a.web.app)"
+    },
+    "backend": {
+      "framework": "Flask (Python)",
+      "cors": "flask-cors",
+      "deployment": "Google Cloud Run (Docker container)",
+      "data_sources": [
+        "Google Sheets (via gspread + service_account.json)",
+        "Yahoo Finance (via yfinance)",
+        "Tesouro Direto API (via web scraping / API)",
+        "RSS Feeds (financial news)",
+        "BCB API (economic indices)"
+      ],
+      "caching": "In-memory dict with TTL (services/cache.py)",
+      "env_management": "python-dotenv (.env file)"
+    }
+  },
+
+  "environment_variables": {
+    "frontend": {
+      "VITE_API_BASE_URL": "Base URL for backend API (e.g., https://wisefinan-backend-XXXXX.a.run.app)",
+      "VITE_GOOGLE_CLIENT_ID": "Google OAuth Client ID for login",
+      "VITE_FIREBASE_API_KEY": "Firebase project API key",
+      "VITE_FIREBASE_AUTH_DOMAIN": "Firebase Auth domain",
+      "VITE_FIREBASE_PROJECT_ID": "Firebase project ID",
+      "VITE_FIREBASE_STORAGE_BUCKET": "Firebase storage bucket",
+      "VITE_FIREBASE_MESSAGING_SENDER_ID": "Firebase messaging sender ID",
+      "VITE_FIREBASE_APP_ID": "Firebase app ID",
+      "VITE_FIREBASE_MEASUREMENT_ID": "Firebase measurement ID"
+    },
+    "backend": {
+      "PORT": "Server port (default 5002)",
+      "GOOGLE_SHEETS_ID": "ID of the Google Sheets workbook containing stock data",
+      "GOOGLE_SHEETS_CREDS": "Path to service_account.json or inline JSON"
+    }
+  },
+
+  "authentication": {
+    "provider": "Firebase Authentication",
+    "methods": ["Email/Password", "Google OAuth (popup)"],
+    "flow": {
+      "1_unauthenticated": "User sees LandingPage component with pricing plans and features",
+      "2_login_click": "User clicks 'Entrar' → SplashScreen component renders with login/register forms",
+      "3_auth_success": "Firebase onAuthStateChanged fires → AuthContext sets user state → AppContent renders main app",
+      "4_session": "User object includes: uid, email, name, photo, accessToken"
+    },
+    "context_file": "frontend/src/context/AuthContext.jsx",
+    "capabilities": ["login", "register", "logout", "updateUserProfile"],
+    "google_client_id": "477556815504-12btpjhrd9cr5qc86aqp2e7792oemvqj.apps.googleusercontent.com"
+  },
+
+  "project_structure": {
+    "root": "WiseFinan/",
+    "frontend": {
+      "path": "frontend/",
+      "entry_point": "src/main.jsx",
+      "app_root": "src/App.jsx",
+      "components_dir": "src/components/",
+      "context_dir": "src/context/",
+      "services_dir": "src/services/",
+      "styles_dir": "src/styles/"
+    },
+    "backend": {
+      "path": "backend/",
+      "entry_point": "app.py",
+      "services_dir": "backend/services/",
+      "scripts_dir": "backend/scripts/",
+      "dockerfile": "backend/Dockerfile"
+    },
+    "automation_scripts": {
+      "atualizar_opcoes.bat": "BAT script to trigger options data update",
+      "atualizar_rf.bat": "BAT script to trigger fixed income (Tesouro Direto) data update",
+      "update_td_historico.py": "Python script to update Treasury historical data",
+      "fetch_indices_60m.py": "Python script to fetch economic indices every 60 minutes"
+    }
+  },
+
+  "frontend_routing": {
+    "type": "State-based (useState in AppContent)",
+    "views": {
+      "home": {
+        "component": "Home.jsx",
+        "description": "Dashboard principal. Exibe oportunidades de ações descontadas, ações caras, renda fixa, opções com garantia. Também inclui destaques de notícias (RSS), calendário de dividendos, e resumo de mercado (maiores altas/baixas/dividendos).",
+        "apis_used": ["/api/home", "/api/stocks", "/api/news/dashboard", "/api/calendar", "/api/news/movers", "/api/indices"],
+        "sub_components": ["OperationModal (strategies popup)", "StockTicker (scrolling ticker bar)"]
+      },
+      "renda-variavel": {
+        "component": "StockList.jsx",
+        "description": "Lista de ações agrupadas por setor. Mostra ticker, preço atual, variação diária, DY, e barra de progresso de desconto (valuation). Permite busca por ticker/nome.",
+        "apis_used": ["/api/stocks"],
+        "click_action": "onSelectStock → navigates to StockDetail"
+      },
+      "stock-detail": {
+        "component": "StockDetail.jsx",
+        "description": "Página de detalhes de uma ação individual. Inclui: gráfico de preço histórico (com linhas de referência de alta/baixa/atual), estatísticas (P/L, P/VP, DY, Lucro, etc.), seção de Valuation, módulo de opções, e fundamentos (gráficos de receita, lucro, ROE).",
+        "apis_used": ["/api/stocks/<ticker>/history", "/api/stocks/<ticker>/options", "/api/stocks/<ticker>/fundamentals"],
+        "sub_components": ["FundamentalsSection", "OptionsModule"]
+      },
+      "renda-fixa": {
+        "component": "FixedIncome.jsx",
+        "description": "Página de Renda Fixa. Exibe indicadores econômicos (Selic, CDI, IPCA, Poupança), gráfico comparativo de rentabilidade acumulada, e cards de títulos públicos por categoria: Reserva de Emergência, Proteção contra Inflação, Pré-fixados, Longo Prazo/Aposentadoria. Também inclui ETFs de Renda Fixa (LFTS11, IMAB11, etc).",
+        "apis_used": ["/api/indices", "/api/rf", "/api/indicators/history", "/api/etfs/treasury"],
+        "sub_components": ["Card (reusable card for each category)", "ComparativeChart"]
+      },
+      "portfolio": {
+        "component": "Portfolio.jsx",
+        "description": "Divisão de Portfólio. O usuário seleciona um perfil de investidor (Conservador, Moderado, Arrojado, Agressivo) e recebe uma alocação sugerida com gráfico de pizza (PieChart). Cada fatia do gráfico mostra as recomendações de ativos correspondentes: Reserva de Emergência (Tesouro Selic, LFTS11), Proteção (IPCA+), Crescimento (ações de baixa volatilidade), Alto Risco (ações de alta volatilidade), Pré-fixados. Também inclui módulo de Metas Financeiras (InvestmentGoals).",
+        "apis_used": ["/api/stocks", "/api/rf", "/api/etfs/treasury", "/api/home", "/api/indices"],
+        "sub_components": ["InvestmentGoals (modal with calculator)"],
+        "filtering_logic": {
+          "low_volatility_stocks": {
+            "sectors": ["Bancos", "Energia", "Saneamento", "Seguradora"],
+            "count_per_sector": 2,
+            "sort_by": "falta_pct (Highest Discount) DESC"
+          },
+          "high_volatility_stocks": {
+            "sectors": ["Bens Industriais", "Consumo", "Materiais Básicos", "Tecnologia", "Telecomunicações", "Papel e Celulose"],
+            "count_per_sector": 1,
+            "sort_by": "falta_pct (Highest Discount) DESC"
+          }
+        }
+      },
+      "news": {
+        "component": "Noticias.jsx",
+        "description": "Página de Notícias. Exibe notícias financeiras do mercado brasileiro via RSS feed. Cards modernos com glassmorphism.",
+        "apis_used": ["/api/news/dashboard"]
+      },
+      "calculator": {
+        "component": "Calculator.jsx",
+        "description": "Simulador de Renda Fixa. Permite selecionar um título (Tesouro Direto ou ETF), informar aporte inicial, mensal, data de vencimento, e taxa anual esperada. A taxa é calculada automaticamente: para IPCA+ soma fixa + IPCA, para Selic soma fixa + Selic index. Gera gráfico de evolução patrimonial e mostra Total Investido, Total Acumulado, e Rendimento.",
+        "apis_used": ["/api/rf", "/api/etfs/treasury", "/api/indices"]
+      },
+      "options_calculator": {
+        "component": "OptionsCalculator.jsx",
+        "description": "Calculadora de opções avançada. Permite calcular Black-Scholes, Greeks, e visualizar a cadeia de opções de uma ação específica. Inclui campos para preço do ativo, strike, volatilidade, taxa livre de risco, e tempo até expiração.",
+        "apis_used": ["/api/stocks/<ticker>/options"]
+      },
+      "chat": {
+        "component": "Chat.jsx",
+        "description": "Módulo de chat integrado com IA (LLM). Permite ao usuário fazer perguntas sobre investimentos e receber respostas contextualizadas. Usa OpenRouter como backend de LLM.",
+        "apis_used": ["/api/chat (POST)"]
+      },
+      "strategies": {
+        "component": "Strategies.jsx",
+        "description": "Página de Estratégias de Investimento. Exibe estratégias detalhadas para cada tipo de operação: Ações Descontadas, Ações Caras (venda a descoberto), Opções (venda coberta), Renda Fixa. Cada estratégia tem passo a passo, condições de entrada/saída, e disclaimers.",
+        "apis_used": []
+      },
+      "calendar": {
+        "component": "Calendario.jsx",
+        "description": "Calendário financeiro. Exibe datas de dividendos (próximos ex-dates) e balanços trimestrais das empresas. Mostra gráfico de frequência de pagamentos e lista de próximos eventos com logos das empresas.",
+        "apis_used": ["/api/calendar", "/api/stocks"]
+      },
+      "support": {
+        "component": "Support.jsx",
+        "description": "Página de Suporte. Contém FAQ, informações de contato, e links úteis.",
+        "apis_used": []
+      }
+    }
+  },
+
+  "frontend_components": {
+    "layout": {
+      "Header.jsx": {
+        "description": "Cabeçalho fixo no topo. Exibe logo WiseFinan, nome do usuário, avatar, e botão de menu (hamburger para sidebar). Inclui StockTicker (barra rolante de cotações).",
+        "css": "Header.css"
+      },
+      "Sidebar.jsx": {
+        "description": "Menu lateral deslizante. Navegação entre todas as views (Home, Ações, Renda Fixa, Portfólio, Notícias, Simulador, Opções, Chat, Estratégias, Calendário, Suporte). Toggle open/close.",
+        "css": "Sidebar.css"
+      },
+      "StockTicker.jsx": {
+        "description": "Barra horizontal scrolling infinito com principais ações e suas variações diárias. Exibe ticker, variação %, e cor (verde/vermelho).",
+        "apis_used": ["/api/stocks"]
+      }
+    },
+    "auth": {
+      "SplashScreen.jsx": {
+        "description": "Tela de login/registro. Formulários para Email+Senha, botão Google Login. Animações de entrada. Background gradiente escuro.",
+        "auth_methods": ["Email/Password (Firebase)", "Google OAuth (popup)"]
+      },
+      "UserProfileModal.jsx": {
+        "description": "Modal para edição de perfil do usuário (nome, foto). Sincroniza com Firebase Auth e backend.",
+        "apis_used": ["/api/user/update (POST)"]
+      }
+    },
+    "landing": {
+      "LandingPage/LandingPage.jsx": {
+        "description": "Landing page pública. Seções: Hero (com mockups do app), Features, Planos de Preço (Mensal R$47,90, Semestral R$239,40, Anual R$383,90), FAQ, Footer. Inclui modal de assinatura.",
+        "sub_files": ["HeroSection.jsx", "PricingSection.jsx", "FeaturesSection.jsx", "LandingPage.css", "SubscriptionModal.jsx"],
+        "apis_used": ["/api/subscription/request (POST)"]
+      }
+    },
+    "shared": {
+      "ModernLoader.jsx": "Spinner de carregamento global com texto customizável",
+      "ModernSpinner.jsx": "Spinner menor para carregamentos parciais",
+      "OptionsModule.jsx": {
+        "description": "Módulo de opções inline exibido dentro de StockDetail. Mostra cadeia de calls/puts com Greeks.",
+        "css": "OptionsModule.css"
+      },
+      "InvestmentGoals.jsx": {
+        "description": "Componente de Metas Financeiras. Modal com formulário para definir meta (nome, valor alvo, prazo, rentabilidade). Calcula PMT (aporte mensal necessário). Salva no Firestore por usuário (user.uid). Lista metas existentes com barra de progresso.",
+        "database": "Firestore collection: goals/{userId}/userGoals"
+      }
+    }
+  },
+
+  "frontend_services": {
+    "api.js": {
+      "description": "Configuração do Axios e helper getApiUrl(). Em dev usa proxy (/api), em prod usa VITE_API_BASE_URL completa.",
+      "exports": ["getApiUrl(path)", "default api (axios instance)"]
+    },
+    "firebaseConfig.js": {
+      "description": "Inicialização do Firebase App e Auth. Usa variáveis VITE_FIREBASE_*.",
+      "exports": ["auth (Firebase Auth instance)"]
+    }
+  },
+
+  "frontend_context": {
+    "AuthContext.jsx": {
+      "description": "Context Provider para autenticação. Gerencia estado do usuário, login, registro, logout, e atualização de perfil.",
+      "state": ["user", "loading", "authError"],
+      "methods": ["login(email, password)", "register(email, password, name)", "logout()", "updateUserProfile(newName, newPhoto)"],
+      "exports": ["useAuth()", "AuthProvider"]
+    },
+    "NotificationContext.jsx": {
+      "description": "Context Provider para notificações toast. Permite mostrar mensagens de sucesso/erro temporárias.",
+      "exports": ["useNotification()", "NotificationProvider"]
+    }
+  },
+
+  "backend_api_endpoints": [
+    {
+      "route": "GET /",
+      "handler": "index",
+      "description": "Health check do backend. Retorna mensagem simples."
+    },
+    {
+      "route": "GET /api/stocks",
+      "handler": "get_stocks",
+      "description": "Retorna lista completa de ações monitoradas. Dados da planilha Google Sheets (aba principal).",
+      "response_format": "Array de objetos stock",
+      "stock_fields": ["ticker", "company_name", "sector", "setor", "price", "variation", "dy", "pl", "pvp", "lpa", "vpa", "roe", "lucro_liquido", "cotacao", "falta_pct", "vol_ano", "image_url"]
+    },
+    {
+      "route": "GET /api/calendar",
+      "handler": "get_calendar",
+      "description": "Retorna calendário de dividendos e balanços. Usa yfinance para buscar dados de cada ticker da planilha.",
+      "response_format": "{ dividend_events: [], earnings_events: [] }"
+    },
+    {
+      "route": "GET /api/stocks/<ticker>/history",
+      "handler": "get_stock_history",
+      "description": "Retorna histórico de preços de uma ação específica. Fonte: Google Sheets tab 'Historico' ou yfinance.",
+      "response_format": "Array de { date, close, open, high, low, volume }"
+    },
+    {
+      "route": "GET /api/stocks/<ticker>/options",
+      "handler": "get_stock_options",
+      "description": "Retorna cadeia de opções (calls/puts) de uma ação. Dados da Google Sheets tab 'Opcoes'.",
+      "response_format": "Array de objetos option"
+    },
+    {
+      "route": "GET /api/stocks/<ticker>/fundamentals",
+      "handler": "get_stock_fundamentals",
+      "description": "Retorna dados fundamentalistas de uma ação (receita, lucro, ROE ao longo dos trimestres).",
+      "response_format": "Array de { quarter, revenue, net_income, roe }"
+    },
+    {
+      "route": "POST /api/update/options",
+      "handler": "update_options",
+      "description": "Trigger para atualizar dados de opções. Executa scripts/opcoes_to_sheets_rules.py.",
+      "response_format": "{ status: 'success'|'error', output: string }"
+    },
+    {
+      "route": "POST /api/update/rf",
+      "handler": "update_rf",
+      "description": "Trigger para atualizar dados de renda fixa (Tesouro Direto). Executa scripts/td_to_sheets.py.",
+      "response_format": "{ status: 'success'|'error', output: string }"
+    },
+    {
+      "route": "GET /api/news/dashboard",
+      "handler": "get_news_dashboard",
+      "description": "Retorna indicadores de mercado e notícias RSS agregadas de fontes BR (InfoMoney, Valor Econômico, etc).",
+      "response_format": "{ indicators: { ibov, sp500, dollar, bitcoin }, news: [{ title, link, source, date }] }"
+    },
+    {
+      "route": "GET /api/news/movers",
+      "handler": "get_market_movers",
+      "description": "Retorna maiores altas, baixas, e maiores dividend yields do dia. Calculado a partir de /api/stocks.",
+      "response_format": "{ highs: [...top5], lows: [...top5], dividends: [...top5] }"
+    },
+    {
+      "route": "GET /api/rf",
+      "handler": "rf",
+      "description": "Retorna lista de títulos de renda fixa (Tesouro Direto) com categorias. Dados da Google Sheets tab 'TD_Diario'.",
+      "response_format": "Array de { titulo, taxa_compra, vencimento, min_investimento, category, rentabilidade_anual }",
+      "categories": ["Reserva de Emergência", "Proteção contra Inflação", "Pré-fixados", "Longo Prazo / Aposentadoria"]
+    },
+    {
+      "route": "GET /api/indices",
+      "handler": "indices",
+      "description": "Retorna principais indicadores econômicos brasileiros em tempo real.",
+      "response_format": "{ selic: '14.25%', cdi: '14.15%', ipca: '4.50%', poupanca: '0.5% + TR' }",
+      "source": "services/indices.py (BCB API + fallbacks)"
+    },
+    {
+      "route": "GET /api/indicators/history",
+      "handler": "indicators_history",
+      "description": "Retorna série histórica de CDI, Selic, e Poupança acumulados para o gráfico comparativo.",
+      "response_format": "Array de { date, cdi, selic, poupanca }"
+    },
+    {
+      "route": "GET /api/etfs/treasury",
+      "handler": "get_treasury_etfs_endpoint",
+      "description": "Retorna dados de ETFs de renda fixa (LFTS11, IMAB11, B5P211, etc) com yield calculado via yfinance.",
+      "response_format": "Array de { titulo, yield_val, yield_label, ticker, min_investimento }"
+    },
+    {
+      "route": "GET /api/home",
+      "handler": "get_home_data",
+      "description": "Retorna oportunidades filtradas para a Home. Inclui ações descontadas, caras, renda fixa, e garantias para opções.",
+      "response_format": "{ discounted: [...], expensive: [...], fixed_income: [...], guarantees: [...] }"
+    },
+    {
+      "route": "POST /api/chat",
+      "handler": "chat_handler",
+      "description": "Endpoint de chat com IA. Recebe mensagem do usuário, consulta LLM (OpenRouter), retorna resposta. Mantém histórico in-memory.",
+      "request_body": "{ message: string }",
+      "response_format": "{ response: string }"
+    },
+    {
+      "route": "POST /api/auth/login",
+      "handler": "auth_login",
+      "description": "Endpoint de autenticação backend (para sincronização com planilha de usuários). Verifica credenciais na aba 'Usuarios' da Google Sheets.",
+      "request_body": "{ email, token }",
+      "response_format": "{ status, user: { name, email, plan } }"
+    },
+    {
+      "route": "POST /api/user/update",
+      "handler": "update_user_endpoint",
+      "description": "Atualiza nome e foto do usuário na planilha Google Sheets.",
+      "request_body": "{ email, name, photo }"
+    },
+    {
+      "route": "POST /api/subscription/request",
+      "handler": "subscription_request",
+      "description": "Registra pedido de assinatura na Google Sheets (aba 'Assinaturas'). Captura nome, email, telefone, plano.",
+      "request_body": "{ name, email, phone, plan }"
+    }
+  ],
+
+  "backend_services": {
+    "sheets.py": {
+      "description": "Principal serviço de dados. Conecta à Google Sheets via gspread/service_account. Funções para ler ações, renda fixa, opções, fundamentos, histórico de preços, e oportunidades filtradas.",
+      "key_functions": [
+        "get_sheet_data() → lista completa de ações",
+        "get_fixed_income_data() → títulos de renda fixa categorizados",
+        "get_options_data(ticker) → cadeia de opções de uma ação",
+        "get_fundamentals_data(ticker) → fundamentos trimestrais",
+        "get_history_data(ticker) → histórico de preços",
+        "get_filtered_opportunities() → oportunidades para Home"
+      ],
+      "google_sheet_tabs": [
+        "Fundamentos Ações (main stock data)",
+        "TD_Diario (Treasury daily rates)",
+        "Historico (price history)",
+        "Opcoes (options chain)",
+        "Usuarios (user accounts backup)",
+        "Assinaturas (subscription requests)"
+      ]
+    },
+    "indices.py": {
+      "description": "Busca indicadores econômicos (Selic, CDI, IPCA, Poupança) do Banco Central do Brasil (BCB API).",
+      "key_functions": ["get_economic_indices() → { selic, cdi, ipca, poupanca }"]
+    },
+    "market_data.py": {
+      "description": "Serviço para dados de mercado em tempo real. Inclui indicadores de mercado (IBOV, S&P500, Dólar, Bitcoin), RSS news, dados comparativos históricos, e ETFs de renda fixa.",
+      "key_functions": [
+        "get_market_indicators() → indicadores de mercado",
+        "get_rss_news() → notícias financeiras via RSS",
+        "get_comparative_data() → série histórica CDI/Selic/Poupança",
+        "get_treasury_etfs() → dados de ETFs de renda fixa via yfinance"
+      ]
+    },
+    "cache.py": {
+      "description": "Sistema de cache em memória com TTL. Armazena respostas de API para evitar chamadas repetitivas. Inclui persistência de valores voláteis (ex: variação de preço) entre horários de mercado fechado (18h-10h).",
+      "key_functions": [
+        "get_or_update(key, fetch_func, ttl) → dados cacheados ou frescos",
+        "clear_all_cache() → limpa todo o cache (para pull-to-refresh)"
+      ],
+      "volatile_cache_file": "services/volatile_values_cache.json"
+    },
+    "calendar_service.py": {
+      "description": "Busca dados de calendário (dividendos futuros e balanços) via yfinance para cada ação. Executa em paralelo via ThreadPoolExecutor.",
+      "key_functions": ["get_calendar_data(tickers) → { dividend_events, earnings_events }"]
+    },
+    "sheets_v2.py": {
+      "description": "Versão alternativa do serviço de Google Sheets. Contém lógica adicional de parsing e transformação de dados.",
+      "key_functions": ["get_sheet_data_v2()", "parse_stock_row()"]
+    }
+  },
+
+  "data_model": {
+    "stock": {
+      "ticker": "string (e.g., 'PETR4')",
+      "company_name": "string (e.g., 'Petrobras PN')",
+      "sector": "string (e.g., 'Energia')",
+      "setor": "string (alias for sector)",
+      "price": "string or number (current price in BRL)",
+      "cotacao": "string or number (alias for price)",
+      "variation": "string (daily variation %, e.g., '2,50%')",
+      "dy": "string (Dividend Yield anual, e.g., '12,5%')",
+      "pl": "string (P/E ratio)",
+      "pvp": "string (P/BV ratio)",
+      "lpa": "string (Earnings Per Share)",
+      "vpa": "string (Book Value Per Share)",
+      "roe": "string (Return on Equity)",
+      "lucro_liquido": "string (Net Income)",
+      "falta_pct": "string (discount percentage to fair value, e.g., '25,00%')",
+      "vol_ano": "string (annual volatility, e.g., '35,0%')",
+      "image_url": "string (URL to company logo, or null)",
+      "preco_justo": "string (fair value price)",
+      "preco_teto": "string (ceiling price)"
+    },
+    "fixed_income_bond": {
+      "titulo": "string (e.g., 'Tesouro Selic 2031')",
+      "taxa_compra": "string (buy rate, e.g., '0,0996%' or 'IPCA + 6,56%')",
+      "vencimento": "string (maturity date, e.g., '01/03/2031')",
+      "min_investimento": "string (minimum investment, e.g., 'R$ 182,75')",
+      "category": "string (e.g., 'Reserva de Emergência')",
+      "rentabilidade_anual": "string (annual yield if available)"
+    },
+    "treasury_etf": {
+      "titulo": "string (e.g., 'LFTS11')",
+      "yield_val": "number (real-time yield from yfinance, e.g., 11.25)",
+      "yield_label": "string (e.g., '12 Meses')",
+      "ticker": "string (yfinance ticker, e.g., 'LFTS11.SA')",
+      "min_investimento": "string (e.g., 'R$ 100,00')"
+    },
+    "indices": {
+      "selic": "string (e.g., '14.25%')",
+      "cdi": "string (e.g., '14.15%')",
+      "ipca": "string (e.g., '4.50%')",
+      "poupanca": "string (e.g., '0.5% + TR')"
+    },
+    "investment_goal": {
+      "storage": "Firestore → goals/{userId}/userGoals/{goalId}",
+      "fields": {
+        "name": "string (goal name)",
+        "targetAmount": "number (target value in BRL)",
+        "deadline": "number (months)",
+        "annualRate": "number (expected annual return %)",
+        "currentAmount": "number (current progress)",
+        "monthlyContribution": "number (calculated PMT)",
+        "createdAt": "timestamp"
+      }
+    }
+  },
+
+  "key_business_logic": {
+    "opportunity_filtering_home": {
+      "discounted_stocks": "Stocks where falta_pct > threshold (significantly below fair value). Displayed as 'Oportunidade em Ativos Descontados'.",
+      "expensive_stocks": "Stocks where price > preco_justo (above fair value). Displayed as 'Oportunidade em Ativos Caros'.",
+      "fixed_income": "Fixed income titles from TD_Diario sheet, categorized automatically.",
+      "guarantee_options": "Stocks with covered call options available (from Opcoes tab)."
+    },
+    "portfolio_allocation": {
+      "profiles": {
+        "Conservador": {
+          "allocation": {"Reserva de Emergência": "50%", "Proteção (IPCA+)": "30%", "Crescimento (Ações Baixa Vol)": "15%", "Prefixado": "5%"},
+          "recommendation_type_map": {"selic": "50%", "ipca": "30%", "lowVol": "15%", "prefixado": "5%"}
+        },
+        "Moderado": {
+          "allocation": {"Reserva de Emergência": "30%", "Proteção (IPCA+)": "25%", "Crescimento (Ações Baixa Vol)": "30%", "Alto Risco (Ações Alta Vol)": "10%", "Prefixado": "5%"},
+          "recommendation_type_map": {"selic": "30%", "ipca": "25%", "lowVol": "30%", "highVol": "10%", "prefixado": "5%"}
+        },
+        "Arrojado": {
+          "allocation": {"Reserva de Emergência": "15%", "Proteção (IPCA+)": "15%", "Crescimento (Ações Baixa Vol)": "35%", "Alto Risco (Ações Alta Vol)": "25%", "Prefixado": "10%"},
+          "recommendation_type_map": {"selic": "15%", "ipca": "15%", "lowVol": "35%", "highVol": "25%", "prefixado": "10%"}
+        },
+        "Agressivo": {
+          "allocation": {"Reserva de Emergência": "10%", "Crescimento (Ações Baixa Vol)": "30%", "Alto Risco (Ações Alta Vol)": "50%", "Prefixado": "10%"},
+          "recommendation_type_map": {"selic": "10%", "lowVol": "30%", "highVol": "50%", "prefixado": "10%"}
+        }
+      }
+    },
+    "selic_yield_calculation": {
+      "description": "For Tesouro Selic (Reserva de Emergência), the displayed yield = Fixed Rate from API (e.g., 0.0996%) + Current Selic Index from /api/indices (e.g., 14.25%). This is applied in Home, FixedIncome, Portfolio, and Calculator.",
+      "formula": "displayRate = fixedPart + selicIndex"
+    },
+    "ipca_yield_calculation": {
+      "description": "For IPCA+ bonds, the displayed yield = Fixed Rate (e.g., 6.56%) + Current IPCA from /api/indices (e.g., 4.50%) = Total (e.g., 11.06%).",
+      "formula": "displayRate = fixedPart + ipcaIndex"
+    },
+    "market_hours_persistence": {
+      "description": "Stock variation values are persisted to a JSON file after market close (18h). Between 18h-10h, persisted values are returned instead of stale sheet data. This ensures correct display of daily variation after hours.",
+      "cache_file": "services/volatile_values_cache.json"
+    }
+  },
+
+  "css_design_system": {
+    "theme": "Dark mode (background #0f172a)",
+    "accent_colors": {
+      "primary_green": "#4ade80 (positive values, yields)",
+      "primary_red": "#ef4444 (negative values, losses)",
+      "primary_blue": "#3b82f6 (Reserva de Emergência, general accent)",
+      "secondary_blue": "#38bdf8 (charts, secondary)",
+      "gold": "#f59e0b (Arrojado profile, warnings)",
+      "purple": "#a855f7 (poupança, secondary)",
+      "muted": "#94a3b8 (labels, disabled)"
+    },
+    "card_style": "Glassmorphism (background: rgba(15,23,42,0.7), backdrop-filter: blur, border: 1px solid rgba(255,255,255,0.08))",
+    "css_files": [
+      "Dashboard.css (global container and grid)",
+      "FixedIncome.css (reused by Calculator, styled cards)",
+      "StockList.css",
+      "StockDetail.css",
+      "Header.css",
+      "Sidebar.css",
+      "Calendar.css",
+      "News.css",
+      "OptionsModule.css",
+      "Strategies.css",
+      "LandingPage/LandingPage.css",
+      "index.css (global styles, fonts)",
+      "styles/main.css (global overrides)"
+    ]
+  },
+
+  "deployment": {
+    "frontend": {
+      "host": "Firebase Hosting",
+      "url": "https://wisefinan-af83a.web.app",
+      "build_command": "npm run build",
+      "deploy_command": "firebase deploy --only hosting",
+      "config_file": "firebase.json"
+    },
+    "backend": {
+      "host": "Google Cloud Run",
+      "dockerfile": "backend/Dockerfile",
+      "build_command": "gcloud builds submit --tag gcr.io/PROJECT_ID/wisefinan-backend",
+      "deploy_command": "gcloud run deploy wisefinan-backend --image gcr.io/PROJECT_ID/wisefinan-backend --platform managed --region us-central1 --allow-unauthenticated"
+    }
+  },
+
+  "google_sheets_structure": {
+    "workbook_name": "Fundamentos Ações",
+    "tabs": [
+      {
+        "name": "Main Sheet (Fundamentos)",
+        "description": "Dados fundamentalistas de todas as ações monitoradas",
+        "columns": ["Ticker", "Empresa", "Setor", "Cotação", "Preço Justo", "Preço Teto", "Falta (%)", "Vol. Ano (%)", "P/L", "P/VP", "DY (%)", "LPA", "VPA", "ROE (%)", "Lucro Líquido", "Variação (%)"]
+      },
+      {
+        "name": "TD_Diario",
+        "description": "Taxas diárias do Tesouro Direto",
+        "columns": ["Título", "Vencimento", "Taxa Compra", "Taxa Venda", "Preço Compra", "Preço Venda", "Categoria"]
+      },
+      {
+        "name": "Historico",
+        "description": "Histórico de preços de ações (séries temporais)",
+        "columns": ["Ticker", "Data", "Open", "High", "Low", "Close", "Volume"]
+      },
+      {
+        "name": "Opcoes",
+        "description": "Cadeia de opções (calls e puts) das ações",
+        "columns": ["Ticker", "Tipo", "Strike", "Prêmio", "Vencimento", "Vol. Implícita", "Delta", "Gamma", "Theta", "Vega"]
+      },
+      {
+        "name": "Usuarios",
+        "description": "Backup de dados de usuários (sincronizado com Firebase)",
+        "columns": ["Email", "Nome", "Foto", "Plano", "Data Cadastro"]
+      },
+      {
+        "name": "Assinaturas",
+        "description": "Pedidos de assinatura da landing page",
+        "columns": ["Nome", "Email", "Telefone", "Plano", "Data"]
+      }
+    ]
+  },
+
+  "external_dependencies": {
+    "frontend_npm": [
+      "react", "react-dom", "react-router-dom",
+      "recharts (charts)",
+      "lucide-react (icons)",
+      "framer-motion (animations)",
+      "axios (HTTP client)",
+      "firebase (auth + firestore)",
+      "@react-oauth/google (Google login)"
+    ],
+    "backend_pip": [
+      "flask", "flask-cors",
+      "gspread (Google Sheets API)",
+      "google-auth (service account auth)",
+      "yfinance (Yahoo Finance data)",
+      "feedparser (RSS parsing)",
+      "requests",
+      "python-dotenv",
+      "gunicorn (production server)"
+    ]
+  }
+}

@@ -12,11 +12,12 @@ const Calculator = () => {
 
     // Form State
     const [selectedBond, setSelectedBond] = useState(null);
-    const [initialAmount, setInitialAmount] = useState(1000);
-    const [monthlyAmount, setMonthlyAmount] = useState(200);
+    const [initialAmount, setInitialAmount] = useState(0);
+    const [monthlyAmount, setMonthlyAmount] = useState(0);
     const [maturityDate, setMaturityDate] = useState('');
     const [rateAnnual, setRateAnnual] = useState(10.0);
     const [ipcaProj, setIpcaProj] = useState(4.5); // Default expected IPCA
+    const [selicRate, setSelicRate] = useState(10.75); // Default Selic
 
     // Result State
     const [results, setResults] = useState(null);
@@ -44,7 +45,12 @@ const Calculator = () => {
                 const resInd = await fetch(getApiUrl('/api/indices'));
                 const indices = await resInd.json();
                 if (indices.ipca) {
-                    setIpcaProj(parseFloat(indices.ipca.replace('%', '').replace(',', '.')));
+                    const ipcaValue = parseFloat(indices.ipca.replace('%', '').replace(',', '.'));
+                    setIpcaProj(ipcaValue);
+                }
+                if (indices.selic) {
+                    const selicValue = parseFloat(indices.selic.replace('%', '').replace(',', '.'));
+                    setSelicRate(selicValue);
                 }
             } catch (err) {
                 console.error("Error loading simulator data", err);
@@ -59,53 +65,74 @@ const Calculator = () => {
     );
 
     const handleSelectBond = (bond) => {
+        if (!bond) return;
         setSelectedBond(bond);
         setSearchTerm(bond.titulo);
         setIsDropdownOpen(false);
 
-        // Auto-fill Logic
+        // Auto-fill Maturity Date
         if (bond.vencimento) {
-            // Format DD/MM/YYYY -> YYYY-MM-DD for input
             const parts = bond.vencimento.split('/');
             if (parts.length === 3) {
                 setMaturityDate(`${parts[2]}-${parts[1]}-${parts[0]}`);
             } else {
-                setMaturityDate(bond.vencimento); // Fallback if already ISO or different
+                setMaturityDate(bond.vencimento);
             }
         }
 
-        // Rate Parsing
-        // Examples: "11,25%", "IPCA + 6,56%", "Selic + 0,10%"
-        let rateVal = 0;
-
-        // ETF Case (Real Yield from API)
-        if (bond.yield_val !== undefined) {
-            setRateAnnual(Number(bond.yield_val));
-            return;
-        }
-
+        // Rate Parsing with IPCA/Selic Summation
         let rateStr = bond.taxa_compra || "";
+        const titleUpper = (bond.titulo || "").toUpperCase();
 
-        // Simple heuristic parsing
-        if (rateStr.toUpperCase().includes("IPCA")) {
-            // Extract fixed part
-            const fixedStr = rateStr.replace(/[^\d.,]/g, "").replace(",", ".");
-            const fixed = parseFloat(fixedStr) || 0;
-            // The user will see formatting, but we store annual total expectation
-            // Actually better to keep fixed rate separate from IPCA proj?
-            // Let's set rateAnnual to Fixed Part + IPCA Proj
-            // But we need to update rateAnnual state when IPCA Proj changes too.
-            // For simplicity, let's treat rateAnnual as the TOTAL Nominal Rate for calculation.
-            setRateAnnual(fixed + ipcaProj);
-        } else if (rateStr.toUpperCase().includes("SELIC")) {
-            // Selic is variable. Let's assume current Selic (~10.75 or whatever from API).
-            // If we have access to indices we could use that. defaulting to 10.75.
-            setRateAnnual(10.75);
+        // Detect if it's an IPCA bond (including Renda+ and Educa+)
+        const isIPCA = titleUpper.includes("IPCA") ||
+            titleUpper.includes("RENDA+") ||
+            titleUpper.includes("EDUCA+") ||
+            rateStr.toUpperCase().includes("IPCA");
+
+        // Detect Selic
+        const isSelic = titleUpper.includes("SELIC") || rateStr.toUpperCase().includes("SELIC");
+
+        if (bond.yield_val !== undefined) {
+            // ETFs already have the real-time yield from API
+            setRateAnnual(Number(bond.yield_val));
+        } else if (isIPCA) {
+            // Extract the fixed percentage part (e.g., "6,56" from "IPCA + 6,56%")
+            const match = rateStr.match(/(\d+([.,]\d+)?)/);
+            const fixed = match ? parseFloat(match[0].replace(',', '.')) : 0;
+            // Sum fixed rate + current IPCA projection from API
+            const totalRate = fixed + (ipcaProj || 0);
+            setRateAnnual(Number(totalRate.toFixed(2)));
+            console.log(`IPCA Bond: Fixed ${fixed}% + IPCA ${ipcaProj}% = ${totalRate}%`);
+        } else if (isSelic) {
+            // Selic Logic: Fixed + Selic Index
+            const match = rateStr.match(/(\d+([.,]\d+)?)/);
+            const fixed = match ? parseFloat(match[0].replace(',', '.')) : 0;
+            const totalRate = fixed + (selicRate || 10.75);
+            setRateAnnual(Number(totalRate.toFixed(2)));
         } else {
             // Prefixado
-            const val = parseFloat(rateStr.replace("R$", "").replace("%", "").replace(",", "."));
+            const val = parseFloat(rateStr.replace(/[^\d.,]/g, "").replace(",", "."));
             setRateAnnual(val || 10);
         }
+    };
+
+    // Robust Currency Input Handler (Mask)
+    const handleCurrencyChange = (value, setter) => {
+        // Only keep digits
+        const digits = value.replace(/\D/g, '');
+        if (digits === '') {
+            setter(0);
+            return;
+        }
+        // Cents logic (standard for currency inputs)
+        const num = parseFloat(digits) / 100;
+        setter(num);
+    };
+
+    const formatCurrency = (val) => {
+        const value = typeof val === 'number' ? val : 0;
+        return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     // Calculation Effect
@@ -125,8 +152,8 @@ const Calculator = () => {
         if (months <= 0) return;
 
         const data = [];
-        let currentTotal = parseFloat(initialAmount);
-        let currentInvested = parseFloat(initialAmount);
+        let currentTotal = parseFloat(initialAmount || 0);
+        let currentInvested = parseFloat(initialAmount || 0);
         const monthlyRate = Math.pow(1 + (rateAnnual / 100), 1 / 12) - 1;
 
         // Point 0
@@ -138,17 +165,10 @@ const Calculator = () => {
         });
 
         for (let i = 1; i <= months; i++) {
-            // Apply Interest
             currentTotal = currentTotal * (1 + monthlyRate);
+            currentTotal += parseFloat(monthlyAmount || 0);
+            currentInvested += parseFloat(monthlyAmount || 0);
 
-            // Add Contribution
-            currentTotal += parseFloat(monthlyAmount);
-            currentInvested += parseFloat(monthlyAmount);
-
-            // Logic to plot points? If too many months, maybe skip some for performance?
-            // Recharts handles reasonable amounts (e.g. 360 points).
-
-            // Generate label date
             const d = new Date(today);
             d.setMonth(today.getMonth() + i);
 
@@ -297,12 +317,8 @@ const Calculator = () => {
                             }}>
                                 <span style={{ color: '#fff', fontWeight: 'bold', marginRight: '8px' }}>R$</span>
                                 <input type="text"
-                                    value={Number(initialAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    onChange={e => {
-                                        const raw = e.target.value.replace(/\./g, '').replace(',', '.');
-                                        const num = parseFloat(raw) || 0;
-                                        setInitialAmount(num);
-                                    }}
+                                    value={formatCurrency(initialAmount)}
+                                    onChange={e => handleCurrencyChange(e.target.value, setInitialAmount)}
                                     style={{
                                         width: '100%', background: 'transparent',
                                         border: 'none', color: '#fff',
@@ -323,12 +339,8 @@ const Calculator = () => {
                             }}>
                                 <span style={{ color: '#fff', fontWeight: 'bold', marginRight: '8px' }}>R$</span>
                                 <input type="text"
-                                    value={Number(monthlyAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    onChange={e => {
-                                        const raw = e.target.value.replace(/\./g, '').replace(',', '.');
-                                        const num = parseFloat(raw) || 0;
-                                        setMonthlyAmount(num);
-                                    }}
+                                    value={formatCurrency(monthlyAmount)}
+                                    onChange={e => handleCurrencyChange(e.target.value, setMonthlyAmount)}
                                     style={{
                                         width: '100%', background: 'transparent',
                                         border: 'none', color: '#fff',

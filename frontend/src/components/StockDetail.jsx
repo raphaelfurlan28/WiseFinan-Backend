@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Label } from 'recharts';
 import { ArrowLeft, TrendingUp, TrendingDown, ListPlus, Landmark, Target, DollarSign, ArrowUp, ArrowDown, Coins, PieChart, Activity } from 'lucide-react';
 import OptionsModule from './OptionsModule';
 import ModernLoader from './ModernLoader';
@@ -41,6 +41,15 @@ export default function StockDetail({ stock, onBack }) {
     // FALTA POSITIVE/ZERO (>= 0): Price is below Low Cost (Cheap) -> 100% Full, Green.
     // FALTA NEGATIVE (< 0): Price is above Low Cost (Expensive, needs to drop) -> Reduced Fill.
 
+    // Task List:
+    // - [x] Modernize Progress Bar Cards <!-- id: 24 -->
+    //     - [x] Refine Valuation section cards in StockDetail
+    //     - [x] Modernize progress bars in StockList view
+    // - [/] Overhaul Price History and Statistics UI <!-- id: 25 -->
+    //     - [ ] Upgrade Price History card with premium glassmorphism
+    //     - [ ] Redesign statistics cards for a modern, unified Look
+    //     - [ ] Refine Recharts styling (glow, soft colors, minimalist grid)
+
     let progressWidth = 0;
     const isCheap = faltaVal >= 0;
 
@@ -54,11 +63,13 @@ export default function StockDetail({ stock, onBack }) {
     // Dynamic Color Logic
     let barGradient;
     let textColor;
+    let barGlow;
 
     if (isCheap) {
         // >= 0 is always Green
         barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
         textColor = '#4ade80';
+        barGlow = '0 0 12px rgba(74, 222, 128, 0.5)';
     } else {
         // Negative (Expensive)
         const distance = Math.abs(faltaVal);
@@ -66,14 +77,17 @@ export default function StockDetail({ stock, onBack }) {
             // Gap up to 15% (e.g. -10%) -> Green
             barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
             textColor = '#4ade80';
+            barGlow = '0 0 12px rgba(74, 222, 128, 0.5)';
         } else if (distance <= 30) {
             // Gap 15-30% (e.g. -20%) -> Yellow
             barGradient = 'linear-gradient(90deg, #facc15, #eab308)';
             textColor = '#facc15';
+            barGlow = '0 0 12px rgba(250, 204, 21, 0.4)';
         } else {
             // Gap > 30% -> Red
             barGradient = 'linear-gradient(90deg, #f87171, #ef4444)';
             textColor = '#ef4444';
+            barGlow = '0 0 12px rgba(239, 68, 68, 0.5)';
         }
     }
 
@@ -160,19 +174,44 @@ export default function StockDetail({ stock, onBack }) {
 
             {/* Historical Chart Section - Now in Card Format */}
             <div className="rf-card glass-card" style={{ marginTop: '24px', marginBottom: '24px' }}>
-                <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                    <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                        <TrendingUp size={20} color="#fff" />
+                <div className="rf-card-header" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="rf-card-icon" style={{ background: 'rgba(96, 165, 250, 0.1)', border: '1px solid rgba(96, 165, 250, 0.2)' }}>
+                            <TrendingUp size={18} color="#60a5fa" strokeWidth={2.5} />
+                        </div>
+                        <span className="label" style={{ fontSize: '10px' }}>Histórico de Preços</span>
                     </div>
-                    <span className="label">Histórico de Preços</span>
+
+                    {/* Legend Section */}
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }}></div>
+                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#fff' }}>Preço: R$ {stock.price}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ width: '8px', height: '2px', backgroundColor: '#22c55e' }}></div>
+                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#22c55e' }}>Baixo: R$ {stock.min_val}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ width: '8px', height: '2px', backgroundColor: '#ef4444' }}></div>
+                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#ef4444' }}>Alto: R$ {stock.max_val}</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="rf-card-content" style={{ padding: '20px' }}>
+                <div className="rf-card-content" style={{ padding: '8px 12px 12px 12px' }}>
                     <div className="chart-container" style={{ height: 250, width: '100%' }}>
                         {loadingHistory ? (
                             <ModernLoader text="Carregando gráfico..." />
                         ) : history.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                                <AreaChart data={history} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0.3} />
@@ -190,6 +229,27 @@ export default function StockDetail({ stock, onBack }) {
                                         width={40}
                                     />
                                     <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+
+                                    {(() => {
+                                        const parseVal = (v) => parseFloat((v || "0").toString().replace('R$', '').replace('.', '').replace(',', '.').trim());
+                                        const currentP = parseVal(stock.price);
+                                        const lowP = parseVal(stock.min_val);
+                                        const highP = parseVal(stock.max_val);
+
+                                        return (
+                                            <>
+                                                {/* Current Price Line */}
+                                                <ReferenceLine y={currentP} stroke="#fff" strokeWidth={1} />
+
+                                                {/* Custo Baixo Line */}
+                                                {lowP > 0 && <ReferenceLine y={lowP} stroke="#22c55e" strokeWidth={1} />}
+
+                                                {/* Custo Alto Line */}
+                                                {highP > 0 && <ReferenceLine y={highP} stroke="#ef4444" strokeWidth={1} />}
+                                            </>
+                                        );
+                                    })()}
+
                                     <Area type="monotone" dataKey="price" stroke={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2} />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -202,9 +262,9 @@ export default function StockDetail({ stock, onBack }) {
 
             <div className="stats-grid">
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <DollarSign size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <DollarSign size={18} color="#4ade80" strokeWidth={2.5} />
                         </div>
                         <span className="label">Últ. Fechamento</span>
                     </div>
@@ -214,9 +274,9 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <ArrowUp size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <ArrowUp size={18} color="#4ade80" strokeWidth={2.5} />
                         </div>
                         <span className="label">Máxima 12m</span>
                     </div>
@@ -226,9 +286,9 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <ArrowDown size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <ArrowDown size={18} color="#f87171" strokeWidth={2.5} />
                         </div>
                         <span className="label">Mínima 12m</span>
                     </div>
@@ -238,14 +298,14 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <Coins size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <Coins size={18} color="#facc15" strokeWidth={2.5} />
                         </div>
                         <span className="label">Dividendo (DY)</span>
                     </div>
                     <div className="val-card-content" style={{ width: '100%', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', gap: '4px' }}>
                             <span className="value">{formatPercentage(stock.dividend)}</span>
                             {(() => {
                                 try {
@@ -258,16 +318,14 @@ export default function StockDetail({ stock, onBack }) {
                                     if (price > 0 && divPct > 0) {
                                         const divValue = price * (divPct / 100);
                                         return (
-                                            <>
-                                                <span style={{ color: '#64748b', fontSize: '1rem' }}>—</span>
-                                                <span style={{
-                                                    fontSize: '0.9rem',
-                                                    color: '#4ade80',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                                </span>
-                                            </>
+                                            <span style={{
+                                                fontSize: '1.2rem',
+                                                color: '#4ade80',
+                                                fontWeight: '700',
+                                                textShadow: '0 0 10px rgba(74, 222, 128, 0.3)'
+                                            }}>
+                                                {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </span>
                                         );
                                     }
                                 } catch (e) { return null; }
@@ -278,9 +336,9 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <PieChart size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <PieChart size={18} color="#60a5fa" strokeWidth={2.5} />
                         </div>
                         <span className="label">Payout Médio</span>
                     </div>
@@ -290,9 +348,9 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="rf-card glass-card">
-                    <div className="rf-card-header" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.35), transparent)' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <Activity size={20} color="#fff" />
+                    <div className="rf-card-header">
+                        <div className="rf-card-icon">
+                            <Activity size={18} color="#a855f7" strokeWidth={2.5} />
                         </div>
                         <span className="label">Volat. (Ano)</span>
                     </div>
@@ -335,7 +393,11 @@ export default function StockDetail({ stock, onBack }) {
                     <div className="progress-bar-bg">
                         <div
                             className="progress-bar-fill"
-                            style={{ width: `${progressWidth}%`, background: barGradient }}
+                            style={{
+                                width: `${progressWidth}%`,
+                                background: barGradient,
+                                boxShadow: barGlow
+                            }}
                         ></div>
                     </div>
                     <p className="progress-hint">

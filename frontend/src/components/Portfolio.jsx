@@ -53,7 +53,14 @@ const Portfolio = () => {
             } catch (err) {
                 console.error('Error fetching data:', err);
                 // Fallback indices if fetch fails completely
-                setIndices({ selic: '10.75%', cdi: '10.65%', ipca: '6.40%', poupanca: '0.5% + TR' });
+                try {
+                    const resIndices = await fetch(getApiUrl('/api/indices'));
+                    const jsonIndices = await resIndices.json();
+                    setIndices(jsonIndices);
+                } catch (error) {
+                    console.error("Error fetching indices", error);
+                    setIndices({ selic: '10.75%', cdi: '10.65%', ipca: '6.40%', poupanca: '0.5% + TR' });
+                }
             } finally {
                 setLoading(false);
             }
@@ -68,46 +75,84 @@ const Portfolio = () => {
         return parseFloat(clean) || 999;
     };
 
-    // Helper to get best stock per sector
-    const getBestStocksBySector = (stocks, limit = 4) => {
-        const distinctSectors = [];
-        const sectorSet = new Set();
+    // Helper to parse percentage string to number
+    const parsePercentage = (str) => {
+        if (!str) return -999; // Default low value for descending sort if missing
+        const clean = str.toString().replace('%', '').replace(',', '.');
+        return parseFloat(clean) || -999;
+    };
 
-        for (const stock of stocks) {
-            const sector = stock.setor || 'Outros';
-            if (!sectorSet.has(sector)) {
-                distinctSectors.push(stock);
-                sectorSet.add(sector);
+    // Helper to get stocks by specific sector rules
+    const getStocksBySector = (sectorKeyword, count, sortKey = 'vol_ano', sortDir = 'asc') => {
+        // Filter by sector keyword (case insensitive check)
+        const sectorStocks = allStocks.filter(s => {
+            const sectorName = s.sector || s.setor || '';
+            return sectorName.toLowerCase().includes(sectorKeyword.toLowerCase());
+        });
+
+        // Sort by key
+        sectorStocks.sort((a, b) => {
+            let valA, valB;
+
+            if (sortKey === 'vol_ano') {
+                valA = parseVolatility(a[sortKey]);
+                valB = parseVolatility(b[sortKey]);
+            } else if (sortKey === 'falta_pct') {
+                valA = parsePercentage(a[sortKey]);
+                valB = parsePercentage(b[sortKey]);
+            } else {
+                valA = a[sortKey];
+                valB = b[sortKey];
             }
-            if (distinctSectors.length >= limit) break;
-        }
 
+            return sortDir === 'asc' ? valA - valB : valB - valA;
+        });
 
-        if (distinctSectors.length < limit) {
-            for (const stock of stocks) {
-                if (!distinctSectors.includes(stock)) {
-                    distinctSectors.push(stock);
-                }
-                if (distinctSectors.length >= limit) break;
-            }
-        }
-
-        return distinctSectors;
+        // Take top N
+        return sectorStocks.slice(0, count);
     };
 
     // Filter stocks by volatility threshold
+    // NOW: Filter by Highest Discount (Falta) within Low Volatility Sectors
     const getLowVolatilityStocks = () => {
-        const filtered = allStocks
-            .filter(s => parseVolatility(s.vol_ano) < 25)
-            .sort((a, b) => parseVolatility(a.vol_ano) - parseVolatility(b.vol_ano));
-        return getBestStocksBySector(filtered, 3);
+        const sectors = ['Bancos', 'Energia', 'Saneamento', 'Seguradora'];
+        let results = [];
+
+        sectors.forEach(sector => {
+            // Get 2 stocks per sector with HIGHEST DISCOUNT (falta_pct desc)
+            const stocks = getStocksBySector(sector, 2, 'falta_pct', 'desc');
+            results = [...results, ...stocks];
+        });
+
+        // Remove duplicates if any (though unlikely if sectors are distinct)
+        const uniqueResults = Array.from(new Set(results.map(s => s.ticker)))
+            .map(ticker => results.find(s => s.ticker === ticker));
+
+        return uniqueResults;
     };
 
+    // NOW: Filter by Highest Discount (Falta) within High Volatility Sectors
     const getHighVolatilityStocks = () => {
-        const filtered = allStocks
-            .filter(s => parseVolatility(s.vol_ano) >= 25)
-            .sort((a, b) => parseVolatility(b.vol_ano) - parseVolatility(a.vol_ano));
-        return getBestStocksBySector(filtered, 3);
+        const sectors = [
+            'Bens Industriais',
+            'Consumo',
+            'Materiais Básicos',
+            'Tecnologia',
+            'Telecomunicações',
+            'Papel e Celulose'
+        ];
+        let results = [];
+
+        sectors.forEach(sector => {
+            // Get 1 stock per sector with HIGHEST DISCOUNT (falta_pct desc)
+            const stocks = getStocksBySector(sector, 1, 'falta_pct', 'desc');
+            results = [...results, ...stocks];
+        });
+
+        const uniqueResults = Array.from(new Set(results.map(s => s.ticker)))
+            .map(ticker => results.find(s => s.ticker === ticker));
+
+        return uniqueResults;
     };
 
     // Filter fixed income by type
@@ -203,23 +248,47 @@ const Portfolio = () => {
                 });
 
                 const lfts11Data = treasuryBonds.find(item => (item.titulo || '').toUpperCase().includes('LFTS11'));
+                // LFTS11 is ETF, usually just Selic, we can use the ETF yield directly or Selic index
+                const selicIndexVal = indices.selic ? parseFloat(indices.selic.replace('%', '').replace(',', '.')) : 0;
+
                 const lfts11Yield = lfts11Data && lfts11Data.yield_val !== undefined
                     ? `${lfts11Data.yield_val.toFixed(2).replace('.', ',')}%`
-                    : 'Selic + 0%';
+                    : (selicIndexVal > 0 ? `${selicIndexVal.toFixed(2).replace('.', ',')}%` : 'Selic');
 
                 return [
                     {
                         name: 'LFTS11 (ETF Selic)',
                         type: 'ETF de Renda Fixa',
-                        yield: lfts11Yield,
+                        // Use calculated yield
+                        yield: lfts11Yield.includes('%') ? lfts11Yield : `${lfts11Yield}%`,
                         image: 'https://brapi.dev/api/v2/logo/LFTS11'
                     },
-                    ...selic.slice(0, 2).map(t => ({
-                        name: t.titulo || t.name,
-                        type: 'Tesouro Direto',
-                        yield: t.rentabilidade_anual ? (t.rentabilidade_anual.includes('%') ? t.rentabilidade_anual : t.rentabilidade_anual + '%') : ((t.taxa_compra || 'Selic') + (t.taxa_compra && !t.taxa_compra.toString().includes('%') ? '%' : '')),
-                        image: null
-                    }))
+                    ...selic.slice(0, 2).map(t => {
+                        // Calculate Total Yield: Fixed + Selic
+                        let displayYield = t.rentabilidade_anual || t.taxa_compra || 'Selic';
+
+                        try {
+                            const rawRate = t.rentabilidade_anual || t.taxa_compra || "0";
+                            const fixedPartStr = rawRate.toString().replace(/[^\d,.]/g, "").replace(",", ".");
+                            const fixedPart = parseFloat(fixedPartStr) || 0;
+
+                            if (selicIndexVal > 0) {
+                                const total = fixedPart + selicIndexVal;
+                                displayYield = `${total.toFixed(2).replace('.', ',')}%`;
+                            } else if (!displayYield.includes('%')) {
+                                displayYield += '%';
+                            }
+                        } catch (e) {
+                            console.error("Error calc Portfolio Selic", e);
+                        }
+
+                        return {
+                            name: t.titulo || t.name,
+                            type: 'Tesouro Direto',
+                            yield: displayYield,
+                            image: null
+                        };
+                    })
                 ];
             case 'ipca':
                 // Proteção: IPCA+
@@ -297,18 +366,18 @@ const Portfolio = () => {
                     });
             case 'lowVol':
                 return getLowVolatilityStocks().map(s => ({
-                    name: s.company_name || s.ticker,
-                    type: `${s.ticker}${s.setor ? ' • ' + s.setor : ''}`,
+                    name: s.ticker, // Ticker Top
+                    type: `${s.company_name || 'Empresa'} • ${s.sector || s.setor || 'Setor'}`, // Name + Sector Bottom
                     isStock: true,
-                    falta: s.falta_pct, // Correctly mapped from API 'falta_pct'
+                    falta: s.falta_pct,
                     image: s.image_url || `https://brapi.dev/api/v2/logo/${s.ticker}`
                 }));
             case 'highVol':
                 return getHighVolatilityStocks().map(s => ({
-                    name: s.company_name || s.ticker,
-                    type: `${s.ticker}${s.setor ? ' • ' + s.setor : ''}`,
+                    name: s.ticker, // Ticker Top
+                    type: `${s.company_name || 'Empresa'} • ${s.sector || s.setor || 'Setor'}`, // Name + Sector Bottom
                     isStock: true,
-                    falta: s.falta_pct, // Correctly mapped from API 'falta_pct'
+                    falta: s.falta_pct,
                     image: s.image_url || `https://brapi.dev/api/v2/logo/${s.ticker}`
                 }));
             default:
@@ -556,10 +625,10 @@ const Portfolio = () => {
                                                                         style={{
                                                                             width: 36,
                                                                             height: 36,
-                                                                            borderRadius: '50%',
+                                                                            borderRadius: '8px',
                                                                             objectFit: 'cover',
                                                                             background: '#fff',
-                                                                            border: '1px solid #ffffffff',
+                                                                            border: '1px solid rgba(255,255,255,0.1)',
                                                                             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
                                                                         }}
                                                                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -568,9 +637,9 @@ const Portfolio = () => {
 
                                                                 {/* Fallback Icon */}
                                                                 <div style={{
-                                                                    width: 32,
-                                                                    height: 32,
-                                                                    borderRadius: '50%',
+                                                                    width: 36,
+                                                                    height: 36,
+                                                                    borderRadius: '8px',
                                                                     background: item.color + '20',
                                                                     display: (isStock && rec.image) ? 'none' : 'flex',
                                                                     alignItems: 'center',
@@ -586,19 +655,20 @@ const Portfolio = () => {
                                                                 {/* Content */}
                                                                 <div style={{ flex: 1, minWidth: 0 }}>
                                                                     <div style={{
-                                                                        fontSize: '0.70rem',
+                                                                        fontSize: isStock ? '1rem' : '0.85rem',
                                                                         fontWeight: 600,
                                                                         color: '#fff',
-                                                                        lineHeight: '1.2',
-                                                                        marginBottom: '2px'
+                                                                        lineHeight: '1',
+                                                                        marginBottom: isStock ? '2px' : '2px'
                                                                     }}>
                                                                         {rec.name}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '0.6rem',
-                                                                        color: '#64748b',
-                                                                        lineHeight: '1.2',
-                                                                        marginTop: '1px'
+                                                                        fontSize: isStock ? '0.75rem' : '0.7rem',
+                                                                        fontWeight: 500,
+                                                                        color: isStock ? '#aaa' : '#64748b',
+                                                                        lineHeight: '1',
+                                                                        marginTop: '0'
                                                                     }}>
                                                                         {rec.type}
                                                                     </div>
@@ -608,14 +678,14 @@ const Portfolio = () => {
                                                                 {rec.yield && (
                                                                     <div style={{ marginLeft: 'auto', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                                                         <span style={{
-                                                                            fontSize: '0.7rem',
+                                                                            fontSize: '0.8rem',
                                                                             color: isStock ? (rec.yield.includes('Baixa') || parseFloat(rec.yield.replace('Vol: ', '').replace(',', '.')) < 25 ? 'rgb(52, 211, 153)' : '#f87171') : item.color,
                                                                             fontWeight: 600
                                                                         }}>
                                                                             {rec.yield}
                                                                         </span>
                                                                         {!isStock && (
-                                                                            <span style={{ fontSize: '0.58rem', color: '#64748b', marginTop: '1px' }}>
+                                                                            <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '1px' }}>
                                                                                 {item.recommendationType === 'selic' ? (rec.name?.includes('LFTS11') ? 'ao Ano' : 'ao dia útil') : 'ao Ano'}
                                                                             </span>
                                                                         )}
@@ -624,7 +694,7 @@ const Portfolio = () => {
 
                                                                 {/* Discount Indicator */}
                                                                 {isStock && rec.falta && (
-                                                                    <div title={`Desconto: ${rec.falta} (Disclaimer: Compra recomendada apenas se descontado)`} style={{ marginLeft: '8px', position: 'relative', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    <div title={`Desconto: ${rec.falta} (Disclaimer: Compra recomendada apenas se descontado)`} style={{ marginLeft: '10px', position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                         {(() => {
                                                                             const faltaVal = parseFloat(rec.falta.replace('%', '').replace(',', '.')) || 0;
                                                                             let color = '#ef4444';
@@ -632,15 +702,15 @@ const Portfolio = () => {
                                                                             else if (faltaVal >= -30) color = '#facc15';
 
                                                                             const fillPercentage = Math.max(0, Math.min(100, 100 + faltaVal));
-                                                                            const radius = 10;
+                                                                            const radius = 13;
                                                                             const circumference = 2 * Math.PI * radius;
                                                                             const strokeDashoffset = circumference - (fillPercentage / 100) * circumference;
 
                                                                             return (
-                                                                                <svg width="24" height="24" style={{ transform: 'rotate(-90deg)' }}>
-                                                                                    <circle cx="12" cy="12" r={radius} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                                                                                <svg width="32" height="32" style={{ transform: 'rotate(-90deg)' }}>
+                                                                                    <circle cx="16" cy="16" r={radius} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
                                                                                     <circle
-                                                                                        cx="12" cy="12" r={radius} fill="transparent" stroke={color} strokeWidth="3"
+                                                                                        cx="16" cy="16" r={radius} fill="transparent" stroke={color} strokeWidth="3"
                                                                                         strokeDasharray={circumference}
                                                                                         strokeDashoffset={strokeDashoffset}
                                                                                         strokeLinecap="round"
@@ -665,7 +735,7 @@ const Portfolio = () => {
                                                         background: `${item.color}08`,
                                                         borderRadius: '8px',
                                                         border: `1px solid ${item.color}20`,
-                                                        fontSize: '0.65rem',
+                                                        fontSize: '0.70rem',
                                                         color: '#94a3b8',
                                                         lineHeight: '1.4'
                                                     }}>
@@ -685,7 +755,7 @@ const Portfolio = () => {
                                                         background: `${item.color}08`,
                                                         borderRadius: '8px',
                                                         border: `1px solid ${item.color}20`,
-                                                        fontSize: '0.65rem',
+                                                        fontSize: '0.70rem',
                                                         color: '#94a3b8',
                                                         lineHeight: '1.4'
                                                     }}>

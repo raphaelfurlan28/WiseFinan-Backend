@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Plus, Trash2, Calendar, DollarSign, TrendingUp, Calculator } from 'lucide-react';
+import { db } from '../services/firebaseConfig';
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
+import ModernSpinner from './ModernSpinner';
 
 const InvestmentGoals = () => {
+    const { user } = useAuth();
     const [goals, setGoals] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [newGoal, setNewGoal] = useState({
         name: '',
@@ -16,15 +22,29 @@ const InvestmentGoals = () => {
     const DEFAULT_ANNUAL_RATE = 0.10;
 
     useEffect(() => {
-        const savedGoals = localStorage.getItem('investmentGoals');
-        if (savedGoals) {
-            setGoals(JSON.parse(savedGoals));
-        }
-    }, []);
+        if (!user?.uid) return;
 
-    useEffect(() => {
-        localStorage.setItem('investmentGoals', JSON.stringify(goals));
-    }, [goals]);
+        const q = query(
+            collection(db, "user_goals"),
+            where("userId", "==", user.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const goalsData = [];
+            querySnapshot.forEach((doc) => {
+                goalsData.push({ id: doc.id, ...doc.data() });
+            });
+            // Sort by createdAt or name
+            goalsData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            setGoals(goalsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching goals:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user?.uid]);
 
     const calculateMonthlyInvestment = (target, initial, deadlineDate, customAnnualRate) => {
         const now = new Date();
@@ -68,8 +88,13 @@ const InvestmentGoals = () => {
         return { monthly: pmt, months };
     };
 
-    const handleAddGoal = (e) => {
+    const handleAddGoal = async (e) => {
         e.preventDefault();
+
+        if (!user?.uid) {
+            alert("Faça login para salvar suas metas.");
+            return;
+        }
 
         // Basic validation
         if (!newGoal.name || !newGoal.targetValue || !newGoal.deadline) return;
@@ -88,25 +113,36 @@ const InvestmentGoals = () => {
 
         const { monthly, months } = calculateMonthlyInvestment(target, initial, newGoal.deadline, rate);
 
-        const goal = {
-            id: Date.now(),
-            name: newGoal.name,
-            targetValue: target,
-            initialAmount: initial,
-            deadline: newGoal.deadline,
-            annualRate: rate, // Store it
-            monthlyInvestment: monthly,
-            monthsRemaining: months,
-            createdAt: new Date().toISOString()
-        };
+        try {
+            await addDoc(collection(db, "user_goals"), {
+                userId: user.uid,
+                name: newGoal.name,
+                targetValue: target,
+                initialAmount: initial,
+                deadline: newGoal.deadline,
+                annualRate: rate,
+                monthlyInvestment: monthly,
+                monthsRemaining: months,
+                createdAt: serverTimestamp()
+            });
 
-        setGoals([...goals, goal]);
-        setNewGoal({ name: '', targetValue: '', deadline: '', initialAmount: '', annualRate: '' });
-        setShowForm(false);
+            setNewGoal({ name: '', targetValue: '', deadline: '', initialAmount: '', annualRate: '' });
+            setShowForm(false);
+        } catch (error) {
+            console.error("Error adding goal:", error);
+            alert("Erro ao salvar meta. Verifique sua conexão.");
+        }
     };
 
-    const handleDeleteGoal = (id) => {
-        setGoals(goals.filter(g => g.id !== id));
+    const handleDeleteGoal = async (id) => {
+        if (!window.confirm("Deseja realmente excluir esta meta?")) return;
+
+        try {
+            await deleteDoc(doc(db, "user_goals", id));
+        } catch (error) {
+            console.error("Error deleting goal:", error);
+            alert("Erro ao excluir meta.");
+        }
     };
 
     const formatCurrency = (value) => {
@@ -123,6 +159,14 @@ const InvestmentGoals = () => {
         const formatted = floatValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         setNewGoal({ ...newGoal, [field]: formatted });
     };
+
+    if (loading) {
+        return (
+            <div className="rf-container" style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>
+                <ModernSpinner />
+            </div>
+        );
+    }
 
     return (
         <div className="rf-container" style={{ marginTop: '40px' }}>

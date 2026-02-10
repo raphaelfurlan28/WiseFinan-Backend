@@ -17,11 +17,15 @@ export default function Header({ onToggleSidebar, user, onProfileClick }) {
                 <span style={{
                     marginLeft: '16px',
                     fontFamily: 'Inter, sans-serif',
-                    fontSize: '1.5rem',
-                    fontWeight: '700',
-                    color: '#e2e8f0',
-                    letterSpacing: '-0.5px',
-                    textShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)'
+                    fontSize: '1.6rem',
+                    fontWeight: '800',
+                    background: 'linear-gradient(to right, #4ade80, #34d399, #22d3ee)',
+                    WebkitBackgroundClip: 'text',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-1px',
+                    textShadow: '0 10px 20px rgba(74, 222, 128, 0.2)'
                 }}>
                     WiseFinan
                 </span>

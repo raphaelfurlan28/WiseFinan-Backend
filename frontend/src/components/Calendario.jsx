@@ -160,6 +160,7 @@ export default function Calendario() {
                                         onClick={() => hasEvents && setSelectedDay(date)}
                                     >
                                         <span className="day-num">{date.getDate()}</span>
+                                        {isToday && <span className="today-label">Hoje</span>}
                                         {hasEvents && (
                                             <div className="event-dots">
                                                 {dayEvents.slice(0, 3).map((e, i) => (

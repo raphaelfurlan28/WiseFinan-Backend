@@ -422,6 +422,19 @@ const StrategyChart = ({ strategy, color, sim }) => {
 };
 
 const Strategies = () => {
+    React.useEffect(() => {
+        const hash = window.location.hash;
+        if (hash) {
+            const id = hash.replace('#', '');
+            const element = document.getElementById(id);
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+    }, []);
+
     return (
         <div className="rf-container">
             {/* Header */}
@@ -444,7 +457,11 @@ const Strategies = () => {
                 boxSizing: 'border-box'
             }}>
                 {strategies.map((strat, idx) => (
-                    <div key={idx} className="rf-card glass-card">
+                    <div
+                        key={idx}
+                        id={strat.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[()]/g, '')}
+                        className="rf-card glass-card"
+                    >
                         {/* Header */}
                         <div className="rf-card-header" style={{
                             background: `linear-gradient(90deg, ${strat.color}35, transparent)`

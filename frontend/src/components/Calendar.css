@@ -125,13 +125,25 @@
     transition: all 0.2s;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 2px;
 }
 
 .day-cell.today {
-    background: rgba(16, 185, 129, 0.15);
-    /* Green tint */
-    border: 1px solid #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+.today-label {
+    font-size: 0.5rem;
+    color: #3b82f6;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    margin-top: 2px;
 }
 
 .day-cell.empty {
@@ -140,21 +152,26 @@
 }
 
 .day-cell.has-events {
-    background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(4px);
+    border-color: rgba(255, 255, 255, 0.05);
     cursor: pointer;
 }
 
 .day-cell:hover.has-events {
-    background: rgba(30, 41, 59, 1);
-    border-color: #10b981;
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(59, 130, 246, 0.5);
     transform: translateY(-2px);
 }
 
 .day-num {
-    font-weight: bold;
-    font-size: 1rem;
-    color: #cbd5e1;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.day-cell.today .day-num {
+    color: #3b82f6;
 }
 
 .event-count-badge {
@@ -303,53 +320,76 @@
 
 .summary-list {
     display: grid;
-    /* Strict 3 columns on ALL screens including mobile */
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
 }
 
 .summary-card {
     display: flex;
     flex-direction: column;
-    /* Vertical stack for compactness */
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 12px 4px;
-    border-radius: 8px;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .summary-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: #10b981;
-    transform: translateY(-2px);
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.summary-card:hover::before {
+    opacity: 1;
 }
 
 .summary-card .stock-basic {
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 12px;
     justify-content: center;
 }
 
 .summary-card .stock-basic img {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    padding: 2px;
-    background: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    padding: 0;
+    background: transparent;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
 .summary-card .ph-logo {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+    border-radius: 10px;
     margin: 0 auto;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .summary-card .stock-basic div {
@@ -359,21 +399,31 @@
 }
 
 .summary-card .stock-basic h4 {
-    font-size: 0.85rem;
-    line-height: 1.2;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: 0.5px;
     margin: 0;
 }
 
 .summary-card .stock-basic span {
     display: none;
-    /* Hide full name to save space on mobile matching "3 columns" requirement */
 }
 
 .payment-text {
     color: #10b981;
-    font-weight: 600;
-    font-size: 0.75rem;
-    white-space: nowrap;
+    font-weight: 500;
+    font-size: 0.5rem;
+    opacity: 0.8;
+    background: rgba(74, 222, 128, 0);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 0px solid rgba(74, 222, 128, 0.4);
+}
+
+.summary-card:hover .payment-text {
+    opacity: 1;
+    background: rgba(74, 222, 128, 0.15);
 }
 
 .payment-badge {

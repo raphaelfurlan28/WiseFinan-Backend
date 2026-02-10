@@ -351,13 +351,26 @@ def log(msg, debug=False, force=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sheet-name", required=True)
+    parser.add_argument("--sheet-name", required=False)
+    parser.add_argument("--sheet-id", required=False)
     parser.add_argument("--tab-diario", required=True)
     parser.add_argument("--tab-hist", required=False)
     parser.add_argument("--cred-file", required=True)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--force-selenium", action="store_true")
     args = parser.parse_args()
+
+    # Load ID from .env if not provided as argument
+    if not args.sheet_id:
+        from dotenv import load_dotenv
+        # Try both root and backend .env
+        load_dotenv('.env')
+        load_dotenv('backend/.env')
+        args.sheet_id = os.environ.get('SPREADSHEET_ID')
+
+    if not args.sheet_id and not args.sheet_name:
+        log("Erro: é necessário fornecer --sheet-id ou --sheet-name (ou definir SPREADSHEET_ID no .env).", force=True)
+        sys.exit(1)
 
     log("Iniciando atualização de Renda Fixa...", force=True)
 
@@ -383,7 +396,14 @@ def main():
         creds = Credentials.from_service_account_file(args.cred_file, scopes=scope)
         gc = gspread.authorize(creds)
         
-        sh = gc.open(args.sheet_name)
+        if args.sheet_id:
+            log(f"Abrindo planilha por ID: {args.sheet_id}", force=True)
+            sh = gc.open_by_key(args.sheet_id)
+        else:
+            log(f"Abrindo planilha por Nome: {args.sheet_name}", force=True)
+            sh = gc.open(args.sheet_name)
+        
+        log(f"Planilha conectada: '{sh.title}'", force=True)
         try:
             ws = sh.worksheet(args.tab_diario)
         except gspread.WorksheetNotFound:

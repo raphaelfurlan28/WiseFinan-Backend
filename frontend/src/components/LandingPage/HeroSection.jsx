@@ -23,7 +23,7 @@ const HeroSection = ({ onLoginClick }) => {
                             Domine seus investimentos com <span className="gradient-text">Inteligência</span>
                         </h1>
                         <p className="hero-subtitle">
-                            WiseFinan oferece ferramentas avançadas de análise, rastreamento em tempo real e insights impulsionados por Estatísticas para maximizar seus retornos.
+                            <span className="brand-highlight">WiseFinan</span> oferece ferramentas avançadas de análise, rastreamento em tempo real e insights impulsionados por Estatísticas para maximizar seus retornos.
                         </p>
                         <div className="hero-buttons">
                             <button

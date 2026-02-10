@@ -16,6 +16,7 @@ import Support from './components/Support';
 import Chat from './components/Chat';
 import Strategies from './components/Strategies';
 import Calendario from './components/Calendario';
+import LeadBoard from './components/LeadBoard';
 import SplashScreen from './components/SplashScreen';
 import UserProfileModal from './components/UserProfileModal';
 import LandingPage from './components/LandingPage/LandingPage';
@@ -81,6 +82,8 @@ const AppContent = () => {
         return <Strategies />;
       case 'calendar':
         return <Calendario />;
+      case 'admin-leads':
+        return <LeadBoard />;
       case 'support':
         return <Support />;
 

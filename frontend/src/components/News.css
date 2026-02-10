@@ -1,0 +1,113 @@
+/* News.css */
+
+.news-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.news-card:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border-color: rgba(74, 222, 128, 0.3);
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(74, 222, 128, 0.1);
+}
+
+.news-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at top right, rgba(74, 222, 128, 0.15), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.news-card:hover::before {
+    opacity: 1;
+}
+
+.news-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.news-badge {
+    font-size: 0.7rem;
+    color: #4ade80;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    background: rgba(74, 222, 128, 0.1);
+    border-radius: 8px;
+    border: 0px solid rgba(74, 222, 128, 0.4);
+}
+
+.news-date {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.news-title-link {
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+}
+
+.news-title {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 4px 0;
+    transition: color 0.3s;
+}
+
+.news-card:hover .news-title {
+    color: #4ade80;
+}
+
+.news-footer {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: auto;
+}
+
+.news-read-more {
+    font-size: 0.825rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.news-card:hover .news-read-more {
+    color: #f1f5f9;
+    gap: 10px;
+}
+
+.news-icon-glow {
+    color: #4ade80;
+    filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.4));
+}
