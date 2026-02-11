@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, Trash2, AlertCircle } from 'lucide-react';
+import { MessageSquare, Send, Trash2, AlertCircle, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { db } from '../services/firebaseConfig';
@@ -8,7 +8,7 @@ import './FixedIncome.css';
 
 const Chat = () => {
     const { user } = useAuth();
-    const { updateReadStatus } = useNotification();
+    const { updateReadStatus, notificationPermission, requestNotificationPermission } = useNotification();
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [loading, setLoading] = useState(true);
@@ -152,6 +152,43 @@ const Chat = () => {
                 </div>
                 <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', marginTop: '16px' }}></div>
             </header>
+
+            {/* Notification Permission Banner */}
+            {'Notification' in window && notificationPermission !== 'granted' && notificationPermission !== 'denied' && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    flexShrink: 0
+                }}>
+                    <Bell size={20} color="#60a5fa" />
+                    <span style={{ flex: 1, color: '#cbd5e1', fontSize: '0.85rem' }}>
+                        Ative as notificações para receber alertas no ícone do app.
+                    </span>
+                    <button
+                        onClick={requestNotificationPermission}
+                        style={{
+                            background: '#3b82f6',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                        }}
+                    >
+                        Ativar
+                    </button>
+                </div>
+            )}
 
             {/* Chat Area */}
             <div className="glass-card" style={{

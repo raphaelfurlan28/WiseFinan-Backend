@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { db } from '../services/firebaseConfig'; // Import Firestore
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 
@@ -8,6 +8,7 @@ export const useNotification = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationPermission, setNotificationPermission] = useState('default');
     // Track the timestamp of when the user last opened the chat
     const [lastReadTimestamp, setLastReadTimestamp] = useState(() => {
         const stored = localStorage.getItem('chatLastReadTimestamp');
@@ -15,6 +16,38 @@ export const NotificationProvider = ({ children }) => {
         return stored ? new Date(stored) : new Date(0);
     });
     const [messages, setMessages] = useState([]);
+
+    // Check initial notification permission
+    useEffect(() => {
+        if ('Notification' in window) {
+            setNotificationPermission(Notification.permission);
+        }
+    }, []);
+
+    // Request notification permission (must be called from user interaction)
+    const requestNotificationPermission = useCallback(async () => {
+        if (!('Notification' in window)) return 'denied';
+
+        try {
+            const permission = await Notification.requestPermission();
+            setNotificationPermission(permission);
+            return permission;
+        } catch (err) {
+            console.error("Error requesting notification permission:", err);
+            return 'denied';
+        }
+    }, []);
+
+    // Update the app badge
+    const updateAppBadge = useCallback((count) => {
+        if ('setAppBadge' in navigator) {
+            if (count > 0) {
+                navigator.setAppBadge(count).catch(() => { });
+            } else {
+                navigator.clearAppBadge().catch(() => { });
+            }
+        }
+    }, []);
 
     // Real-time listener for messages to drive notifications
     useEffect(() => {
@@ -28,12 +61,9 @@ export const NotificationProvider = ({ children }) => {
             setMessages(msgs);
 
             // Calculate unread based on TIMESTAMP
-            // Count messages where timestamp > lastReadTimestamp
             let count = 0;
             msgs.forEach(msg => {
-                // msg.timestamp is Firestore Timestamp (seconds, nanoseconds)
                 if (msg.timestamp) {
-                    // Handle potential Date/Timestamp variance
                     const msgDate = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
                     if (msgDate > lastReadTimestamp) {
                         count++;
@@ -41,42 +71,33 @@ export const NotificationProvider = ({ children }) => {
                 }
             });
 
-
             setUnreadCount(count);
-
-            // Update App Badge
-            if ('setAppBadge' in navigator) {
-                if (count > 0) {
-                    navigator.setAppBadge(count).catch((error) => {
-                        // Fail silently, not critical
-                    });
-                } else {
-                    navigator.clearAppBadge().catch(() => { });
-                }
-            }
+            updateAppBadge(count);
 
         }, (error) => {
             console.error("Error listening to chat notifications:", error);
         });
 
         return () => unsubscribe();
-    }, [lastReadTimestamp]);
+    }, [lastReadTimestamp, updateAppBadge]);
 
     // Called by Chat.jsx when user opens/views chat
-    // No arguments needed now, we just use current time
     const updateReadStatus = () => {
         const now = new Date();
         localStorage.setItem('chatLastReadTimestamp', now.toISOString());
         setLastReadTimestamp(now);
         setUnreadCount(0);
-
-        if ('clearAppBadge' in navigator) {
-            navigator.clearAppBadge().catch(() => { });
-        }
+        updateAppBadge(0);
     };
 
     return (
-        <NotificationContext.Provider value={{ unreadCount, updateReadStatus, messages }}>
+        <NotificationContext.Provider value={{
+            unreadCount,
+            updateReadStatus,
+            messages,
+            notificationPermission,
+            requestNotificationPermission
+        }}>
             {children}
         </NotificationContext.Provider>
     );
