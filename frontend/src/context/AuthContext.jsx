@@ -37,6 +37,31 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let heartbeatInterval;
 
+        const validateWithRetry = async (currentUser, tokenObj, retries = 3) => {
+            try {
+                // Determine which token to use
+                const localToken = localStorage.getItem('session_token');
+                const token = tokenObj || localToken;
+
+                if (!token) return { valid: false, reason: 'no_token_locally' };
+
+                const response = await axios.post('/api/auth/validate-session', {
+                    email: currentUser.email,
+                    token: token
+                });
+                return response.data;
+            } catch (err) {
+                console.error("[Auth] Validation error:", err);
+                if (retries > 0) {
+                    console.log(`[Auth] Retrying validation... (${retries} left)`);
+                    await new Promise(r => setTimeout(r, 1000));
+                    return validateWithRetry(currentUser, tokenObj, retries - 1);
+                }
+                // Network error or 500 - don't logout immediately, assume valid to avoid glitch
+                return { valid: true, warning: 'network_error_assumed_valid' };
+            }
+        };
+
         const manageSession = async (currentUser) => {
             if (!currentUser) return;
 
@@ -46,17 +71,15 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 if (token) {
-                    // Validate existing token (Page Reload scenario)
-                    const response = await axios.post('/api/auth/validate-session', {
-                        email: currentUser.email,
-                        token: token
-                    });
+                    // Validate existing token
+                    const validation = await validateWithRetry(currentUser, token);
 
-                    if (!response.data.valid) {
-                        console.warn("[Auth] Token invalid on load. logging out.");
-                        // If the server says it's invalid, it IS invalid.
-                        await logout(true);
-                        return;
+                    if (!validation.valid) {
+                        console.warn("[Auth] Token invalid on load:", validation.reason);
+                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session') {
+                            await logout(true);
+                            return;
+                        }
                     } else {
                         console.log("[Auth] Token valid on load.");
                     }
@@ -71,38 +94,26 @@ export const AuthProvider = ({ children }) => {
                     console.log("[Auth] New session registered:", token);
                 }
 
-                // 2. Start Heartbeat ONLY if we have a valid token
+                // 2. Start Heartbeat
                 if (heartbeatInterval) clearInterval(heartbeatInterval);
 
                 heartbeatInterval = setInterval(async () => {
-                    const currentToken = localStorage.getItem('session_token');
-                    // Use the 'token' variable from closure as fallback or currentToken
-                    const tokenToSend = currentToken || token;
+                    if (currentUser) {
+                        const validation = await validateWithRetry(currentUser, null, 2); // 2 retries for heartbeat
 
-                    if (currentUser && tokenToSend) {
-                        try {
-                            // console.log("[Auth] Sending heartbeat..."); 
-                            const res = await axios.post('/api/auth/validate-session', {
-                                email: currentUser.email,
-                                token: tokenToSend
-                            });
-
-                            if (!res.data.valid) {
-                                console.warn("[Auth] Heartbeat failed. Session invalid.");
+                        if (!validation.valid) {
+                            console.warn("[Auth] Heartbeat failed:", validation.reason);
+                            if (validation.reason === 'token_mismatch' || validation.reason === 'no_session') {
                                 clearInterval(heartbeatInterval);
                                 alert("Sessão encerrada. Sua conta foi conectada em outro dispositivo.");
                                 await logout(true);
                             }
-                        } catch (err) {
-                            console.error("[Auth] Heartbeat error:", err);
                         }
                     }
                 }, 30000); // 30 seconds
 
             } catch (error) {
                 console.error("[Auth] Session management error:", error);
-                // If we can't register/validate, maybe we should logout? 
-                // For now, let's just log it to avoid locking user out due to network glitch
             }
         };
 
