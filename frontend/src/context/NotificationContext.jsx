@@ -41,7 +41,19 @@ export const NotificationProvider = ({ children }) => {
                 }
             });
 
+
             setUnreadCount(count);
+
+            // Update App Badge
+            if ('setAppBadge' in navigator) {
+                if (count > 0) {
+                    navigator.setAppBadge(count).catch((error) => {
+                        // Fail silently, not critical
+                    });
+                } else {
+                    navigator.clearAppBadge().catch(() => { });
+                }
+            }
 
         }, (error) => {
             console.error("Error listening to chat notifications:", error);
@@ -57,6 +69,10 @@ export const NotificationProvider = ({ children }) => {
         localStorage.setItem('chatLastReadTimestamp', now.toISOString());
         setLastReadTimestamp(now);
         setUnreadCount(0);
+
+        if ('clearAppBadge' in navigator) {
+            navigator.clearAppBadge().catch(() => { });
+        }
     };
 
     return (

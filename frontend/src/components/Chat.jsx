@@ -138,7 +138,7 @@ const Chat = () => {
     };
 
     return (
-        <div className="rf-container" style={{ height: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}>
+        <div className="rf-container" style={{ height: 'calc(100vh - 30px)', display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -159,7 +159,7 @@ const Chat = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                marginBottom: '20px',
+                marginBottom: '0',
                 borderRadius: '16px',
                 border: '1px solid rgba(255, 255, 255, 0.05)',
                 background: 'rgba(30, 41, 59, 0.4)'
@@ -241,7 +241,9 @@ const Chat = () => {
                                         position: 'relative',
                                         minWidth: '120px'
                                     }}>
-                                        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                            {msg.text}
+                                        </div>
 
                                         <div style={{
                                             fontSize: '0.65rem',
@@ -289,42 +291,46 @@ const Chat = () => {
 
                 {/* Input Area (Only for Admin) */}
                 {canSend ? (
-                    <form onSubmit={handleSend} style={{
-                        padding: '16px',
+                    <div style={{
+                        padding: '12px',
                         background: 'rgba(0, 0, 0, 0.2)',
                         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                         display: 'flex',
-                        gap: '12px'
+                        gap: '8px',
+                        alignItems: 'center'
                     }}>
-                        <input
-                            type="text"
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            placeholder="Digite sua mensagem..."
-                            style={{
-                                flex: 1,
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                        <form onSubmit={handleSend} style={{ flex: 1, display: 'flex', gap: '12px' }}>
+                            <input
+                                type="text"
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                placeholder="Digite sua mensagem..."
+                                style={{
+                                    flex: 1,
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '12px',
+                                    padding: '12px 16px',
+                                    color: '#fff',
+                                    fontSize: '1rem',
+                                    outline: 'none'
+                                }}
+                            />
+                            <button type="submit" disabled={!inputText.trim()} style={{
+                                background: '#3b82f6',
+                                border: 'none',
                                 borderRadius: '12px',
-                                padding: '12px 16px',
-                                color: '#fff',
-                                fontSize: '1rem',
-                                outline: 'none'
-                            }}
-                        />
-                        <button type="submit" disabled={!inputText.trim()} style={{
-                            background: '#3b82f6',
-                            border: 'none',
-                            borderRadius: '12px',
-                            width: '48px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: inputText.trim() ? 'pointer' : 'default',
-                            opacity: inputText.trim() ? 1 : 0.5,
-                            transition: 'opacity 0.2s'
-                        }}>
-                            <Send size={20} color="#fff" />
-                        </button>
-                    </form>
+                                width: '48px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: inputText.trim() ? 'pointer' : 'default',
+                                opacity: inputText.trim() ? 1 : 0.5,
+                                transition: 'opacity 0.2s',
+                                flexShrink: 0
+                            }}>
+                                <Send size={20} color="#fff" />
+                            </button>
+                        </form>
+                    </div>
                 ) : (
                     <div style={{
                         padding: '16px',
