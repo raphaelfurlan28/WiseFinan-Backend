@@ -97,12 +97,20 @@ export const AuthProvider = ({ children }) => {
                 // 2. Start Heartbeat
                 if (heartbeatInterval) clearInterval(heartbeatInterval);
 
+                // Capture the token being used for this session to ensure we validate integrity
+                // against THIS session, not just whatever is in localStorage
+                const currentSessionToken = token;
+
                 heartbeatInterval = setInterval(async () => {
-                    if (currentUser) {
-                        const validation = await validateWithRetry(currentUser, null, 2); // 2 retries for heartbeat
+                    if (currentUser && currentSessionToken) {
+                        // Pass the specific token we expect to be valid
+                        const validation = await validateWithRetry(currentUser, currentSessionToken, 2);
+
+                        // console.log("[Auth] Heartbeat Result:", validation);
 
                         if (!validation.valid) {
                             console.warn("[Auth] Heartbeat failed:", validation.reason);
+                            // Only logout on explicit rejections from server
                             if (validation.reason === 'token_mismatch' || validation.reason === 'no_session') {
                                 clearInterval(heartbeatInterval);
                                 alert("Sessão encerrada. Sua conta foi conectada em outro dispositivo.");
@@ -110,7 +118,7 @@ export const AuthProvider = ({ children }) => {
                             }
                         }
                     }
-                }, 30000); // 30 seconds
+                }, 10000); // Check every 10s for faster feedback during debug, can revert to 30s later
 
             } catch (error) {
                 console.error("[Auth] Session management error:", error);

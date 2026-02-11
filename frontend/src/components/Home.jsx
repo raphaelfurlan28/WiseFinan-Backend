@@ -1709,7 +1709,7 @@ const Home = ({ onNavigate }) => {
             {/* 1. Destaques: Notícias (2 Brasil + 2 Mundo) */}
             <div className="section-header" style={{ marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Newspaper size={20} /> Destaques do Dia (Brasil & Mundo)
+                    <Newspaper size={20} /> Notícias (Brasil & Mundo)
                 </h2>
             </div>
 

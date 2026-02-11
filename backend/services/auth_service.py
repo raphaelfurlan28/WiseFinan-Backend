@@ -83,8 +83,10 @@ def validate_user_session(email, token):
         if active_token == token:
             # Update heartbeat/last_seen if needed? 
             # For now just validate.
+            # print(f"[AUTH DEBUG] Valid session for {email}")
             return {"valid": True}
         else:
+            print(f"[AUTH DEBUG] Token Mismatch for {email}. Incoming: {token[-5:]} | Active: {active_token[-5:]}")
             return {"valid": False, "reason": "token_mismatch"}
             
     except Exception as e:
