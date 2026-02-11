@@ -135,6 +135,11 @@ export const AuthProvider = ({ children }) => {
                     accessToken: firebaseUser.accessToken
                 };
                 setUser(u);
+
+                // If we are just logging in, ensure we don't accidentally reuse an old token
+                // logic in manageSession handles "if token exists, validate", "if not, create"
+                // But to be safe, if we just came from a "login" action, we might want to force create?
+                // For now, let's rely on manageSession's boolean check.
                 manageSession(u);
             } else {
                 setUser(null);

@@ -239,7 +239,17 @@ def rf():
 @app.route('/api/indices', methods=['GET'])
 def indices():
     try:
+        from services.market_data import get_economic_indices
         data = get_economic_indices()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/quotes', methods=['GET'])
+def quotes():
+    try:
+        from services.market_data import get_general_quotes
+        data = get_general_quotes()
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

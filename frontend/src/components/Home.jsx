@@ -6,7 +6,7 @@ import './OptionsModule.css'; // Import Options Styles
 import './Dashboard.css'; // Import Dashboard Styles
 import './News.css';
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
@@ -55,6 +55,7 @@ const Home = ({ onNavigate }) => {
 
     // Indices State
     const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
+    const [generalQuotes, setGeneralQuotes] = useState([]);
 
     // Fetch Home Highlights
     useEffect(() => {
@@ -76,6 +77,15 @@ const Home = ({ onNavigate }) => {
                     setIndices(jsonIndices);
                 } catch (e) {
                     console.error("Error fetching indices in Home", e);
+                }
+
+                // General Quotes
+                try {
+                    const resQuotes = await fetch(getApiUrl('/api/quotes'));
+                    const jsonQuotes = await resQuotes.json();
+                    setGeneralQuotes(jsonQuotes);
+                } catch (e) {
+                    console.error("Error fetching quotes", e);
                 }
 
                 // Stocks Map & Market Movers
@@ -1762,7 +1772,81 @@ const Home = ({ onNavigate }) => {
                 )}
             </div>
 
-            {/* 2. Destaques: Calendário (Dividends & Earnings) */}
+            {/* 2. Cotações Gerais */}
+            <div className="section-header" style={{ marginBottom: '16px', marginTop: '32px' }}>
+                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TrendingUp size={20} /> Cotações Mundiais
+                </h2>
+            </div>
+
+            <div className="market-overview-card glass-card" style={{ padding: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                    {generalQuotes.map((quote) => {
+                        const isPositive = quote.change >= 0;
+                        const color = isPositive ? '#4ade80' : '#ef4444';
+                        const Sign = isPositive ? '+' : '';
+
+                        const getTheme = (name) => {
+                            switch (name) {
+                                case 'IBOV': return { bg: '#1e3a8a', icon: <BarChart2 size={24} color="#ffffff" /> };
+                                case 'Dólar': return { bg: '#14532d', icon: <DollarSign size={24} color="#ffffff" /> };
+                                case 'Bitcoin': return { bg: '#78350f', icon: <Bitcoin size={24} color="#ffffff" /> };
+                                case 'Euro': return { bg: '#0c4a6e', icon: <Euro size={24} color="#ffffff" /> };
+                                case 'Libra': return { bg: '#581c87', icon: <PoundSterling size={24} color="#ffffff" /> };
+                                default: return { bg: '#334155', icon: <TrendingUp size={24} color="#ffffff" /> };
+                            }
+                        };
+
+                        const theme = getTheme(quote.name);
+
+                        return (
+                            <div key={quote.id} style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '16px', borderRadius: '16px', background: 'rgba(30, 41, 59, 0.4)',
+                                border: '0px solid rgba(255,255,255,0.05)',
+                                backdropFilter: 'blur(10px)',
+                                transition: 'transform 0.2s',
+                                cursor: 'default',
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                            }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{
+                                        width: '48px', height: '48px',
+                                        borderRadius: '12px',
+                                        background: theme.bg,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: 'px solid rgba(255,255,255,0.1)',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                    }}>
+                                        {theme.icon}
+                                    </div>
+                                    <span style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>{quote.name}</span>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                    <span style={{ fontSize: '0.85rem', color: '#f1f5f9', fontWeight: 600, letterSpacing: '-0.5px' }}>
+                                        {quote.name === 'IBOV' ? `${Math.round(quote.price).toLocaleString('pt-BR')} pts` :
+                                            quote.name === 'Bitcoin' ? `US$ ${quote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+                                                `R$ ${quote.price.toFixed(2).replace('.', ',')}`}
+                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        {isPositive ? <TrendingUp size={12} color={color} /> : <TrendingDown size={12} color={color} />}
+                                        <span style={{ fontSize: '0.65rem', color: color, fontWeight: 600 }}>
+                                            {Sign}{quote.change.toFixed(2).replace('.', ',')}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {generalQuotes.length === 0 && <div style={{ color: '#64748b' }}>Carregando cotações...</div>}
+                </div>
+            </div>
+
+            {/* 3. Destaques: Calendário (Dividends & Earnings) */}
             <div style={{ margin: '40px 0 20px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
 
             <div className="section-header" style={{ marginBottom: '20px' }}>

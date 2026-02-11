@@ -397,3 +397,66 @@ def get_home_news_highlights():
     brasil = get_rss_news(limit=2, topic='BRASIL')
     mundo = get_rss_news(limit=2, topic='MUNDO')
     return brasil + mundo
+
+def get_general_quotes():
+    """
+    Fetches major market indicators: IBOV, Dollar, Bitcoin, Euro, Libra.
+    Returns a list of dicts with price and daily variation.
+    """
+    quotes = []
+    
+    # Tickers mapping
+    tickers = {
+        "^BVSP": "IBOV",
+        "BRL=X": "Dólar",
+        "BTC-USD": "Bitcoin",
+        "EURBRL=X": "Euro",
+        "GBPBRL=X": "Libra"
+    }
+
+    try:
+        # Fetch data in batch or loop? Loop is fine for 5 items.
+        # Batch might be faster: yf.download(" ".join(tickers.keys()), period="2d")
+        
+        # Let's use Ticker(t).history(period="2d") to get today and yesterday
+        for ticker, name in tickers.items():
+            try:
+                t = yf.Ticker(ticker)
+                hist = t.history(period="5d") # Fetch 5 days to be safe over weekends
+                
+                if not hist.empty and len(hist) >= 2:
+                    current = hist['Close'].iloc[-1]
+                    previous = hist['Close'].iloc[-2]
+                    
+                    change = ((current - previous) / previous) * 100
+                    
+                    quotes.append({
+                        "id": ticker,
+                        "name": name,
+                        "price": current,
+                        "change": change
+                    })
+                elif not hist.empty:
+                     # Only one day of data?
+                    current = hist['Close'].iloc[-1]
+                    quotes.append({
+                        "id": ticker,
+                        "name": name,
+                        "price": current,
+                        "change": 0.0
+                    })
+            except Exception as e:
+                print(f"Error fetching {ticker}: {e}")
+                # Fallback?
+                quotes.append({
+                    "id": ticker,
+                    "name": name,
+                    "price": 0.0,
+                    "change": 0.0,
+                    "error": True
+                })
+
+    except Exception as e:
+        print(f"Error in get_general_quotes: {e}")
+
+    return quotes
