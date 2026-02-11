@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../services/firebaseConfig'; // Import Firestore
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 
@@ -9,18 +9,32 @@ export const useNotification = () => useContext(NotificationContext);
 export const NotificationProvider = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [notificationPermission, setNotificationPermission] = useState('default');
-    // Track the timestamp of when the user last opened the chat
     const [lastReadTimestamp, setLastReadTimestamp] = useState(() => {
         const stored = localStorage.getItem('chatLastReadTimestamp');
-        // Default to very old date if not set (Epoch)
         return stored ? new Date(stored) : new Date(0);
     });
     const [messages, setMessages] = useState([]);
+    const latestUnreadCount = useRef(0);
 
     // Check initial notification permission
     useEffect(() => {
         if ('Notification' in window) {
             setNotificationPermission(Notification.permission);
+        }
+    }, []);
+
+    // Update the app badge
+    const updateAppBadge = useCallback((count) => {
+        // Check permission first
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            return;
+        }
+        if ('setAppBadge' in navigator) {
+            if (count > 0) {
+                navigator.setAppBadge(count).catch(() => { });
+            } else {
+                navigator.clearAppBadge().catch(() => { });
+            }
         }
     }, []);
 
@@ -31,21 +45,23 @@ export const NotificationProvider = ({ children }) => {
         try {
             const permission = await Notification.requestPermission();
             setNotificationPermission(permission);
+
+            // After granting, immediately set badge with current unread count
+            if (permission === 'granted' && latestUnreadCount.current > 0) {
+                if ('setAppBadge' in navigator) {
+                    navigator.setAppBadge(latestUnreadCount.current).catch(() => { });
+                }
+                // Also show a test notification to confirm it works
+                new Notification('WiseFinan - Alertas', {
+                    body: `Você tem ${latestUnreadCount.current} alerta(s) não lido(s).`,
+                    icon: '/icon-v2-192.png',
+                    badge: '/icon-v2-192.png'
+                });
+            }
             return permission;
         } catch (err) {
             console.error("Error requesting notification permission:", err);
             return 'denied';
-        }
-    }, []);
-
-    // Update the app badge
-    const updateAppBadge = useCallback((count) => {
-        if ('setAppBadge' in navigator) {
-            if (count > 0) {
-                navigator.setAppBadge(count).catch(() => { });
-            } else {
-                navigator.clearAppBadge().catch(() => { });
-            }
         }
     }, []);
 
@@ -72,6 +88,7 @@ export const NotificationProvider = ({ children }) => {
             });
 
             setUnreadCount(count);
+            latestUnreadCount.current = count;
             updateAppBadge(count);
 
         }, (error) => {
@@ -87,6 +104,7 @@ export const NotificationProvider = ({ children }) => {
         localStorage.setItem('chatLastReadTimestamp', now.toISOString());
         setLastReadTimestamp(now);
         setUnreadCount(0);
+        latestUnreadCount.current = 0;
         updateAppBadge(0);
     };
 

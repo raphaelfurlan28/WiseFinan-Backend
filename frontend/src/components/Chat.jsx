@@ -1,135 +1,97 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, Trash2, AlertCircle, Bell } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Bell, TrendingUp, Lightbulb, BarChart3, AlertTriangle, Plus, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { db } from '../services/firebaseConfig';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import './FixedIncome.css';
 
+const CATEGORIES = {
+    operacao: { label: 'Operação', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)', icon: TrendingUp },
+    dica: { label: 'Dica', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)', icon: Lightbulb },
+    analise: { label: 'Análise', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', icon: BarChart3 },
+    urgente: { label: 'Urgente', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)', icon: AlertTriangle },
+};
+
 const Chat = () => {
     const { user } = useAuth();
     const { updateReadStatus, notificationPermission, requestNotificationPermission } = useNotification();
-    const [messages, setMessages] = useState([]);
-    const [inputText, setInputText] = useState('');
+    const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Scroll Refs
-    const messagesEndRef = useRef(null);
-    const scrollViewportRef = useRef(null);
-    const [isAtBottom, setIsAtBottom] = useState(true);
-    const prevMessagesLength = useRef(0);
+    // Admin form state
+    const [showForm, setShowForm] = useState(false);
+    const [formCategory, setFormCategory] = useState('operacao');
+    const [formTitle, setFormTitle] = useState('');
+    const [formBody, setFormBody] = useState('');
+    const [sending, setSending] = useState(false);
 
-    // Admin email allowed to send messages
     const ADMIN_EMAIL = 'raphaelfurlan28@gmail.com';
     const canSend = user?.email === ADMIN_EMAIL;
 
-    // Real-time listener for messages
+    // Real-time listener
     useEffect(() => {
-        const q = query(collection(db, "chat_messages"), orderBy("timestamp", "asc"));
+        const q = query(collection(db, "chat_messages"), orderBy("timestamp", "desc"));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const msgs = [];
-            querySnapshot.forEach((doc) => {
-                msgs.push({ id: doc.id, ...doc.data() });
+            querySnapshot.forEach((d) => {
+                msgs.push({ id: d.id, ...d.data() });
             });
-            setMessages(msgs);
+            setAlerts(msgs);
             setLoading(false);
         }, (error) => {
-            console.error("Error fetching chat:", error);
+            console.error("Error fetching alerts:", error);
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, []);
 
-    // 1. Handle User Scroll - Detect if user is reading history
-    const handleScroll = () => {
-        if (scrollViewportRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = scrollViewportRef.current;
-            // Consider "at bottom" if within 50px of end
-            const atBottom = scrollHeight - scrollTop - clientHeight < 50;
-            setIsAtBottom(atBottom);
-        }
-    };
-
-    // 2. Scroll Helper
-    const scrollToBottom = (smooth = true) => {
-        messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
-        setIsAtBottom(true);
-    };
-
-    // 3. Initial Scroll (Only once on load)
+    // Mark as read on mount / when alerts change
     useEffect(() => {
-        if (!loading && messages.length > 0) {
-            scrollToBottom(false); // Instant scroll
-            prevMessagesLength.current = messages.length;
-        }
-    }, [loading]);
-
-    // 4. Auto-scroll Logic (Only when NEW messages arrive)
-    useEffect(() => {
-        // Did we get a NEW message?
-        const addedMessage = messages.length > prevMessagesLength.current;
-        prevMessagesLength.current = messages.length;
-
-        if (addedMessage) {
-            const lastMsg = messages[messages.length - 1];
-            // Scroll ONLY if:
-            // a) User was already at the bottom (sticky behavior)
-            // b) OR the user sent the message (force scroll for my own messages)
-            if (isAtBottom || (lastMsg && (lastMsg.email === user?.email || lastMsg.email === ADMIN_EMAIL))) {
-                setTimeout(() => {
-                    scrollToBottom();
-                }, 100);
-            }
-        }
-
-        // Always update read status when messages change
         updateReadStatus();
-    }, [messages, updateReadStatus, user?.email]);
-    // Removed isAtBottom from dependency array to prevent scroll loop when scrolling up!
+    }, [alerts, updateReadStatus]);
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!inputText.trim() || !canSend) return;
+        if (!formTitle.trim() || !canSend) return;
 
-        const text = inputText;
-        setInputText(''); // Optimistic clear
-
+        setSending(true);
         try {
             await addDoc(collection(db, "chat_messages"), {
-                text: text,
+                category: formCategory,
+                title: formTitle.trim(),
+                text: formBody.trim(),
                 user: user.name || user.email,
-                email: user.email, // Store email for ownership check
+                email: user.email,
                 timestamp: serverTimestamp()
             });
-            // Force scroll immediately on send for better UX
-            scrollToBottom();
+            setFormTitle('');
+            setFormBody('');
+            setShowForm(false);
         } catch (err) {
-            console.error("Error sending message:", err);
-            setInputText(text); // Restore on error
-            alert("Erro ao enviar mensagem.");
+            console.error("Error sending alert:", err);
+            alert("Erro ao enviar alerta.");
+        } finally {
+            setSending(false);
         }
     };
 
-    const handleDelete = async (msgId) => {
-        // Allow delete if admin
+    const handleDelete = async (alertId) => {
         if (!canSend) return;
-
-        if (!window.confirm("Apagar mensagem?")) return;
+        if (!window.confirm("Apagar este alerta?")) return;
 
         try {
-            await deleteDoc(doc(db, "chat_messages", msgId));
+            await deleteDoc(doc(db, "chat_messages", alertId));
         } catch (err) {
-            console.error("Error deleting message:", err);
-            alert("Erro ao apagar mensagem.");
+            console.error("Error deleting alert:", err);
+            alert("Erro ao apagar alerta.");
         }
     };
 
-    // Format timestamp
     const formatTime = (timestamp) => {
         if (!timestamp) return 'Enviando...';
-        // Firestore timestamp to Date
         const date = timestamp.toDate();
         return date.toLocaleString('pt-BR', {
             day: '2-digit', month: '2-digit', year: '2-digit',
@@ -137,18 +99,40 @@ const Chat = () => {
         });
     };
 
+    const getCategoryInfo = (cat) => {
+        return CATEGORIES[cat] || { label: 'Geral', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.3)', icon: MessageSquare };
+    };
+
     return (
         <div className="rf-container" style={{ height: 'calc(100vh - 30px)', display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        padding: '0',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <MessageSquare size={20} color="#94a3b8" />
+                    <div style={{ padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Bell size={20} color="#94a3b8" />
                     </div>
                     <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Alertas de Operações</h1>
+                    {canSend && (
+                        <button
+                            onClick={() => setShowForm(!showForm)}
+                            style={{
+                                marginLeft: 'auto',
+                                background: showForm ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                border: `1px solid ${showForm ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'}`,
+                                borderRadius: '10px',
+                                padding: '8px 14px',
+                                color: showForm ? '#ef4444' : '#60a5fa',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {showForm ? <X size={16} /> : <Plus size={16} />}
+                            {showForm ? 'Cancelar' : 'Novo Alerta'}
+                        </button>
+                    )}
                 </div>
                 <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', marginTop: '16px' }}></div>
             </header>
@@ -173,16 +157,9 @@ const Chat = () => {
                     <button
                         onClick={requestNotificationPermission}
                         style={{
-                            background: '#3b82f6',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '8px 16px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0
+                            background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px',
+                            padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                            whiteSpace: 'nowrap', flexShrink: 0
                         }}
                     >
                         Ativar
@@ -190,197 +167,236 @@ const Chat = () => {
                 </div>
             )}
 
-            {/* Chat Area */}
-            <div className="glass-card" style={{
+            {/* Admin: New Alert Form */}
+            {canSend && showForm && (
+                <div style={{
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    marginBottom: '16px',
+                    flexShrink: 0,
+                    backdropFilter: 'blur(12px)'
+                }}>
+                    <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: 600, color: '#e2e8f0' }}>Criar Alerta</h3>
+
+                    {/* Category Selector */}
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                        {Object.entries(CATEGORIES).map(([key, cat]) => {
+                            const Icon = cat.icon;
+                            const isSelected = formCategory === key;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => setFormCategory(key)}
+                                    style={{
+                                        background: isSelected ? cat.bg : 'rgba(255, 255, 255, 0.04)',
+                                        border: `1.5px solid ${isSelected ? cat.color : 'rgba(255, 255, 255, 0.1)'}`,
+                                        borderRadius: '10px',
+                                        padding: '8px 14px',
+                                        color: isSelected ? cat.color : '#64748b',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                        transition: 'all 0.2s',
+                                        transform: isSelected ? 'scale(1.03)' : 'scale(1)'
+                                    }}
+                                >
+                                    <Icon size={14} />
+                                    {cat.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Title Input */}
+                    <input
+                        type="text"
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        placeholder="Título do alerta..."
+                        style={{
+                            width: '100%',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            color: '#fff',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            outline: 'none',
+                            marginBottom: '10px',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+
+                    {/* Body Textarea */}
+                    <textarea
+                        value={formBody}
+                        onChange={(e) => setFormBody(e.target.value)}
+                        placeholder="Descrição (opcional)..."
+                        rows={3}
+                        style={{
+                            width: '100%',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            color: '#fff',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            resize: 'vertical',
+                            marginBottom: '14px',
+                            fontFamily: 'inherit',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+
+                    {/* Send Button */}
+                    <button
+                        onClick={handleSend}
+                        disabled={!formTitle.trim() || sending}
+                        style={{
+                            background: formTitle.trim() ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'rgba(255, 255, 255, 0.1)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '12px 24px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: formTitle.trim() ? 'pointer' : 'default',
+                            opacity: formTitle.trim() ? 1 : 0.5,
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'all 0.2s',
+                            width: '100%',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <Send size={16} />
+                        {sending ? 'Enviando...' : 'Publicar Alerta'}
+                    </button>
+                </div>
+            )}
+
+            {/* Feed Area */}
+            <div style={{
                 flex: 1,
+                overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden',
-                marginBottom: '0',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-                background: 'rgba(30, 41, 59, 0.4)'
+                gap: '12px',
+                paddingBottom: '16px'
             }}>
-                {/* Standard Gradient Header */}
-                <div className="rf-card-header" style={{
-                    background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.35), transparent)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    padding: '16px',
-                    display: 'flex', alignItems: 'center', gap: '12px'
-                }}>
+                {/* Empty State */}
+                {alerts.length === 0 && !loading && (
                     <div style={{
-                        background: '#3b82f6',
-                        color: '#fff',
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        textAlign: 'center', color: '#64748b', marginTop: '60px',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px'
                     }}>
-                        <MessageSquare size={20} />
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#fff' }}>Mensagens</h3>
-                    {!canSend && (
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: 'auto' }}>
-                            Apenas o administrador pode enviar mensagens.
-                        </span>
-                    )}
-                </div>
-
-                {/* Messages List */}
-                <div
-                    ref={scrollViewportRef}
-                    onScroll={handleScroll}
-                    style={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        padding: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                    }}>
-                    {messages.length === 0 && !loading && (
-                        <div style={{ textAlign: 'center', color: '#64748b', marginTop: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '50%' }}>
-                                <MessageSquare size={24} color="#64748b" />
-                            </div>
-                            <span style={{ fontSize: '0.9rem' }}>Nenhuma mensagem ainda.</span>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '50%' }}>
+                            <Bell size={28} color="#475569" />
                         </div>
-                    )}
-
-                    {messages.map((msg) => {
-                        const isMe = msg.email === user?.email;
-                        const isAdminMsg = msg.email === ADMIN_EMAIL;
-
-                        return (
-                            <div key={msg.id} className="message-group" style={{
-                                alignSelf: isMe ? 'flex-end' : 'flex-start',
-                                maxWidth: '85%',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: isMe ? 'flex-end' : 'flex-start',
-                                position: 'relative'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                                    {/* Bubble */}
-                                    <div style={{
-                                        background: isAdminMsg
-                                            ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' // Admin (Blue)
-                                            : 'rgba(255, 255, 255, 0.1)', // Others (Gray - though likely none as only admin sends)
-                                        color: '#fff',
-                                        padding: '12px 16px',
-                                        borderRadius: '16px',
-                                        borderBottomRightRadius: isMe ? '4px' : '16px',
-                                        borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                        lineHeight: '1.5',
-                                        fontSize: '0.95rem',
-                                        border: isAdminMsg ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                                        position: 'relative',
-                                        minWidth: '120px'
-                                    }}>
-                                        <div style={{ whiteSpace: 'pre-wrap' }}>
-                                            {msg.text}
-                                        </div>
-
-                                        <div style={{
-                                            fontSize: '0.65rem',
-                                            color: 'rgba(255,255,255,0.7)',
-                                            marginTop: '6px',
-                                            textAlign: 'right',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}>
-                                            <span>{msg.user}</span>
-                                            <span>{formatTime(msg.timestamp)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Delete Button (Only for Admin) */}
-                                    {canSend && (
-                                        <button
-                                            onClick={() => handleDelete(msg.id)}
-                                            className="delete-btn"
-                                            title="Apagar mensagem"
-                                            style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                color: '#ef4444',
-                                                cursor: 'pointer',
-                                                padding: '4px',
-                                                opacity: 0.5,
-                                                transition: 'opacity 0.2s',
-                                                display: 'flex', alignItems: 'center'
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.opacity = 1}
-                                            onMouseLeave={(e) => e.target.style.opacity = 0.5}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input Area (Only for Admin) */}
-                {canSend ? (
-                    <div style={{
-                        padding: '12px',
-                        background: 'rgba(0, 0, 0, 0.2)',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'center'
-                    }}>
-                        <form onSubmit={handleSend} style={{ flex: 1, display: 'flex', gap: '12px' }}>
-                            <input
-                                type="text"
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                placeholder="Digite sua mensagem..."
-                                style={{
-                                    flex: 1,
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '12px',
-                                    padding: '12px 16px',
-                                    color: '#fff',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                            />
-                            <button type="submit" disabled={!inputText.trim()} style={{
-                                background: '#3b82f6',
-                                border: 'none',
-                                borderRadius: '12px',
-                                width: '48px',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: inputText.trim() ? 'pointer' : 'default',
-                                opacity: inputText.trim() ? 1 : 0.5,
-                                transition: 'opacity 0.2s',
-                                flexShrink: 0
-                            }}>
-                                <Send size={20} color="#fff" />
-                            </button>
-                        </form>
-                    </div>
-                ) : (
-                    <div style={{
-                        padding: '16px',
-                        background: 'rgba(0, 0, 0, 0.2)',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                        textAlign: 'center',
-                        color: '#94a3b8',
-                        fontSize: '0.9rem'
-                    }}>
-                        <AlertCircle size={16} style={{ display: 'inline', marginBottom: '-3px', marginRight: '6px' }} />
-                        Apenas o administrador pode enviar mensagens.
+                        <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>Nenhum alerta publicado.</span>
+                        <span style={{ fontSize: '0.8rem', color: '#475569' }}>Novos alertas aparecerão aqui.</span>
                     </div>
                 )}
+
+                {/* Alert Cards */}
+                {alerts.map((alert) => {
+                    const catInfo = getCategoryInfo(alert.category);
+                    const Icon = catInfo.icon;
+
+                    return (
+                        <div
+                            key={alert.id}
+                            style={{
+                                background: 'rgba(30, 41, 59, 0.5)',
+                                border: `1px solid ${catInfo.border}`,
+                                borderLeft: `4px solid ${catInfo.color}`,
+                                borderRadius: '14px',
+                                padding: '16px 18px',
+                                position: 'relative',
+                                transition: 'transform 0.15s, box-shadow 0.15s',
+                                backdropFilter: 'blur(8px)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = `0 4px 20px ${catInfo.bg}`;
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        >
+                            {/* Card Header: Tag + Delete */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                    background: catInfo.bg,
+                                    padding: '4px 12px',
+                                    borderRadius: '20px',
+                                    border: `1px solid ${catInfo.border}`
+                                }}>
+                                    <Icon size={13} color={catInfo.color} />
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: catInfo.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                        {catInfo.label}
+                                    </span>
+                                </div>
+
+                                {canSend && (
+                                    <button
+                                        onClick={() => handleDelete(alert.id)}
+                                        title="Apagar alerta"
+                                        style={{
+                                            background: 'transparent', border: 'none', color: '#64748b',
+                                            cursor: 'pointer', padding: '4px', opacity: 0.5,
+                                            transition: 'all 0.2s', display: 'flex', alignItems: 'center'
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#ef4444'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = '#64748b'; }}
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Title */}
+                            <h4 style={{
+                                margin: '0 0 6px 0',
+                                fontSize: '1rem',
+                                fontWeight: 700,
+                                color: '#f1f5f9',
+                                lineHeight: '1.4'
+                            }}>
+                                {alert.title || alert.text}
+                            </h4>
+
+                            {/* Body (only if title exists and body is different) */}
+                            {alert.title && alert.text && (
+                                <p style={{
+                                    margin: '0 0 10px 0',
+                                    fontSize: '0.88rem',
+                                    color: '#94a3b8',
+                                    lineHeight: '1.6',
+                                    whiteSpace: 'pre-wrap'
+                                }}>
+                                    {alert.text}
+                                </p>
+                            )}
+
+                            {/* Footer: Timestamp */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                                gap: '8px', marginTop: '4px'
+                            }}>
+                                <span style={{ fontSize: '0.7rem', color: '#475569' }}>
+                                    {formatTime(alert.timestamp)}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
