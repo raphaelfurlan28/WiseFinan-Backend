@@ -19,8 +19,11 @@ import {
 import './Sidebar.css';
 import { useNotification } from '../context/NotificationContext';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
     const { unreadCount } = useNotification();
+    const { user } = useAuth();
 
     const menuItems = [
         { id: 'home', label: 'Home', icon: Home },
@@ -35,7 +38,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'chat', label: 'Alertas', icon: MessageSquare },
         { id: 'admin-leads', label: 'CRM Leads', icon: Users },
         { id: 'support', label: 'Suporte', icon: HelpCircle },
-    ];
+    ].filter(item => item.id !== 'admin-leads' || user?.email === 'raphaelfurlan28@gmail.com');
 
     return (
         <>
