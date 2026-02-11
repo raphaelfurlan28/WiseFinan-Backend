@@ -64,6 +64,9 @@ const Support = () => {
                             </div>
                         </a>
 
+                        {/* Separator */}
+                        <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+
                         {/* Instagram */}
                         <a
                             href="https://instagram.com/rapha.furlan"

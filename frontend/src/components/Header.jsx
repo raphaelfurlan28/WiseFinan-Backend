@@ -3,7 +3,7 @@ import { Menu, User, Bell } from 'lucide-react';
 import './Header.css';
 import { useNotification } from '../context/NotificationContext';
 
-export default function Header({ onToggleSidebar, user, onProfileClick }) {
+export default function Header({ onToggleSidebar, user, onProfileClick, onNavigate }) {
     const { unreadCount } = useNotification();
     const [imgError, setImgError] = useState(false);
 
@@ -32,7 +32,14 @@ export default function Header({ onToggleSidebar, user, onProfileClick }) {
             </div>
 
             <div className="header-right">
-                <button className="icon-btn">
+                <button
+                    className="icon-btn"
+                    onClick={() => {
+                        if (unreadCount > 0 && onNavigate) {
+                            onNavigate('chat');
+                        }
+                    }}
+                >
                     <Bell size={20} color="var(--text-primary)" />
                     {unreadCount > 0 && (
                         <span className="notif-badge" style={{

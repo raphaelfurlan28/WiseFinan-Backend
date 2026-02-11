@@ -32,7 +32,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'strategies', label: 'Estratégias Opções', icon: BookOpen },
         { id: 'news', label: 'Notícias', icon: Newspaper },
         { id: 'calendar', label: 'Calendário', icon: Calendar },
-        { id: 'chat', label: 'Chat', icon: MessageSquare },
+        { id: 'chat', label: 'Alertas', icon: MessageSquare },
         { id: 'admin-leads', label: 'CRM Leads', icon: Users },
         { id: 'support', label: 'Suporte', icon: HelpCircle },
     ];

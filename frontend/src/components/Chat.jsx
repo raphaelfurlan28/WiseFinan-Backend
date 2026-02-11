@@ -148,7 +148,7 @@ const Chat = () => {
                     }}>
                         <MessageSquare size={20} color="#94a3b8" />
                     </div>
-                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Chat Global</h1>
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Alertas de Operações</h1>
                 </div>
                 <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', marginTop: '16px' }}></div>
             </header>

@@ -570,6 +570,33 @@ const Home = ({ onNavigate }) => {
         return isNaN(dist) ? 0 : dist;
     };
 
+    // Volatility Circle Component
+    const VolatilityCircle = ({ value }) => {
+        const val = parseFloat(String(value).replace('%', '').replace(',', '.')) || 0;
+        let color = '#ef4444';
+        if (val > -15) color = '#4ade80';
+        else if (val >= -30) color = '#facc15';
+
+        const fillPercentage = Math.max(0, Math.min(100, 100 + val));
+        const radius = 13;
+        const circumference = 2 * Math.PI * radius;
+        const strokeDashoffset = circumference - (fillPercentage / 100) * circumference;
+
+        return (
+            <div title={`Desconto: ${value}%`} style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="32" height="32" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="16" cy="16" r={radius} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                    <circle
+                        cx="16" cy="16" r={radius} fill="transparent" stroke={color} strokeWidth="3"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                    />
+                </svg>
+            </div>
+        );
+    };
+
     return (
         <div className="rf-container" style={{ paddingBottom: '80px' }}>
             {/* Ticker de Variações */}
@@ -618,21 +645,24 @@ const Home = ({ onNavigate }) => {
                             alignItems: 'center',
                             gap: '12px'
                         }}>
-                            <div className="rf-card-icon" style={{
-                                background: '#00ff88',
-                                color: '#000',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <TrendingUp size={20} />
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                                <div className="rf-card-icon" style={{
+                                    background: '#00ff88',
+                                    color: '#000',
+                                    minWidth: '32px', // Prevent shrinking
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <TrendingUp size={20} />
+                                </div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
+                                    Oportunidade em Ativos Descontados
+                                </h3>
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0 }}>
-                                Oportunidade em Ativos Descontados
-                            </h3>
                         </div>
 
                         <div style={{ padding: '24px' }}>
@@ -699,9 +729,10 @@ const Home = ({ onNavigate }) => {
                                                     padding: '12px',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '12px',
+                                                    justifyContent: 'space-between',
                                                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                                                    marginBottom: '0'
+                                                    marginBottom: '0',
+                                                    gap: '12px'
                                                 }}>
                                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                                         {stock.image_url ? (
@@ -727,6 +758,15 @@ const Home = ({ onNavigate }) => {
                                                             <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1' }}>{stock.ticker}</h3>
                                                             <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                                         </div>
+                                                    </div>
+
+                                                    {/* Price and Volatility Circle */}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            <span style={{ display: 'block', fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
+                                                            <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
+                                                        </div>
+                                                        {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
                                                     </div>
                                                 </div>
 
@@ -778,38 +818,38 @@ const Home = ({ onNavigate }) => {
                             alignItems: 'center',
                             gap: '12px'
                         }}>
-                            <div className="rf-card-icon" style={{
-                                background: '#ef4444',
-                                color: '#fff',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <TrendingUp size={20} style={{ transform: 'rotate(180deg)' }} /> {/* Trending Down */}
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                                <div className="rf-card-icon" style={{
+                                    background: '#ef4444',
+                                    color: '#fff',
+                                    minWidth: '32px',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <TrendingUp size={20} style={{ transform: 'rotate(180deg)' }} /> {/* Trending Down */}
+                                </div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
+                                    Oportunidade em Ativos Caros <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '400' }}>- em carteira</span>
+                                </h3>
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0 }}>
-                                Oportunidade em Ativos Caros <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '400' }}>- em carteira</span>
-                            </h3>
                         </div>
 
                         <div style={{ padding: '24px' }}>
                             {expensiveOpportunities.length === 0 ? (
                                 <div className="rf-empty" style={{ marginTop: '0' }}>
-                                    <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5, color: '#ef4444' }} />
-                                    <p style={{ color: '#ef4444' }}>Nenhuma oportunidade encontada.</p>
-                                    <small style={{ color: '#666' }}>
-                                        (Venda Coberta: Strike &gt; Preço e &gt; Max | Compra a Seco: Prazo &gt; 3m, Custo &lt; 2%)
-                                    </small>
+                                    <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                                    <p>Nenhuma oportunidade encontrada.</p>
                                 </div>
                             ) : (
                                 <div className="rf-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     {expensiveOpportunities.map((item, idx) => {
                                         const stock = item.stock;
 
-                                        // Reuse helper logic (inline for now as scope is separate)
+                                        // Filter Logic Helper
                                         const isDateValid = (dateStr, minMonths, maxMonths) => {
                                             if (!dateStr) return false;
                                             const now = new Date();
@@ -831,7 +871,7 @@ const Home = ({ onNavigate }) => {
                                             return true;
                                         };
 
-                                        // Expensive: Calls = Sell (<=2m), Puts = Buy (>3m)
+                                        // expensive: Calls = Sell (<=2m), Puts = Buy (>3m)
                                         const validCalls = (item.options?.calls || []).filter(o => isDateValid(o.expiration, null, 2));
                                         const validPuts = (item.options?.puts || []).filter(o => isDateValid(o.expiration, 3, null));
 
@@ -845,7 +885,7 @@ const Home = ({ onNavigate }) => {
                                                 key={idx}
                                                 className="rf-card icon-hover-effect glass-card"
                                                 style={{
-                                                    borderLeft: '4px solid #ef4444', // Red border
+                                                    borderLeft: '4px solid #ef4444',
                                                     cursor: 'pointer',
                                                     minHeight: 'auto',
                                                     display: 'flex',
@@ -859,21 +899,23 @@ const Home = ({ onNavigate }) => {
                                                     padding: '12px',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '12px',
+                                                    justifyContent: 'space-between',
                                                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                                                    marginBottom: '0'
+                                                    marginBottom: '0',
+                                                    gap: '12px'
                                                 }}>
-                                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
                                                         {stock.image_url ? (
                                                             <img
                                                                 src={stock.image_url}
                                                                 alt={stock.ticker}
-                                                                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                                                                style={{ width: 36, height: 36, minWidth: 36, borderRadius: '50%', objectFit: 'cover' }}
                                                             />
                                                         ) : (
                                                             <div style={{
                                                                 width: 36,
                                                                 height: 36,
+                                                                minWidth: 36,
                                                                 borderRadius: '50%',
                                                                 background: 'rgba(255,255,255,0.1)',
                                                                 display: 'flex',
@@ -888,6 +930,15 @@ const Home = ({ onNavigate }) => {
                                                             <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                                         </div>
                                                     </div>
+
+                                                    {/* Price and Volatility Circle */}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            <span style={{ display: 'block', fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
+                                                            <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
+                                                        </div>
+                                                        {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
+                                                    </div>
                                                 </div>
 
                                                 <div className="rf-card-content" style={{
@@ -897,11 +948,10 @@ const Home = ({ onNavigate }) => {
                                                     gap: '6px',
                                                     marginTop: '0'
                                                 }}>
-                                                    {/* In Expensive Card: Calls are for Selling (Venda Coberta), Puts are for Buying (Compra a Seco) */}
                                                     {callsCount > 0 && (
                                                         <div style={{ padding: '4px 10px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', borderRadius: '12px', fontSize: '0.8rem', width: 'fit-content' }}>
                                                             <span style={{ fontWeight: 'bold' }}>{callsCount} Call{callsCount > 1 ? 's' : ''}</span>
-                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para venda coberta</span>
+                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para lançamento coberto</span>
                                                         </div>
                                                     )}
                                                     {putsCount > 0 && (
@@ -921,8 +971,9 @@ const Home = ({ onNavigate }) => {
                 </div>
             </div>
 
+
             {/* Resumo do Dia: Maiores Altas e Baixas */}
-            <div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+            < div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div >
 
             <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px' }}>
                 <TrendingUp size={24} color="#94a3b8" />
@@ -972,7 +1023,7 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Var. dia</span>
+                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>Var. dia</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '1rem' }}>
                                                 <TrendingUp size={16} />
                                                 {formatVariation(stock.change_day)}
@@ -1032,7 +1083,7 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Var. dia</span>
+                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>Var. dia</span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '1rem' }}>
                                                 <TrendingDown size={16} />
                                                 {formatVariation(stock.change_day)}
@@ -1076,15 +1127,18 @@ const Home = ({ onNavigate }) => {
                         padding: '16px',
                         display: 'flex', alignItems: 'center', gap: '12px'
                     }}>
-                        <div className="rf-card-icon" style={{
-                            background: '#3b82f6', color: '#fff', width: '32px', height: '32px',
-                            borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <Landmark size={20} />
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                            <div className="rf-card-icon" style={{
+                                background: '#3b82f6', color: '#fff',
+                                minWidth: '32px', width: '32px', height: '32px',
+                                borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Landmark size={20} />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
+                                Oportunidades em Renda Fixa
+                            </h3>
                         </div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0 }}>
-                            Oportunidades em Renda Fixa
-                        </h3>
                     </div>
 
                     <div className="rf-items-grid" style={{ padding: '24px' }}>
@@ -1632,12 +1686,14 @@ const Home = ({ onNavigate }) => {
 
             {/* Operation Explanation Modal */}
             {/* Operation Explanation Modal */}
-            {selectedOperation && (
-                <OperationModal
-                    operation={selectedOperation}
-                    onClose={() => setSelectedOperation(null)}
-                />
-            )}
+            {
+                selectedOperation && (
+                    <OperationModal
+                        operation={selectedOperation}
+                        onClose={() => setSelectedOperation(null)}
+                    />
+                )
+            }
 
             {/* ================================================================================== */}
             {/* NEW SECTIONS: News & Calendar Highlights */}
@@ -1661,6 +1717,9 @@ const Home = ({ onNavigate }) => {
                                 <span className="news-badge">{item.source}</span>
                                 <span className="news-date">{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
                             </div>
+                            {item.image && (
+                                <img src={item.image} alt={item.title} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
+                            )}
                             <h3 className="news-title">
                                 {item.title}
                             </h3>
@@ -1766,7 +1825,7 @@ const Home = ({ onNavigate }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

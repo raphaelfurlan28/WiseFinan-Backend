@@ -106,6 +106,7 @@ const AppContent = () => {
         user={user}
         onToggleSidebar={() => setIsSidebarOpen(true)}
         onProfileClick={() => setIsProfileModalOpen(true)}
+        onNavigate={handleNavigate}
       />
 
       <Sidebar

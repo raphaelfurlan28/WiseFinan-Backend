@@ -356,11 +356,24 @@ def get_rss_news():
                     parts = title.rsplit(" - ", 1)
                     title = parts[0]
                 
+                # Extract Image from description if available
+                image_url = None
+                description = item.find('description').text if item.find('description') is not None else ""
+                
+                # Check for img src inside description (Google News often puts it there)
+                if description:
+                    import re
+                    # Look for src="..."
+                    img_match = re.search(r'src="([^"]+)"', description)
+                    if img_match:
+                        image_url = img_match.group(1)
+                
                 news_items.append({
                     "title": title,
                     "link": link,
                     "date": pubDate,
-                    "source": source
+                    "source": source,
+                    "image": image_url
                 })
                 count += 1
     except Exception as e:

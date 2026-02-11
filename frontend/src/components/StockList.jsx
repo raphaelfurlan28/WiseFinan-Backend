@@ -187,13 +187,13 @@ export default function StockList({ onSelectStock }) {
                   <div className="stock-card-header" style={{ marginBottom: '0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {/* Sector Icon */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, background: 'rgba(255,255,255,0.05)', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)' }}>
                         {getSectorIcon(sector)}
                       </div>
                       <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{sector}</h3>
                     </div>
-                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', color: '#ccc' }}>
-                      {count} ativos
+                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.70rem', color: '#ccc' }}>
+                      {count} Empresas
                     </span>
                   </div>
 
