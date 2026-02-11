@@ -189,21 +189,6 @@ export default function StockDetail({ stock, onBack }) {
                         <span className="label" style={{ fontSize: '10px' }}>Histórico de Preços</span>
                     </div>
 
-                    {/* Legend Section */}
-                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }}></div>
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#fff' }}>Preço: R$ {stock.price}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <div style={{ width: '8px', height: '2px', backgroundColor: '#22c55e' }}></div>
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#22c55e' }}>Baixo: R$ {stock.min_val}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <div style={{ width: '8px', height: '2px', backgroundColor: '#ef4444' }}></div>
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#ef4444' }}>Alto: R$ {stock.max_val}</span>
-                        </div>
-                    </div>
                 </div>
                 <div className="rf-card-content" style={{ padding: '8px 12px 12px 12px' }}>
                     <div className="chart-container" style={{ height: 250, width: '100%' }}>
@@ -256,6 +241,57 @@ export default function StockDetail({ stock, onBack }) {
                         ) : (
                             <div className="chart-empty">Sem dados de histórico.</div>
                         )}
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        marginTop: '6px',
+                        padding: '2px',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {/* Preço Item */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '1px', background: '#ffffff' }}></div>
+                            <span style={{
+                                fontSize: '0.6rem', fontWeight: '700',
+                                background: 'linear-gradient(180deg, #ffffff, #94a3b8)',
+                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
+                                letterSpacing: '0.1px'
+                            }}>
+                                R$ {stock.price}
+                            </span>
+                        </div>
+
+                        {/* Baixo Item */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '1px', background: '#22c55e' }}></div>
+                            <span style={{
+                                fontSize: '0.6rem', fontWeight: '700',
+                                background: 'linear-gradient(180deg, #4ade80, #166534)',
+                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
+                                letterSpacing: '0.1px'
+                            }}>
+                                Min: {stock.min_val}
+                            </span>
+                        </div>
+
+                        {/* Alto Item */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '8px', height: '1px', background: '#ef4444' }}></div>
+                            <span style={{
+                                fontSize: '0.6rem', fontWeight: '700',
+                                background: 'linear-gradient(180deg, #f87171, #991b1b)',
+                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
+                                letterSpacing: '0.1px'
+                            }}>
+                                Max: {stock.max_val}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -483,7 +519,7 @@ function FundamentalsSection({ ticker }) {
         return `R$ ${val.toFixed(0)}`;
     }
     const tooltipCurrencyFormatter = (val) => `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val)}`;
-    const roeFormatter = (val) => `${val.toFixed(0)}%`;
+    const roeFormatter = (val) => `${val.toFixed(2)}%`;
 
     const ChartContainer = ({ title, children, icon: Icon, color }) => (
         <div className="rf-card glass-card" style={{ marginBottom: '20px' }}>

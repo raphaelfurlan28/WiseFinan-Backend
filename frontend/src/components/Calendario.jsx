@@ -188,7 +188,7 @@ export default function Calendario() {
                             <h2 style={{ fontSize: '1.0rem', color: '#94a3b8', margin: 0, marginBottom: '10px', fontWeight: 600 }}>Frequência de Pagamentos (Anual)</h2>
                         </div>
 
-                        <div className="summary-list">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
                             {Object.entries(
                                 events.dividends.reduce((acc, ev) => {
                                     acc[ev.ticker] = (acc[ev.ticker] || 0) + 1;
@@ -196,24 +196,68 @@ export default function Calendario() {
                                 }, {})
                             )
                                 .sort(([, countA], [, countB]) => countB - countA)
-                                .map(([ticker, count]) => {
+                                .map(([ticker, count], index, array) => {
                                     const info = stocksMap[ticker] || { name: ticker, logo: null };
+                                    const isLast = index === array.length - 1;
+
+                                    const nextPayment = events.dividends
+                                        .filter(e => e.ticker === ticker)
+                                        .map(e => new Date(e.date))
+                                        .sort((a, b) => a - b)
+                                        .find(d => d >= new Date().setHours(0, 0, 0, 0));
+
+                                    const nextPaymentStr = nextPayment
+                                        ? `${nextPayment.getDate().toString().padStart(2, '0')}/${(nextPayment.getMonth() + 1).toString().padStart(2, '0')}`
+                                        : null;
+
                                     return (
-                                        <div
-                                            key={ticker}
-                                            className="summary-card"
-                                            onClick={() => setSelectedSummaryTicker(ticker)}
-                                        >
-                                            <div className="stock-basic">
-                                                {info.logo ? <img src={info.logo} alt={ticker} /> : <div className="ph-logo">{ticker[0]}</div>}
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <h4>{ticker}</h4>
-                                                    <span>{info.name}</span>
+                                        <div key={ticker} style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <div
+                                                className="summary-item-row"
+                                                onClick={() => setSelectedSummaryTicker(ticker)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    padding: '6px 0',
+                                                    cursor: 'pointer',
+                                                    transition: 'opacity 0.2s',
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.opacity = '0.7'}
+                                                onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    {info.logo ? (
+                                                        <img src={info.logo} alt={ticker} style={{ width: '30px', height: '30px', borderRadius: '6px', objectFit: 'contain', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+                                                    ) : (
+                                                        <div className="ph-logo" style={{ width: '30px', height: '30px', fontSize: '0.8rem', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>{ticker[0]}</div>
+                                                    )}
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <h4 style={{ margin: 0, fontSize: '0.7rem', color: '#f1f5f9' }}>{ticker}</h4>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{ fontSize: '0.5rem', color: '#AAAAAA' }}>{info.name}</span>
+                                                            {nextPaymentStr && (
+                                                                <span style={{ fontSize: '0.5rem', color: '#fff', fontWeight: '600' }}>
+                                                                    • Próx: {nextPaymentStr}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    color: '#fff',
+                                                    fontWeight: '600',
+                                                    fontSize: '0.65rem',
+                                                    background: 'rgba(255, 255, 255, 0.1)',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px'
+                                                }}>
+                                                    {count} {count === 1 ? 'pagt.' : 'pagts.'}
                                                 </div>
                                             </div>
-                                            <div className="payment-text">
-                                                {count} {count === 1 ? 'pagt.' : 'pagts.'}
-                                            </div>
+                                            {!isLast && (
+                                                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+                                            )}
                                         </div>
                                     );
                                 })}

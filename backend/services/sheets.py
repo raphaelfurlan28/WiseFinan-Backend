@@ -678,8 +678,18 @@ def get_fundamentals_data(ticker_filter=None):
         
         def parse(v):
             if not v: return 0.0
-            if isinstance(v, str): return float(v.replace('R$', '').replace(' ', '').replace('.','').replace(',','.'))
-            return float(v)
+            try:
+                if isinstance(v, str):
+                    is_pct = '%' in v
+                    # Remove currency, spaces, normalize decimal
+                    val = v.replace('R$', '').replace(' ', '').replace('%', '')
+                    # Brazil format: 1.000,00 -> 1000.00
+                    val = val.replace('.', '').replace(',', '.')
+                    f = float(val)
+                    return f / 100.0 if is_pct else f
+                return float(v)
+            except:
+                return 0.0
             
         lucro = parse(row[idx_lucro]) if idx_lucro != -1 and len(row) > idx_lucro else 0.0
         pat = parse(row[idx_pat]) if idx_pat != -1 and len(row) > idx_pat else 0.0
@@ -687,7 +697,7 @@ def get_fundamentals_data(ticker_filter=None):
         
         # Calculate ROE if missing or 0, and we have data
         if roe_val == 0 and pat != 0:
-             roe_val = (lucro / pat) * 100
+             roe_val = lucro / pat
         
         fundamentals.append({
             "ticker": t,

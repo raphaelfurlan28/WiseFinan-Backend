@@ -364,6 +364,47 @@ def auth_login():
         traceback.print_exc()
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
+@app.route('/api/auth/register-session', methods=['POST'])
+def register_session_endpoint():
+    try:
+        from flask import request
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({"error": "Email required"}), 400
+            
+        from services.auth_service import register_user_session
+        res = register_user_session(email)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/auth/validate-session', methods=['POST'])
+def validate_session_endpoint():
+    try:
+        from flask import request
+        data = request.json
+        email = data.get('email')
+        token = data.get('token')
+        
+        if not email or not token:
+            return jsonify({"error": "Email and token required"}), 400
+            
+        from services.auth_service import validate_user_session
+        res = validate_user_session(email, token)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/user/update', methods=['POST'])
 def update_user_endpoint():
     try:

@@ -462,11 +462,13 @@ const OptionsCalculator = () => {
 
                                                     return (
                                                         <div>
-                                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: isProfit ? '#4ade80' : '#f87171' }}>
-                                                                {isProfit ? '+' : ''} R$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                                <span style={{ fontSize: '1.2rem', marginLeft: '8px', color: isProfit ? '#86efac' : '#fca5a5', fontWeight: 'normal' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: isProfit ? '#4ade80' : '#f87171' }}>
+                                                                    {isProfit ? '+' : ''} R$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                </div>
+                                                                <div style={{ fontSize: '1.2rem', color: isProfit ? '#86efac' : '#fca5a5', fontWeight: 'normal', marginTop: '4px' }}>
                                                                     ({roi.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%)
-                                                                </span>
+                                                                </div>
                                                             </div>
                                                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '8px' }}>
                                                                 {action === 'buy'

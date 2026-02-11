@@ -19,30 +19,97 @@ export const AuthProvider = ({ children }) => {
     const [authError, setAuthError] = useState(null);
 
     useEffect(() => {
+        let heartbeatInterval;
+
+        const manageSession = async (currentUser) => {
+            if (!currentUser) return;
+
+            // 1. Check for existing local token
+            let token = localStorage.getItem('session_token');
+            let isNewSession = !token;
+
+            try {
+                if (token) {
+                    // Validate existing token (Page Reload scenario)
+                    const response = await axios.post('/api/auth/validate-session', {
+                        email: currentUser.email,
+                        token: token
+                    });
+
+                    if (!response.data.valid) {
+                        // Invalid token (overwritten by another device?)
+                        // Force register ONLY if it's a fresh mounting might be risky, 
+                        // but usually invalid means stolen. 
+                        // However, to be safe against glitches, if strictly invalid, we logout.
+                        console.warn("Session invalid, logging out.");
+                        await logout(true); // true = forced
+                        return;
+                    }
+                } else {
+                    // No token (New Login scenario)
+                    const response = await axios.post('/api/auth/register-session', {
+                        email: currentUser.email
+                    });
+                    token = response.data.token;
+                    localStorage.setItem('session_token', token);
+                }
+
+                // 2. Start Heartbeat
+                heartbeatInterval = setInterval(async () => {
+                    const currentToken = localStorage.getItem('session_token');
+                    if (currentUser && currentToken) {
+                        try {
+                            const res = await axios.post('/api/auth/validate-session', {
+                                email: currentUser.email,
+                                token: currentToken
+                            });
+
+                            if (!res.data.valid) {
+                                console.warn("Heartbeat failed: Session taken by another device.");
+                                clearInterval(heartbeatInterval);
+                                alert("Sessão encerrada. Sua conta foi conectada em outro dispositivo.");
+                                await logout(true);
+                            }
+                        } catch (err) {
+                            console.error("Heartbeat error:", err);
+                        }
+                    }
+                }, 30000); // 30 seconds
+
+            } catch (error) {
+                console.error("Session management error:", error);
+            }
+        };
+
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
-                // User is signed in
-                // We can construct our user object or just use firebaseUser
-                setUser({
+                const u = {
                     uid: firebaseUser.uid,
                     email: firebaseUser.email,
                     name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
                     photo: firebaseUser.photoURL,
                     accessToken: firebaseUser.accessToken
-                });
+                };
+                setUser(u);
+                manageSession(u);
             } else {
-                // User is signed out
                 setUser(null);
+                localStorage.removeItem('session_token'); // Clear on firebase auto-logout
             }
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+        };
     }, []);
 
     const login = async (email, password) => {
         setAuthError(null);
         try {
+            // Clear any old token to force new session registration
+            localStorage.removeItem('session_token');
             await signInWithEmailAndPassword(auth, email, password);
             return true;
         } catch (error) {
@@ -55,13 +122,10 @@ export const AuthProvider = ({ children }) => {
     const register = async (email, password, name) => {
         setAuthError(null);
         try {
+            localStorage.removeItem('session_token');
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            // Update profile with name
             if (name) {
-                await updateProfile(userCredential.user, {
-                    displayName: name
-                });
-                // Update local state immediately to reflect name
+                await updateProfile(userCredential.user, { displayName: name });
                 setUser(prev => ({ ...prev, name: name }));
             }
             return true;
@@ -72,10 +136,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = async () => {
+    const logout = async (forced = false) => {
         try {
             await signOut(auth);
-            setUser(null); // Explicit clear
+            setUser(null);
+            localStorage.removeItem('session_token');
+            if (forced) {
+                window.location.href = "/"; # Redirect if forced
+            }
         } catch (error) {
             console.error("Logout Error:", error);
         }
