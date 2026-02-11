@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
             // 1. Check for existing local token
             let token = localStorage.getItem('session_token');
-            let isNewSession = !token;
+            console.log("[Auth] Checking session. Existing token:", token);
 
             try {
                 if (token) {
@@ -53,47 +53,56 @@ export const AuthProvider = ({ children }) => {
                     });
 
                     if (!response.data.valid) {
-                        // Invalid token (overwritten by another device?)
-                        // Force register ONLY if it's a fresh mounting might be risky, 
-                        // but usually invalid means stolen. 
-                        // However, to be safe against glitches, if strictly invalid, we logout.
-                        console.warn("Session invalid, logging out.");
-                        await logout(true); // true = forced
+                        console.warn("[Auth] Token invalid on load. logging out.");
+                        // If the server says it's invalid, it IS invalid.
+                        await logout(true);
                         return;
+                    } else {
+                        console.log("[Auth] Token valid on load.");
                     }
                 } else {
                     // No token (New Login scenario)
+                    console.log("[Auth] No token, registering new session...");
                     const response = await axios.post('/api/auth/register-session', {
                         email: currentUser.email
                     });
                     token = response.data.token;
                     localStorage.setItem('session_token', token);
+                    console.log("[Auth] New session registered:", token);
                 }
 
-                // 2. Start Heartbeat
+                // 2. Start Heartbeat ONLY if we have a valid token
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+
                 heartbeatInterval = setInterval(async () => {
                     const currentToken = localStorage.getItem('session_token');
-                    if (currentUser && currentToken) {
+                    // Use the 'token' variable from closure as fallback or currentToken
+                    const tokenToSend = currentToken || token;
+
+                    if (currentUser && tokenToSend) {
                         try {
+                            // console.log("[Auth] Sending heartbeat..."); 
                             const res = await axios.post('/api/auth/validate-session', {
                                 email: currentUser.email,
-                                token: currentToken
+                                token: tokenToSend
                             });
 
                             if (!res.data.valid) {
-                                console.warn("Heartbeat failed: Session taken by another device.");
+                                console.warn("[Auth] Heartbeat failed. Session invalid.");
                                 clearInterval(heartbeatInterval);
                                 alert("Sessão encerrada. Sua conta foi conectada em outro dispositivo.");
                                 await logout(true);
                             }
                         } catch (err) {
-                            console.error("Heartbeat error:", err);
+                            console.error("[Auth] Heartbeat error:", err);
                         }
                     }
                 }, 30000); // 30 seconds
 
             } catch (error) {
-                console.error("Session management error:", error);
+                console.error("[Auth] Session management error:", error);
+                // If we can't register/validate, maybe we should logout? 
+                // For now, let's just log it to avoid locking user out due to network glitch
             }
         };
 

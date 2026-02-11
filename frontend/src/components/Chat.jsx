@@ -124,27 +124,38 @@ const Chat = () => {
         };
     };
 
+    const renderMessageWithBold = (text) => {
+        if (!text) return null;
+        // Split by **text** markers
+        const parts = text.split(/(\*\*.*?\*\*)/g);
+        return parts.map((part, index) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index} style={{ color: '#fff', fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+        });
+    };
+
     return (
         <div className="rf-container" style={{ minHeight: '100%', paddingBottom: '30px' }}>
-            {/* Header Moderno e Padronizado (Conforme Renda Fixa / Portfólio) */}
+            {/* ... Header and other code remains unchanged ... */}
             <header className="rf-header" style={{ marginBottom: '24px' }}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '16px' // Added gap to prevent squeezing
+                    gap: '16px'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                        {/* Ícone sem fundo, padrão do App */}
                         <Bell size={20} color="#94a3b8" />
                         <h1 style={{
                             margin: 0,
-                            fontSize: '1.2rem', // Slightly smaller title
+                            fontSize: '1.2rem',
                             fontWeight: 700,
                             background: 'linear-gradient(90deg, #fff, #cbd5e1)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
-                            whiteSpace: 'nowrap' // Prevent title from wrapping
+                            whiteSpace: 'nowrap'
                         }}>
                             Alertas Premium
                         </h1>
@@ -156,18 +167,18 @@ const Chat = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowForm(!showForm)}
                             style={{
-                                background: showForm ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                background: showForm ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #4ade80, #22c55e)',
                                 border: showForm ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                                 borderRadius: '8px',
-                                padding: '6px 14px', // Smaller padding
+                                padding: '6px 6px',
                                 color: '#fff',
-                                fontSize: '0.78rem', // Smaller font
+                                fontSize: '0.78rem',
                                 fontWeight: 700,
                                 cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: '6px',
                                 boxShadow: showForm ? 'none' : '0 4px 10px rgba(37, 99, 235, 0.2)',
                                 whiteSpace: 'nowrap',
-                                flexShrink: 0 // Prevent button from shrinking
+                                flexShrink: 0
                             }}
                         >
                             {showForm ? <X size={14} /> : <Plus size={14} />}
@@ -176,11 +187,10 @@ const Chat = () => {
                     )}
                 </div>
 
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, display: 'block', marginBottom: '16px' }}>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500, display: 'block', marginBottom: '16px' }}>
                     Insights e Operações em tempo real
                 </span>
 
-                {/* Separador Padronizado (Cor e Estilo do Renda Fixa) */}
                 <div style={{
                     width: '100%',
                     height: '1px',
@@ -189,7 +199,6 @@ const Chat = () => {
                 }} />
             </header>
 
-            {/* Banner de Permissão Glassmorphism */}
             {'Notification' in window && notificationPermission !== 'granted' && notificationPermission !== 'denied' && (
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -226,7 +235,6 @@ const Chat = () => {
                 </motion.div>
             )}
 
-            {/* Formulário Admin Sóbrio */}
             <AnimatePresence>
                 {canSend && showForm && (
                     <motion.div
@@ -302,7 +310,7 @@ const Chat = () => {
                             <textarea
                                 value={formBody}
                                 onChange={(e) => setFormBody(e.target.value)}
-                                placeholder="Escreva os detalhes..."
+                                placeholder="Escreva os detalhes... Use **texto** para negrito."
                                 rows={4}
                                 style={{
                                     width: '100%',
@@ -346,7 +354,6 @@ const Chat = () => {
                 )}
             </AnimatePresence>
 
-            {/* Lista de Alertas Estilo Feed de Cards Padronizado */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {alerts.length === 0 && !loading && (
                     <div style={{ textAlign: 'center', padding: '100px 20px', color: '#64748b' }}>
@@ -377,17 +384,15 @@ const Chat = () => {
                                 boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                             }}
                         >
-                            {/* Card Header (Padronizado com Degradê de Categoria) */}
                             <div style={{
                                 background: catInfo.headerGradient,
                                 borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-                                padding: '16px 20px',
+                                padding: '16px 12px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                    {/* Icon Box Padronizado */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
                                     <div style={{
                                         width: '36px',
                                         height: '36px',
@@ -396,23 +401,44 @@ const Chat = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                                        flexShrink: 0 // Prevent icon shrinking
                                     }}>
                                         <Icon size={18} color="#fff" />
                                     </div>
-                                    <h4 style={{
-                                        margin: 0,
-                                        fontSize: '1.05rem',
-                                        fontWeight: 800,
-                                        color: '#fff',
-                                        letterSpacing: '-0.01em'
-                                    }}>
-                                        {alert.title || alert.text}
-                                    </h4>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+                                        <span style={{
+                                            fontSize: '0.65rem',
+                                            color: 'rgba(255, 255, 255, 0.5)',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            lineHeight: 1,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            {catInfo.label}
+                                        </span>
+                                        <h4 style={{
+                                            margin: 0,
+                                            fontSize: '0.9rem',
+                                            fontWeight: 800,
+                                            color: '#fff',
+                                            letterSpacing: '-0.01em',
+                                            lineHeight: 1.2,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            {alert.title || alert.text}
+                                        </h4>
+                                    </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', fontWeight: 600 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, marginLeft: '16px' }}>
+                                    <span style={{ fontSize: '0.6rem', color: 'rgba(255, 255, 255, 0.5)', fontWeight: 500, whiteSpace: 'nowrap' }}>
                                         {formatTime(alert.timestamp)}
                                     </span>
                                     {canSend && (
@@ -437,7 +463,6 @@ const Chat = () => {
                                 </div>
                             </div>
 
-                            {/* Card Body (Conteúdo do Alerta) */}
                             {alert.title && alert.text && (
                                 <div style={{ padding: '18px 20px' }}>
                                     <p style={{
@@ -448,7 +473,7 @@ const Chat = () => {
                                         whiteSpace: 'pre-wrap',
                                         fontWeight: 500
                                     }}>
-                                        {alert.text}
+                                        {renderMessageWithBold(alert.text)}
                                     </p>
                                 </div>
                             )}
