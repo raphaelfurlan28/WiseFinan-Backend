@@ -7,11 +7,13 @@ import './News.css';
 const Noticias = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('BRASIL');
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
-                const resDash = await fetch(getApiUrl('/api/news/dashboard'));
+                const resDash = await fetch(getApiUrl(`/api/news/dashboard?category=${activeTab}`));
                 const dataDash = await resDash.json();
                 if (dataDash && Array.isArray(dataDash.news)) {
                     setNews(dataDash.news);
@@ -26,14 +28,52 @@ const Noticias = () => {
         };
 
         fetchData();
-    }, []);
+    }, [activeTab]);
 
     return (
         <div className="rf-container">
             <header className="rf-header" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <Newspaper size={20} color="#94a3b8" />
-                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Últimas Notícias</h1>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Newspaper size={20} color="#94a3b8" />
+                        <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Últimas Notícias</h1>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div style={{ display: 'flex', gap: '8px', background: 'rgba(30, 41, 59, 0.5)', padding: '4px', borderRadius: '8px' }}>
+                        <button
+                            onClick={() => setActiveTab('BRASIL')}
+                            style={{
+                                background: activeTab === 'BRASIL' ? '#4ade80' : 'transparent',
+                                color: activeTab === 'BRASIL' ? '#0f172a' : '#94a3b8',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '6px 16px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            BRASIL
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('MUNDO')}
+                            style={{
+                                background: activeTab === 'MUNDO' ? '#4ade80' : 'transparent',
+                                color: activeTab === 'MUNDO' ? '#0f172a' : '#94a3b8',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '6px 16px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            MUNDO
+                        </button>
+                    </div>
                 </div>
                 <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>

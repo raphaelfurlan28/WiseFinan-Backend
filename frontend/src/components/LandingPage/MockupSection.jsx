@@ -107,7 +107,7 @@ const MockupSection = () => {
                         />
                         <MockupItem
                             src="/mockups/img_10.png"
-                            alt="Chat de Alertas"
+                            alt="Alertas Premium"
                             size="normal"
                             onClick={() => setSelectedSrc("/mockups/img_10.png")}
                         />

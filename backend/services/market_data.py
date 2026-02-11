@@ -319,18 +319,25 @@ def get_market_indicators():
 
     return indicators
 
-def get_rss_news():
+def get_rss_news(limit=20, topic='BRASIL'):
     """
     Fetches finance news from Google News RSS.
+    Topic: 'BRASIL' or 'MUNDO'
     """
     news_items = []
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+        
+        if topic == 'MUNDO':
+            url = "https://news.google.com/rss/search?q=mercado+financeiro+global+economia+internacional&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+        else:
+            # Default to Brasil
+            url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+
         # Reduced timeout to prevent worker kill
-        r = requests.get(url, headers=headers, timeout=2)
+        r = requests.get(url, headers=headers, timeout=3)
         if r.status_code == 200:
             try:
                 # ET.fromstring handles bytes usually
@@ -339,12 +346,12 @@ def get_rss_news():
                  # Fallback if encoding issue
                 root = ET.fromstring(r.text)
 
-            # Iterate over items (limit 15)
+            # Iterate over items
             count = 0
             # RSS structure: rss > channel > item
             # .findall('.//item') works recursively
             for item in root.findall('.//item'):
-                if count >= 15: break
+                if count >= limit: break
                 
                 title = item.find('title').text if item.find('title') is not None else "Sem título"
                 link = item.find('link').text if item.find('link') is not None else "#"
@@ -373,11 +380,20 @@ def get_rss_news():
                     "link": link,
                     "date": pubDate,
                     "source": source,
-                    "image": image_url
+                    "image": image_url,
+                    "category": topic
                 })
                 count += 1
     except Exception as e:
-        print(f"Error fetching RSS: {e}")
+        print(f"Error fetching RSS ({topic}): {e}")
         # Return empty list on error, do not crash
     
     return news_items
+
+def get_home_news_highlights():
+    """
+    Fetches 2 news from Brasil and 2 from Mundo for the Home screen.
+    """
+    brasil = get_rss_news(limit=2, topic='BRASIL')
+    mundo = get_rss_news(limit=2, topic='MUNDO')
+    return brasil + mundo

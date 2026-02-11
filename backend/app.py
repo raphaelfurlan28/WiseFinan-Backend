@@ -157,7 +157,10 @@ def update_rf():
 @app.route('/api/news/dashboard', methods=['GET'])
 def get_news_dashboard():
     try:
+        from flask import request
         from services.market_data import get_market_indicators, get_rss_news
+        
+        category = request.args.get('category', 'BRASIL')
         
         # Fetch loosely to avoid one failure blocking the other
         try:
@@ -167,7 +170,7 @@ def get_news_dashboard():
             indicators = {}
 
         try:
-            news = get_rss_news()
+            news = get_rss_news(limit=20, topic=category)
         except Exception as e:
             print(f"News failed: {e}")
             news = []
@@ -176,6 +179,15 @@ def get_news_dashboard():
     except Exception as e:
         # Fallback to empty structure instead of 500
         return jsonify({"indicators": {}, "news": [], "error": str(e)})
+
+@app.route('/api/news/highlights', methods=['GET'])
+def get_news_highlights():
+    try:
+        from services.market_data import get_home_news_highlights
+        news = get_home_news_highlights()
+        return jsonify({"news": news})
+    except Exception as e:
+        return jsonify({"news": [], "error": str(e)})
 
 @app.route('/api/news/movers', methods=['GET'])
 def get_market_movers():

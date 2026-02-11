@@ -61,9 +61,13 @@ const Home = ({ onNavigate }) => {
         const fetchHighlights = async () => {
             try {
                 // News
-                const resNews = await fetch(getApiUrl('/api/news/dashboard'));
-                const jsonNews = await resNews.json();
-                if (jsonNews.news) setHomeNews(jsonNews.news.slice(0, 2));
+                try {
+                    const resNews = await fetch(getApiUrl('/api/news/highlights'));
+                    const jsonNews = await resNews.json();
+                    if (jsonNews.news) setHomeNews(jsonNews.news);
+                } catch (e) {
+                    console.error("Error fetching news highlights", e);
+                }
 
                 // Indices (for Selic calcs)
                 try {
@@ -1702,30 +1706,51 @@ const Home = ({ onNavigate }) => {
             {/* Separator */}
             <div style={{ margin: '40px 0 20px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
 
-            {/* 1. Destaques: Notícias (2 Main News) */}
-            <div className="section-header" style={{ marginBottom: '20px' }}>
+            {/* 1. Destaques: Notícias (2 Brasil + 2 Mundo) */}
+            <div className="section-header" style={{ marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Newspaper size={20} /> Destaques do Dia
+                    <Newspaper size={20} /> Destaques do Dia (Brasil & Mundo)
                 </h2>
             </div>
 
-            <div className="dashboard-grid">
+            <div className="dashboard-grid" style={{ gap: '12px' }}>
                 {homeNews.length > 0 ? (
                     homeNews.map((item, idx) => (
-                        <div key={idx} className="news-card" onClick={() => window.open(item.link, '_blank')} style={{ cursor: 'pointer' }}>
-                            <div className="news-card-header">
-                                <span className="news-badge">{item.source}</span>
-                                <span className="news-date">{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
+                        <div key={idx} className="news-card glass-card" onClick={() => window.open(item.link, '_blank')}
+                            style={{
+                                cursor: 'pointer',
+                                padding: '12px',
+                                background: 'rgba(30, 41, 59, 0.4)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px',
+                                minHeight: 'auto'
+                            }}>
+                            <div className="news-card-header" style={{ marginBottom: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <span className="news-badge" style={{ fontSize: '0.6rem', padding: '2px 6px', background: item.category === 'MUNDO' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(74, 222, 128, 0.2)', color: item.category === 'MUNDO' ? '#38bdf8' : '#4ade80' }}>
+                                        {item.category || (idx < 2 ? 'BRASIL' : 'MUNDO')}
+                                    </span>
+                                    <span className="news-badge" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>{item.source}</span>
+                                </div>
+                                <span className="news-date" style={{ fontSize: '0.65rem' }}>{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
                             </div>
-                            {item.image && (
-                                <img src={item.image} alt={item.title} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
-                            )}
-                            <h3 className="news-title">
-                                {item.title}
-                            </h3>
-                            <div className="news-footer">
-                                <span className="news-read-more">
-                                    Ler mais <ChevronRight size={14} />
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                {item.image && (
+                                    <img src={item.image} alt={item.title} style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                                )}
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    <h3 className="news-title" style={{ fontSize: '0.9rem', lineHeight: '1.3', margin: 0, fontWeight: 600, color: '#f1f5f9', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        {item.title}
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <div className="news-footer" style={{ marginTop: '0', paddingTop: '0', borderTop: 'none', justifyContent: 'flex-end' }}>
+                                <span className="news-read-more" style={{ fontSize: '0.7rem' }}>
+                                    Ler mais <ChevronRight size={12} />
                                 </span>
                             </div>
                         </div>
