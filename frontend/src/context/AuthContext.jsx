@@ -18,6 +18,22 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [authError, setAuthError] = useState(null);
 
+    const handleAuthError = (error) => {
+        let msg = "Ocorreu um erro.";
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            msg = "Email ou senha incorretos.";
+        } else if (error.code === 'auth/email-already-in-use') {
+            msg = "Este email já está em uso.";
+        } else if (error.code === 'auth/weak-password') {
+            msg = "A senha deve ter pelo menos 6 caracteres.";
+        } else if (error.code === 'auth/invalid-email') {
+            msg = "Email inválido.";
+        } else {
+            msg = error.message;
+        }
+        setAuthError(msg);
+    };
+
     useEffect(() => {
         let heartbeatInterval;
 
@@ -142,27 +158,11 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             localStorage.removeItem('session_token');
             if (forced) {
-                window.location.href = "/"; # Redirect if forced
+                window.location.href = "/"; // Redirect if forced
             }
         } catch (error) {
             console.error("Logout Error:", error);
         }
-    };
-
-    const handleAuthError = (error) => {
-        let msg = "Ocorreu um erro.";
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            msg = "Email ou senha incorretos.";
-        } else if (error.code === 'auth/email-already-in-use') {
-            msg = "Este email já está em uso.";
-        } else if (error.code === 'auth/weak-password') {
-            msg = "A senha deve ter pelo menos 6 caracteres.";
-        } else if (error.code === 'auth/invalid-email') {
-            msg = "Email inválido.";
-        } else {
-            msg = error.message;
-        }
-        setAuthError(msg);
     };
 
     const updateUserProfile = async (newName, newPhoto) => {
