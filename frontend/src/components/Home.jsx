@@ -305,6 +305,29 @@ const Home = ({ onNavigate }) => {
                                     <span>Aprender sobre esta estratégia</span>
                                     <ChevronRight size={12} style={{ opacity: 0.6 }} />
                                 </button>
+
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '12px',
+                                    marginTop: '12px',
+                                    paddingTop: '12px',
+                                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                                    width: '100%',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Vol. Implícita:</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.sigma || '-'}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Delta:</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.delta_val || '-'}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Preço B.S.:</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.bs_price_val || '-'}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -379,13 +402,25 @@ const Home = ({ onNavigate }) => {
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, textAlign: 'center' }}>Vantagem Teórica (Edge)</span>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{
-                                            fontSize: '1.25rem',
-                                            color: (strategy.includes('venda'))
-                                                ? (parseFloat(option.edge_formatted) > 0 ? '#4ade80' : '#ef4444')
-                                                : (parseFloat(option.edge_formatted) < 0 ? '#4ade80' : '#ef4444'),
-                                            fontWeight: 700
-                                        }}>{option.edge_formatted || 'N/A'}</span>
+                                        {(() => {
+                                            const edgeVal = parseFloat(option.edge_formatted);
+                                            const isBuy = !strategy.includes('venda');
+                                            // Adjusted Logic: If Buy strategy and Edge > 50% (Positive), show text
+                                            if (isBuy && edgeVal > 50) {
+                                                return (
+                                                    <span style={{ fontSize: '0.9rem', color: '#facc15', fontWeight: 700 }}>Alta Volatilidade</span>
+                                                );
+                                            }
+                                            return (
+                                                <span style={{
+                                                    fontSize: '1.25rem',
+                                                    color: (strategy.includes('venda'))
+                                                        ? (edgeVal > 0 ? '#4ade80' : '#ef4444')
+                                                        : (edgeVal < 0 ? '#4ade80' : '#ef4444'),
+                                                    fontWeight: 700
+                                                }}>{option.edge_formatted || 'N/A'}</span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -537,30 +572,49 @@ const Home = ({ onNavigate }) => {
 
 
     useEffect(() => {
-        const fetchOpportunities = async () => {
+        const fetchWithRetry = async (retries = 3, delay = 1500) => {
             try {
                 const res = await fetch(getApiUrl('/api/home'));
                 const json = await res.json();
 
+                let hasData = false;
+
                 // Handle new dictionary structure
                 if (json.cheap && Array.isArray(json.cheap)) {
+                    if (json.cheap.length > 0 || (json.expensive && json.expensive.length > 0)) {
+                        hasData = true;
+                    }
                     setOpportunities(json.cheap);
                     setExpensiveOpportunities(json.expensive || []);
                     setFixedOpportunities(json.fixed_income || []);
                     setGuaranteeOpportunities(json.guarantee || []);
                 } else if (Array.isArray(json)) {
                     // Fallback for old API
+                    if (json.length > 0) hasData = true;
                     setOpportunities(json);
                     setExpensiveOpportunities([]);
                 }
+
+                // If no data and we have retries left, wait and retry
+                if (!hasData && retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(retries - 1, delay);
+                }
+
+                // Success or out of retries
+                setLoading(false);
+
             } catch (err) {
                 console.error("Error fetching home data:", err);
-            } finally {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(retries - 1, delay);
+                }
                 setLoading(false);
             }
         };
 
-        fetchOpportunities();
+        fetchWithRetry();
     }, []);
 
 
@@ -804,22 +858,8 @@ const Home = ({ onNavigate }) => {
                                                                 gap: '4px'
                                                             }}>
                                                                 <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>venda renda</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Venda Coberta</span>
                                                             </div>
-                                                            {validPuts[0]?.prob_success && (
-                                                                <div style={{
-                                                                    fontSize: '0.7rem',
-                                                                    color: '#4ade80',
-                                                                    background: 'rgba(74, 222, 128, 0.1)',
-                                                                    padding: '4px 10px',
-                                                                    borderRadius: '20px',
-                                                                    border: '1px solid rgba(74, 222, 128, 0.2)',
-                                                                    fontWeight: '700',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {validPuts[0].prob_success} prob.
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     )}
                                                     {callsCount > 0 && (
@@ -837,22 +877,8 @@ const Home = ({ onNavigate }) => {
                                                                 gap: '4px'
                                                             }}>
                                                                 <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>compra seco</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
                                                             </div>
-                                                            {validCalls[0]?.edge_formatted && (
-                                                                <div style={{
-                                                                    fontSize: '0.7rem',
-                                                                    color: parseFloat(validCalls[0].edge_formatted) < 0 ? '#4ade80' : '#ef4444',
-                                                                    background: parseFloat(validCalls[0].edge_formatted) < 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                                    padding: '4px 10px',
-                                                                    borderRadius: '20px',
-                                                                    border: parseFloat(validCalls[0].edge_formatted) < 0 ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
-                                                                    fontWeight: '700',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    Edge: {validCalls[0].edge_formatted}
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -1029,22 +1055,8 @@ const Home = ({ onNavigate }) => {
                                                                 gap: '4px'
                                                             }}>
                                                                 <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>lançamento</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Lançamento Coberto</span>
                                                             </div>
-                                                            {validCalls[0]?.prob_success && (
-                                                                <div style={{
-                                                                    fontSize: '0.7rem',
-                                                                    color: '#4ade80',
-                                                                    background: 'rgba(74, 222, 128, 0.1)',
-                                                                    padding: '4px 10px',
-                                                                    borderRadius: '20px',
-                                                                    border: '1px solid rgba(74, 222, 128, 0.2)',
-                                                                    fontWeight: '700',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    {validCalls[0].prob_success} prob.
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     )}
                                                     {putsCount > 0 && (
@@ -1062,22 +1074,8 @@ const Home = ({ onNavigate }) => {
                                                                 gap: '4px'
                                                             }}>
                                                                 <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>compra seco</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
                                                             </div>
-                                                            {validPuts[0]?.edge_formatted && (
-                                                                <div style={{
-                                                                    fontSize: '0.7rem',
-                                                                    color: parseFloat(validPuts[0].edge_formatted) < 0 ? '#4ade80' : '#ef4444',
-                                                                    background: parseFloat(validPuts[0].edge_formatted) < 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                                    padding: '4px 10px',
-                                                                    borderRadius: '20px',
-                                                                    border: parseFloat(validPuts[0].edge_formatted) < 0 ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
-                                                                    fontWeight: '700',
-                                                                    whiteSpace: 'nowrap'
-                                                                }}>
-                                                                    Edge: {validPuts[0].edge_formatted}
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

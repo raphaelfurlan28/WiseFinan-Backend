@@ -281,6 +281,7 @@ def get_home_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # Chat Store (In-Memory)
 chat_messages = []
 

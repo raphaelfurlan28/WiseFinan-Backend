@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
@@ -278,6 +279,46 @@ def get_options_data(ticker_filter=None):
         
     return options
 
+# Helpers
+def smart_float(v):
+    if isinstance(v, (int, float)): return float(v)
+    if isinstance(v, str):
+        clean = v.replace('R$', '').replace(' ', '').replace('%', '').strip()
+        if ',' in clean and '.' in clean: 
+            clean = clean.replace('.', '').replace(',', '.')
+        else:
+            clean = clean.replace(',', '.')
+        try:
+            return float(clean)
+        except:
+            return 0.0
+    return 0.0
+
+def parse_price(val):
+    return smart_float(val)
+
+def get_business_days(expiry_str):
+    from datetime import datetime
+    import numpy as np
+    today_date = datetime.now().date()
+    try:
+        if "/" in expiry_str:
+            exp_date = datetime.strptime(expiry_str, "%d/%m/%Y").date()
+        elif "-" in expiry_str:
+            exp_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
+        else:
+            return 999
+        
+        if exp_date <= today_date:
+            return 0
+        
+        try:
+            return int(np.busday_count(today_date, exp_date))
+        except:
+            return (exp_date - today_date).days
+    except:
+        return 999
+
 def calculate_d1_d2(S, K, T, r, sigma):
     """
     Calculates d1 and d2 for Black-Scholes.
@@ -287,7 +328,7 @@ def calculate_d1_d2(S, K, T, r, sigma):
     r: Risk-free rate (annual)
     sigma: Volatility (annual)
     """
-    if T <= 0 or sigma <= 0:
+    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
         return 0, 0
     
     d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
@@ -364,28 +405,7 @@ def get_filtered_opportunities():
             options_by_ticker[unk].append(opt)
     
     opportunities = []
-    
     today_date = datetime.now().date()
-    
-    def get_business_days(expiry_str):
-        try:
-            if "/" in expiry_str:
-                exp_date = datetime.strptime(expiry_str, "%d/%m/%Y").date()
-            elif "-" in expiry_str:
-                exp_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
-            else:
-                return 999
-            
-            if exp_date <= today_date:
-                return 0
-            
-            try:
-                return int(np.busday_count(today_date, exp_date))
-            except:
-                return (exp_date - today_date).days
-        except:
-            return 999
-
     filtered_results = []
     
     for stock in stocks:
@@ -400,21 +420,6 @@ def get_filtered_opportunities():
             if not is_cheap and not is_expensive:
                 continue
                 
-            # Helper to parse price
-            def parse_price(val):
-                try:
-                    if isinstance(val, (int, float)): return float(val)
-                    if isinstance(val, str):
-                        clean = val.replace('R$', '').replace(' ', '').replace('%', '')
-                        if ',' in clean and '.' in clean:
-                            clean = clean.replace('.', '').replace(',', '.')
-                        else:
-                            clean = clean.replace(',', '.')
-                        return float(clean)
-                    return 0.0
-                except:
-                    return 0.0
-
             stock_price = parse_price(stock.get('price', 0.0))
             cost_val = parse_price(stock.get('min_val', 0.0))
             max_val = parse_price(stock.get('max_val', 0.0))
@@ -436,18 +441,6 @@ def get_filtered_opportunities():
             
             valid_puts = []
             valid_calls = []
-
-            # Helper for strict float parsing inside loop
-            def smart_float(v):
-                if isinstance(v, (int, float)): return float(v)
-                if isinstance(v, str):
-                    clean = v.replace('R$', '').strip()
-                    if ',' in clean and '.' in clean: 
-                        clean = clean.replace('.', '').replace(',', '.')
-                    else:
-                        clean = clean.replace(',', '.')
-                    return float(clean)
-                return 0.0
 
             for opt in stock_opts:
                 try:
@@ -508,66 +501,75 @@ def get_filtered_opportunities():
                     # --- CHEAP (DISCOUNTED) STRATEGY ---
                     if is_cheap:
                         if 'PUT' in otype or 'VENDA' in otype: # PUT SALE (Income)
-                            # Logic: IV > Vol_Hist (Option is Expensive -> Good to Sell)
+                            # Logic: Premium > 1%, Exp <= 40bd, Strike <= LowCost * 1.08
+                            if prem_yield <= 0.01: continue
+                            if bdays > 40: continue
+                            if strike > cost_val * 1.08: continue
+
                             if HAS_BS_LIBS:
-                                if market_price < bs_price: continue # Don't sell cheap options
-                                if not (-0.45 <= delta <= -0.15): continue # Relaxed slightly
                                 prob_success = 1 - abs(delta)
-                                if prob_success < 0.70: continue
                                 opt['prob_success'] = f"{prob_success*100:.1f}%"
                             opt['yield_display'] = f"{prem_yield*100:.2f}%"
                             opt['last_price'] = market_price
+                            # --- ADDED GREEKS FOR UI ---
+                            opt['sigma'] = f"{sigma*100:.1f}%"
+                            opt['delta_val'] = f"{delta:.3f}"
+                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
                             valid_puts.append(opt)
 
                         elif 'CALL' in otype or 'COMPRA' in otype: # CALL BUY (Upside)
-                            # Logic: IV < Vol_Hist (Option is Cheap -> Good to Buy)
-                            # Translates to: Market Price < BS Price
+                            # Logic: Premium <= 2%, Exp > 60bd, Strike > Price * 1.10
+                            if prem_yield > 0.02: continue
+                            if bdays <= 60: continue
+                            if strike <= stock_price * 1.10: continue
+
                             if HAS_BS_LIBS:
-                                if market_price > bs_price: continue 
-                                if not (0.30 <= delta <= 0.55): continue
                                 prob_success = abs(delta)
-                                # For buyers, 70% prob is too restrictive (Delta > 0.70)
-                                # Let's keep a lower threshold or focus on Edge
-                                if prob_success < 0.35: continue 
                                 opt['prob_success'] = f"{prob_success*100:.1f}%"
                             opt['cost_display'] = f"{prem_yield*100:.2f}%"
                             opt['last_price'] = market_price
+                            # --- ADDED GREEKS FOR UI ---
+                            opt['sigma'] = f"{sigma*100:.1f}%"
+                            opt['delta_val'] = f"{delta:.3f}"
+                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
                             valid_calls.append(opt)
 
                     # --- EXPENSIVE STRATEGY ---
                     elif is_expensive:
                         # Calls (Venda Coberta)
                         if 'CALL' in otype or 'VENDA' in otype:
+                             # Logic: Premium > 1%, Exp <= 40bd, Strike > HighCost AND > Price
+                             if prem_yield <= 0.01: continue
+                             if bdays > 40: continue
+                             if strike <= max_val or strike <= stock_price: continue
+
                              if HAS_BS_LIBS:
-                                 if market_price < bs_price: continue
-                                 if not (0.15 <= delta <= 0.35): continue
                                  prob_success = 1 - abs(delta)
-                                 if prob_success < 0.70: continue
                                  opt['prob_success'] = f"{prob_success*100:.1f}%"
                              opt['yield_display'] = f"{prem_yield*100:.2f}%"
                              opt['last_price'] = market_price
+                             # --- ADDED GREEKS FOR UI ---
+                             opt['sigma'] = f"{sigma*100:.1f}%"
+                             opt['delta_val'] = f"{delta:.3f}"
+                             opt['bs_price_val'] = f"R$ {bs_price:.2f}"
                              valid_calls.append(opt)
 
                         # Puts (Compra a Seco)
                         elif 'PUT' in otype or 'COMPRA' in otype:
-                             # Logic: IV < Vol_Hist (Good to Buy)
-                             if market_price > bs_price: continue
-                             
-                             # Delta: -0.30 to -0.50
-                             if not (-0.55 <= delta <= -0.25): continue
-                             
-                             if bdays < 45: continue
-                             
-                             # Strike Rule
-                             if strike < stock_price * 0.80: continue
+                             # Logic: Premium <= 2%, Exp > 60bd, Strike < Price * 0.90
+                             if prem_yield > 0.02: continue
+                             if bdays <= 60: continue
+                             if strike >= stock_price * 0.90: continue
 
-                             prob_success = abs(delta)
-                             # Buying Put (Expensive Strategy) -> Delta -0.25 to -0.55
-                             # 70% prob would be impossible here. Let's use 35%.
-                             if prob_success < 0.35: continue
-                             opt['prob_success'] = f"{prob_success*100:.1f}%"
+                             if HAS_BS_LIBS:
+                                 prob_success = abs(delta)
+                                 opt['prob_success'] = f"{prob_success*100:.1f}%"
                              opt['cost_display'] = f"{prem_yield*100:.2f}%"
                              opt['last_price'] = market_price
+                             # --- ADDED GREEKS FOR UI ---
+                             opt['sigma'] = f"{sigma*100:.1f}%"
+                             opt['delta_val'] = f"{delta:.3f}"
+                             opt['bs_price_val'] = f"R$ {bs_price:.2f}"
                              valid_puts.append(opt)
 
                 except Exception as loop_e:
@@ -1077,3 +1079,4 @@ def append_subscription_request(data):
     except Exception as e:
         print(f"Error appending subscription request: {e}")
         return {"error": str(e)}
+

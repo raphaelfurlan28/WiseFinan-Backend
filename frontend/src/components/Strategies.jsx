@@ -1,7 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import {
     BookOpen, Shield, TrendingUp, TrendingDown, AlertTriangle,
-    Target, Anchor, DollarSign, ArrowRight, Clock, Activity
+    Target, Anchor, DollarSign, ArrowRight, Clock, Activity, AlertCircle, X, Calendar
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea
@@ -438,11 +439,12 @@ const Strategies = () => {
     return (
         <div className="rf-container">
             {/* Header */}
-            {/* Header */}
             <header className="rf-header" style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <BookOpen size={20} color="#94a3b8" />
-                    <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Estratégias de Opções</h1>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <BookOpen size={20} color="#94a3b8" />
+                        <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#94a3b8', fontWeight: 600 }}>Estratégias de Opções</h1>
+                    </div>
                 </div>
                 <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
             </header>
