@@ -13,3 +13,5 @@ gspread
 oauth2client
 gspread_dataframe
 firebase-admin
+numpy
+scipy

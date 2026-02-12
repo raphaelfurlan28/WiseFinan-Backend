@@ -37,7 +37,7 @@ const strategies = [
     },
     {
         name: "Venda de Put (Cash Secured)",
-        subtitle: "Comprar Ações com Desconto",
+        subtitle: "Geração de Renda ou - Comprar Ações com Desconto",
         risk: "Baixo/Médio",
         view: "Alta / Lateral",
         icon: Anchor,

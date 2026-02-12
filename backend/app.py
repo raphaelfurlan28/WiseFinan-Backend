@@ -239,7 +239,7 @@ def rf():
 @app.route('/api/indices', methods=['GET'])
 def indices():
     try:
-        from services.market_data import get_economic_indices
+        from services.indices import get_economic_indices
         data = get_economic_indices()
         return jsonify(data)
     except Exception as e:

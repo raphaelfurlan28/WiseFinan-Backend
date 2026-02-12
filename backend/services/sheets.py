@@ -3,7 +3,13 @@ import json
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
+from google.auth.transport.requests import Request
 from services.cache import cached, get_cached_value
+from services.indices import get_economic_indices
+import numpy as np
+from scipy.stats import norm
+HAS_BS_LIBS = True
+import math
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 # Resolve service_account.json relative to this file
@@ -272,6 +278,54 @@ def get_options_data(ticker_filter=None):
         
     return options
 
+def calculate_d1_d2(S, K, T, r, sigma):
+    """
+    Calculates d1 and d2 for Black-Scholes.
+    S: Spot Price
+    K: Strike Price
+    T: Time to Maturity (in years)
+    r: Risk-free rate (annual)
+    sigma: Volatility (annual)
+    """
+    if T <= 0 or sigma <= 0:
+        return 0, 0
+    
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    return d1, d2
+
+def black_scholes_price(S, K, T, r, sigma, option_type='call'):
+    """
+    Calculates theoretical price using Black-Scholes.
+    option_type: 'call' or 'put'
+    """
+    if T <= 0:
+        return max(0, S - K) if option_type == 'call' else max(0, K - S)
+    
+    d1, d2 = calculate_d1_d2(S, K, T, r, sigma)
+    
+    if option_type == 'call':
+        price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    else:
+        price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        
+    return price
+
+def calculate_delta(S, K, T, r, sigma, option_type='call'):
+    """
+    Calculates Delta.
+    """
+    if T <= 0 or sigma <= 0:
+        return 0.0
+        
+    d1, _ = calculate_d1_d2(S, K, T, r, sigma)
+    
+    if option_type == 'call':
+        return norm.cdf(d1)
+    else:
+        return norm.cdf(d1) - 1.0
+
+
 @cached(ttl_seconds=300)
 def get_filtered_opportunities():
     """
@@ -283,11 +337,20 @@ def get_filtered_opportunities():
     try:
         stocks = get_sheet_data()
         all_options = get_options_data(None)
+        
+        # Get Risk-Free Rate (Selic)
+        indices = get_economic_indices()
+        selic_str = indices.get('selic', '10.75').replace('%', '').replace(',', '.')
+        try:
+            r = float(selic_str) / 100.0
+        except:
+            r = 0.1075 # Fallback
+            
     except Exception as e:
         print(f"Error filtering opportunities: {e}")
         return []
 
-    print(f"Filtering: {len(stocks) if stocks else 0} stocks, {len(all_options) if all_options else 0} options.")
+    print(f"Filtering: {len(stocks) if stocks else 0} stocks, {len(all_options) if all_options else 0} options. Risk-Free Rate: {r}")
     if not stocks: return []
 
     # Map Options by Underlying
@@ -356,8 +419,15 @@ def get_filtered_opportunities():
             cost_val = parse_price(stock.get('min_val', 0.0))
             max_val = parse_price(stock.get('max_val', 0.0))
             
+            # Get Historical Volatility from Stock Data
+            vol_str = str(stock.get('vol_ano', '0')).replace('%', '').replace(',', '.')
+            try:
+               sigma = float(vol_str) / 100.0
+               if sigma <= 0: sigma = 0.40 # Default to 40% if missing
+            except:
+               sigma = 0.40
+
             # --- FILTER FIX: Don't show stocks with invalid targets ---
-            # If both Min and Max targets are missing/0, it's not a valid opportunity
             if cost_val <= 0 and max_val <= 0:
                 continue
 
@@ -383,64 +453,125 @@ def get_filtered_opportunities():
                 try:
                     otype = opt.get('type', '').upper()
                     strike = smart_float(opt.get('strike', 0))
-                    prem_val = float(opt.get('premium_val', 0.0))
-                    
+                    # prem_val IS THE YIELD (Premium / Stock Price), e.g. 0.01 = 1%
+                    prem_yield = float(opt.get('premium_val', 0.0)) 
+                    # market_price IS THE ACTUAL OPTION PRICE (R$)
+                    market_price = float(opt.get('price_val', 0.0))
+
                     if strike <= 0: continue
                     
                     exp = opt.get('expiration', '')
                     bdays = get_business_days(exp)
                     
+                    # Calculate T (Years)
+                    if bdays <= 0: continue
+                    T = bdays / 252.0
+                    
+                    # Black-Scholes Calculation
+                    bs_price = 0.0
+                    delta = 0.0
+                    
+                    if HAS_BS_LIBS:
+                        is_call_opt = 'CALL' in otype or 'COMPRA' in otype
+                        bs_type = 'call' if 'CALL' in otype else 'put'
+                        
+                        try:
+                            bs_price = black_scholes_price(stock_price, strike, T, r, sigma, bs_type)
+                            delta = calculate_delta(stock_price, strike, T, r, sigma, bs_type)
+                        except Exception as bs_e:
+                            print(f"BS Error: {bs_e}")
+                            bs_price = 0.0
+                            delta = 0.0
+                    
+                    # Probability of Success (ITM/OTM probability roughly)
+                    # For Sellers: 1 - |Delta| (Probability of expiring OTM)
+                    # For Buyers: |Delta| (Probability of expiring ITM)
+                    prob_success = 0.0
+                    
+                    # Edge (Vantagem): (Market - BS) / BS
+                    # Positive Edge => Expensive Option (Good to Sell)
+                    # Negative Edge => Cheap Option (Good to Buy)
+                    edge_pct = 0.0
+                    if bs_price > 0:
+                        edge_pct = ((market_price - bs_price) / bs_price)
+                    
+                    # Store Metrics
+                    opt['delta'] = delta
+                    opt['bs_price'] = bs_price
+                    if HAS_BS_LIBS:
+                        opt['edge_formatted'] = f"{edge_pct*100:.1f}%"
+                    else:
+                        opt['edge_formatted'] = None
+                    
+                    # --- FILTERS ---
+
                     # --- CHEAP (DISCOUNTED) STRATEGY ---
                     if is_cheap:
-                        if 'PUT' in otype or 'VENDA' in otype:
-                            limit_strike = 0.0
-                            if cost_val > 0:
-                                limit_strike = cost_val * 1.05
-                                if strike > limit_strike: continue
-                            else:
-                                if strike > stock_price * 1.05: continue
- 
-                            if prem_val <= 0.01: continue
-                            if bdays > 60: continue
-                            
-                            opt['yield_display'] = f"{prem_val*100:.2f}%"
-                            opt['last_price'] = opt.get('price_val', 0.0)
+                        if 'PUT' in otype or 'VENDA' in otype: # PUT SALE (Income)
+                            # Logic: IV > Vol_Hist (Option is Expensive -> Good to Sell)
+                            if HAS_BS_LIBS:
+                                if market_price < bs_price: continue # Don't sell cheap options
+                                if not (-0.45 <= delta <= -0.15): continue # Relaxed slightly
+                                prob_success = 1 - abs(delta)
+                                if prob_success < 0.70: continue
+                                opt['prob_success'] = f"{prob_success*100:.1f}%"
+                            opt['yield_display'] = f"{prem_yield*100:.2f}%"
+                            opt['last_price'] = market_price
                             valid_puts.append(opt)
 
-                        elif 'CALL' in otype or 'COMPRA' in otype:
-                            if prem_val > 0.02: continue
-                            if bdays < 63: continue
-                            
-                            opt['cost_display'] = f"{prem_val*100:.2f}%"
-                            opt['last_price'] = opt.get('price_val', 0.0)
+                        elif 'CALL' in otype or 'COMPRA' in otype: # CALL BUY (Upside)
+                            # Logic: IV < Vol_Hist (Option is Cheap -> Good to Buy)
+                            # Translates to: Market Price < BS Price
+                            if HAS_BS_LIBS:
+                                if market_price > bs_price: continue 
+                                if not (0.30 <= delta <= 0.55): continue
+                                prob_success = abs(delta)
+                                # For buyers, 70% prob is too restrictive (Delta > 0.70)
+                                # Let's keep a lower threshold or focus on Edge
+                                if prob_success < 0.35: continue 
+                                opt['prob_success'] = f"{prob_success*100:.1f}%"
+                            opt['cost_display'] = f"{prem_yield*100:.2f}%"
+                            opt['last_price'] = market_price
                             valid_calls.append(opt)
 
                     # --- EXPENSIVE STRATEGY ---
                     elif is_expensive:
                         # Calls (Venda Coberta)
                         if 'CALL' in otype or 'VENDA' in otype:
-                             if strike <= stock_price: continue
-                             if max_val > 0 and strike <= max_val: continue
-                             if prem_val <= 0.01: continue 
-
-                             opt['yield_display'] = f"{prem_val*100:.2f}%"
-                             opt['last_price'] = opt.get('price_val', 0.0)
+                             if HAS_BS_LIBS:
+                                 if market_price < bs_price: continue
+                                 if not (0.15 <= delta <= 0.35): continue
+                                 prob_success = 1 - abs(delta)
+                                 if prob_success < 0.70: continue
+                                 opt['prob_success'] = f"{prob_success*100:.1f}%"
+                             opt['yield_display'] = f"{prem_yield*100:.2f}%"
+                             opt['last_price'] = market_price
                              valid_calls.append(opt)
 
                         # Puts (Compra a Seco)
                         elif 'PUT' in otype or 'COMPRA' in otype:
-                             if bdays < 63: continue
-                             # Premium <= 2% (User requested "no maximo 2%")
-                             if prem_val > 0.02: continue
+                             # Logic: IV < Vol_Hist (Good to Buy)
+                             if market_price > bs_price: continue
                              
-                             # Strike Rule: Max 20% distance (Strike must be >= 80% of price)
+                             # Delta: -0.30 to -0.50
+                             if not (-0.55 <= delta <= -0.25): continue
+                             
+                             if bdays < 45: continue
+                             
+                             # Strike Rule
                              if strike < stock_price * 0.80: continue
 
-                             opt['cost_display'] = f"{prem_val*100:.2f}%"
-                             opt['last_price'] = opt.get('price_val', 0.0)
+                             prob_success = abs(delta)
+                             # Buying Put (Expensive Strategy) -> Delta -0.25 to -0.55
+                             # 70% prob would be impossible here. Let's use 35%.
+                             if prob_success < 0.35: continue
+                             opt['prob_success'] = f"{prob_success*100:.1f}%"
+                             opt['cost_display'] = f"{prem_yield*100:.2f}%"
+                             opt['last_price'] = market_price
                              valid_puts.append(opt)
 
                 except Exception as loop_e:
+                    # print(f"Loop error: {loop_e}")
                     continue
 
             # Add count to stock object and Filter

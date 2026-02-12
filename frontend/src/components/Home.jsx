@@ -227,7 +227,6 @@ const Home = ({ onNavigate }) => {
                         backdropFilter: 'blur(20px)',
                         position: 'relative'
                     }}>
-                        {/* Improved Close Button */}
                         <button
                             onClick={onClose}
                             style={{
@@ -248,21 +247,11 @@ const Home = ({ onNavigate }) => {
                                 padding: 0,
                                 color: 'rgba(255,255,255,0.5)'
                             }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                                e.currentTarget.style.color = '#fff';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = 'transparent';
-                                e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-                            }}
                         >
                             <CloseIcon size={20} />
                         </button>
 
-                        {/* Header */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '24px', paddingRight: '40px' }}>
-                            {/* Icon Container */}
                             <div style={{
                                 width: '48px', height: '48px', borderRadius: '14px',
                                 background: `linear-gradient(135deg, ${strategyColor}30 0%, ${strategyColor}10 100%)`,
@@ -273,7 +262,6 @@ const Home = ({ onNavigate }) => {
                                 <Crosshair size={24} color={strategyColor} />
                             </div>
 
-                            {/* Text and Button Container */}
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div>
                                     <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff', fontWeight: 700, letterSpacing: '-0.3px' }}>{strategyName}</h3>
@@ -310,20 +298,7 @@ const Home = ({ onNavigate }) => {
                                         color: strategyColor,
                                         fontSize: '0.75rem',
                                         fontWeight: 600,
-                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        marginTop: '4px',
-                                        backdropFilter: 'blur(5px)'
-                                    }}
-                                    className="strategy-link-btn"
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.background = `linear-gradient(90deg, ${strategyColor}25, ${strategyColor}05)`;
-                                        e.currentTarget.style.border = `1px solid ${strategyColor}60`;
-                                        e.currentTarget.style.transform = 'translateX(4px)';
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.background = `linear-gradient(90deg, ${strategyColor}15, transparent)`;
-                                        e.currentTarget.style.border = `1px solid ${strategyColor}30`;
-                                        e.currentTarget.style.transform = 'translateX(0)';
+                                        marginTop: '4px'
                                     }}
                                 >
                                     <BookOpen size={14} />
@@ -333,9 +308,6 @@ const Home = ({ onNavigate }) => {
                             </div>
                         </div>
 
-
-
-                        {/* Dados da Operação */}
                         <div style={{
                             background: 'rgba(255,255,255,0.02)',
                             borderRadius: '20px',
@@ -376,9 +348,7 @@ const Home = ({ onNavigate }) => {
                                     <div style={{ fontSize: '1.1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 700 }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</div>
                                 </div>
                             </div>
-
                             <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', width: '100%' }}></div>
-
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Calendar size={14} color="#64748b" />
                                 <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vencimento:</span>
@@ -386,10 +356,44 @@ const Home = ({ onNavigate }) => {
                             </div>
                         </div>
 
-                        {/* Explicação da Estratégia */}
+                        {(option.prob_success || option.edge_formatted) && (
+                            <div style={{
+                                background: 'rgba(56, 189, 248, 0.05)',
+                                borderRadius: '16px',
+                                padding: '16px 0',
+                                marginBottom: '28px',
+                                border: '1px solid rgba(56, 189, 248, 0.15)',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, textAlign: 'center' }}>Prob. Desfecho Favorável</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }}></div>
+                                        <span style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 700 }}>{option.prob_success || 'N/A'}</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ width: '1px', height: '32px', background: 'rgba(255,255,255,0.1)' }}></div>
+
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, textAlign: 'center' }}>Vantagem Teórica (Edge)</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{
+                                            fontSize: '1.25rem',
+                                            color: (strategy.includes('venda'))
+                                                ? (parseFloat(option.edge_formatted) > 0 ? '#4ade80' : '#ef4444')
+                                                : (parseFloat(option.edge_formatted) < 0 ? '#4ade80' : '#ef4444'),
+                                            fontWeight: 700
+                                        }}>{option.edge_formatted || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {strategy === 'venda_put' && (
-                                <>
+                                <React.Fragment>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
@@ -402,7 +406,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
@@ -415,7 +418,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
@@ -434,11 +436,11 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                     </div>
-                                </>
+                                </React.Fragment>
                             )}
 
                             {strategy === 'venda_call' && (
-                                <>
+                                <React.Fragment>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
@@ -451,7 +453,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
@@ -464,7 +465,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
@@ -483,11 +483,11 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                     </div>
-                                </>
+                                </React.Fragment>
                             )}
 
                             {(strategy === 'compra_call' || strategy === 'compra_put') && (
-                                <>
+                                <React.Fragment>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
@@ -500,7 +500,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
@@ -513,7 +512,6 @@ const Home = ({ onNavigate }) => {
                                             </p>
                                         </div>
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
@@ -528,12 +526,12 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                     </div>
-                                </>
+                                </React.Fragment>
                             )}
                         </div>
                     </div>
-                </motion.div >
-            </div >
+                </motion.div>
+            </div>
         );
     };
 
@@ -785,22 +783,76 @@ const Home = ({ onNavigate }) => {
                                                 </div>
 
                                                 <div className="rf-card-content" style={{
-                                                    padding: '10px',
+                                                    padding: '12px',
                                                     display: 'flex',
-                                                    flexDirection: 'column', // Stack vertically as requested
-                                                    gap: '6px',
+                                                    flexDirection: 'column',
+                                                    gap: '8px',
                                                     marginTop: '0'
                                                 }}>
                                                     {putsCount > 0 && (
-                                                        <div style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', borderRadius: '12px', fontSize: '0.8rem', width: 'fit-content' }}>
-                                                            <span style={{ fontWeight: 'bold' }}>{putsCount} Put{putsCount > 1 ? 's' : ''}</span>
-                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para venda coberta</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                            <div style={{
+                                                                padding: '6px 12px',
+                                                                background: 'rgba(239, 68, 68, 0.15)',
+                                                                color: '#ef4444',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.75rem',
+                                                                whiteSpace: 'nowrap',
+                                                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>venda renda</span>
+                                                            </div>
+                                                            {validPuts[0]?.prob_success && (
+                                                                <div style={{
+                                                                    fontSize: '0.7rem',
+                                                                    color: '#4ade80',
+                                                                    background: 'rgba(74, 222, 128, 0.1)',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '20px',
+                                                                    border: '1px solid rgba(74, 222, 128, 0.2)',
+                                                                    fontWeight: '700',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {validPuts[0].prob_success} prob.
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     {callsCount > 0 && (
-                                                        <div style={{ padding: '4px 10px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', borderRadius: '12px', fontSize: '0.8rem', width: 'fit-content' }}>
-                                                            <span style={{ fontWeight: 'bold' }}>{callsCount} Call{callsCount > 1 ? 's' : ''}</span>
-                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para compra a seco</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                            <div style={{
+                                                                padding: '6px 12px',
+                                                                background: 'rgba(56, 189, 248, 0.15)',
+                                                                color: '#38bdf8',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.75rem',
+                                                                whiteSpace: 'nowrap',
+                                                                border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>compra seco</span>
+                                                            </div>
+                                                            {validCalls[0]?.edge_formatted && (
+                                                                <div style={{
+                                                                    fontSize: '0.7rem',
+                                                                    color: parseFloat(validCalls[0].edge_formatted) < 0 ? '#4ade80' : '#ef4444',
+                                                                    background: parseFloat(validCalls[0].edge_formatted) < 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '20px',
+                                                                    border: parseFloat(validCalls[0].edge_formatted) < 0 ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+                                                                    fontWeight: '700',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    Edge: {validCalls[0].edge_formatted}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -956,22 +1008,76 @@ const Home = ({ onNavigate }) => {
                                                 </div>
 
                                                 <div className="rf-card-content" style={{
-                                                    padding: '10px',
+                                                    padding: '12px',
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    gap: '6px',
+                                                    gap: '8px',
                                                     marginTop: '0'
                                                 }}>
                                                     {callsCount > 0 && (
-                                                        <div style={{ padding: '4px 10px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', borderRadius: '12px', fontSize: '0.8rem', width: 'fit-content' }}>
-                                                            <span style={{ fontWeight: 'bold' }}>{callsCount} Call{callsCount > 1 ? 's' : ''}</span>
-                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para lançamento coberto</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                            <div style={{
+                                                                padding: '6px 12px',
+                                                                background: 'rgba(56, 189, 248, 0.15)',
+                                                                color: '#38bdf8',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.75rem',
+                                                                whiteSpace: 'nowrap',
+                                                                border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>lançamento</span>
+                                                            </div>
+                                                            {validCalls[0]?.prob_success && (
+                                                                <div style={{
+                                                                    fontSize: '0.7rem',
+                                                                    color: '#4ade80',
+                                                                    background: 'rgba(74, 222, 128, 0.1)',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '20px',
+                                                                    border: '1px solid rgba(74, 222, 128, 0.2)',
+                                                                    fontWeight: '700',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {validCalls[0].prob_success} prob.
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     {putsCount > 0 && (
-                                                        <div style={{ padding: '4px 10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', borderRadius: '12px', fontSize: '0.8rem', width: 'fit-content' }}>
-                                                            <span style={{ fontWeight: 'bold' }}>{putsCount} Put{putsCount > 1 ? 's' : ''}</span>
-                                                            <span style={{ fontWeight: '400', opacity: 0.9, marginLeft: '4px' }}>- para compra a seco</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                            <div style={{
+                                                                padding: '6px 12px',
+                                                                background: 'rgba(239, 68, 68, 0.15)',
+                                                                color: '#ef4444',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.75rem',
+                                                                whiteSpace: 'nowrap',
+                                                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
+                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}>compra seco</span>
+                                                            </div>
+                                                            {validPuts[0]?.edge_formatted && (
+                                                                <div style={{
+                                                                    fontSize: '0.7rem',
+                                                                    color: parseFloat(validPuts[0].edge_formatted) < 0 ? '#4ade80' : '#ef4444',
+                                                                    background: parseFloat(validPuts[0].edge_formatted) < 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '20px',
+                                                                    border: parseFloat(validPuts[0].edge_formatted) < 0 ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+                                                                    fontWeight: '700',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    Edge: {validPuts[0].edge_formatted}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -1001,8 +1107,13 @@ const Home = ({ onNavigate }) => {
                         background: 'linear-gradient(90deg, rgba(74, 222, 128, 0.2), transparent)',
                         borderBottom: '1px solid rgba(74, 222, 128, 0.1)'
                     }}>
-                        <div className="rf-card-icon" style={{ background: '#4ade80' }}>
-                            <TrendingUp size={20} color="#000" />
+                        <div className="rf-card-icon" style={{
+                            background: '#4ade80',
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>
+                            <TrendingUp size={18} color="#000" />
                         </div>
                         <h3>Maiores Altas</h3>
                     </div>
@@ -1061,8 +1172,13 @@ const Home = ({ onNavigate }) => {
                         background: 'linear-gradient(90deg, rgba(248, 113, 113, 0.2), transparent)',
                         borderBottom: '1px solid rgba(248, 113, 113, 0.1)'
                     }}>
-                        <div className="rf-card-icon" style={{ background: '#f87171' }}>
-                            <TrendingDown size={20} color="#fff" />
+                        <div className="rf-card-icon" style={{
+                            background: '#f87171',
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>
+                            <TrendingDown size={18} color="#fff" />
                         </div>
                         <h3>Maiores Baixas</h3>
                     </div>
@@ -1773,76 +1889,87 @@ const Home = ({ onNavigate }) => {
             </div>
 
             {/* 2. Cotações Gerais */}
-            <div className="section-header" style={{ marginBottom: '16px', marginTop: '32px' }}>
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <TrendingUp size={20} /> Cotações Mundiais
-                </h2>
-            </div>
+            {/* 2. Cotações Gerais */}
+            <div className="market-overview-card glass-card" style={{ padding: '0', marginTop: '32px', overflow: 'hidden' }}>
+                <div style={{
+                    padding: '12px 16px',
+                    background: 'linear-gradient(90deg, #1e3a8a 0%, #0f172a 100%)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '12px'
+                }}>
+                    <div style={{
+                        width: '32px', height: '32px', borderRadius: '8px',
+                        background: '#3b82f6',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        <TrendingUp size={18} color="#ffffff" />
+                    </div>
+                    <h2 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0, fontWeight: 700, letterSpacing: '-0.3px' }}>
+                        Cotações Mundiais
+                    </h2>
+                </div>
 
-            <div className="market-overview-card glass-card" style={{ padding: '20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
-                    {generalQuotes.map((quote) => {
-                        const isPositive = quote.change >= 0;
-                        const color = isPositive ? '#4ade80' : '#ef4444';
-                        const Sign = isPositive ? '+' : '';
+                <div style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {generalQuotes.map((quote, index) => {
+                            const isPositive = quote.change >= 0;
+                            const color = isPositive ? '#4ade80' : '#ef4444';
+                            const Sign = isPositive ? '+' : '';
 
-                        const getTheme = (name) => {
-                            switch (name) {
-                                case 'IBOV': return { bg: '#1e3a8a', icon: <BarChart2 size={24} color="#ffffff" /> };
-                                case 'Dólar': return { bg: '#14532d', icon: <DollarSign size={24} color="#ffffff" /> };
-                                case 'Bitcoin': return { bg: '#78350f', icon: <Bitcoin size={24} color="#ffffff" /> };
-                                case 'Euro': return { bg: '#0c4a6e', icon: <Euro size={24} color="#ffffff" /> };
-                                case 'Libra': return { bg: '#581c87', icon: <PoundSterling size={24} color="#ffffff" /> };
-                                default: return { bg: '#334155', icon: <TrendingUp size={24} color="#ffffff" /> };
-                            }
-                        };
+                            const getTheme = (name) => {
+                                switch (name) {
+                                    case 'IBOV': return { bg: '#1e3a8a', icon: <BarChart2 size={18} color="#ffffff" /> };
+                                    case 'Dólar': return { bg: '#14532d', icon: <DollarSign size={18} color="#ffffff" /> };
+                                    case 'Bitcoin': return { bg: '#78350f', icon: <Bitcoin size={18} color="#ffffff" /> };
+                                    case 'Euro': return { bg: '#0c4a6e', icon: <Euro size={18} color="#ffffff" /> };
+                                    case 'Libra': return { bg: '#581c87', icon: <PoundSterling size={18} color="#ffffff" /> };
+                                    default: return { bg: '#334155', icon: <TrendingUp size={18} color="#ffffff" /> };
+                                }
+                            };
 
-                        const theme = getTheme(quote.name);
+                            const theme = getTheme(quote.name);
 
-                        return (
-                            <div key={quote.id} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '16px', borderRadius: '16px', background: 'rgba(30, 41, 59, 0.4)',
-                                border: '0px solid rgba(255,255,255,0.05)',
-                                backdropFilter: 'blur(10px)',
-                                transition: 'transform 0.2s',
-                                cursor: 'default',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
-                            }}
-                                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            return (
+                                <React.Fragment key={quote.id}>
                                     <div style={{
-                                        width: '48px', height: '48px',
-                                        borderRadius: '12px',
-                                        background: theme.bg,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        border: 'px solid rgba(255,255,255,0.1)',
-                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '12px 0',
+                                        borderBottom: index < generalQuotes.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'
                                     }}>
-                                        {theme.icon}
-                                    </div>
-                                    <span style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>{quote.name}</span>
-                                </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{
+                                                width: '32px', height: '32px',
+                                                borderRadius: '8px',
+                                                background: theme.bg,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }}>
+                                                {theme.icon}
+                                            </div>
+                                            <span style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>{quote.name}</span>
+                                        </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                    <span style={{ fontSize: '0.85rem', color: '#f1f5f9', fontWeight: 600, letterSpacing: '-0.5px' }}>
-                                        {quote.name === 'IBOV' ? `${Math.round(quote.price).toLocaleString('pt-BR')} pts` :
-                                            quote.name === 'Bitcoin' ? `US$ ${quote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-                                                `R$ ${quote.price.toFixed(2).replace('.', ',')}`}
-                                    </span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        {isPositive ? <TrendingUp size={12} color={color} /> : <TrendingDown size={12} color={color} />}
-                                        <span style={{ fontSize: '0.65rem', color: color, fontWeight: 600 }}>
-                                            {Sign}{quote.change.toFixed(2).replace('.', ',')}%
-                                        </span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.9rem', color: '#f1f5f9', fontWeight: 600, letterSpacing: '-0.5px' }}>
+                                                {quote.name === 'IBOV' ? `${Math.round(quote.price).toLocaleString('pt-BR')} pts` :
+                                                    quote.name === 'Bitcoin' ? `US$ ${quote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+                                                        `R$ ${quote.price.toFixed(2).replace('.', ',')}`}
+                                            </span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                {isPositive ? <TrendingUp size={12} color={color} /> : <TrendingDown size={12} color={color} />}
+                                                <span style={{ fontSize: '0.75rem', color: color, fontWeight: 600 }}>
+                                                    {Sign}{quote.change.toFixed(2).replace('.', ',')}%
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                    {generalQuotes.length === 0 && <div style={{ color: '#64748b' }}>Carregando cotações...</div>}
+                                </React.Fragment>
+                            );
+                        })}
+                        {generalQuotes.length === 0 && <div style={{ color: '#64748b' }}>Carregando cotações...</div>}
+                    </div>
                 </div>
             </div>
 
