@@ -226,7 +226,7 @@ const ComparativeChart = ({ data }) => {
     if (!data || data.length === 0) return null;
 
     return (
-        <div className="rf-card glass-card" style={{ marginTop: '20px', padding: '20px' }}>
+        <div className="rf-card glass-card" style={{ marginTop: '20px', padding: '8px' }}>
             <div className="rf-card-header">
                 <div>
                     <h3>Rentabilidade Acumulada (5 Anos)</h3>
@@ -235,7 +235,7 @@ const ComparativeChart = ({ data }) => {
             </div>
             <div style={{ width: '100%', height: 350, marginTop: '20px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
+                    <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                         <XAxis
                             dataKey="date"
