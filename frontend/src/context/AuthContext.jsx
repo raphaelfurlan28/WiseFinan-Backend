@@ -16,6 +16,21 @@ export const useAuth = () => useContext(AuthContext);
 // Inactivity timeout: 15 minutes in ms
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
 
+// Generate or retrieve a persistent device identifier
+const getDeviceId = () => {
+    let deviceId = localStorage.getItem('wisefinan_device_id');
+    if (!deviceId) {
+        deviceId = crypto.randomUUID ? crypto.randomUUID() :
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        localStorage.setItem('wisefinan_device_id', deviceId);
+        console.log('[Auth] New device_id generated:', deviceId.slice(-8));
+    }
+    return deviceId;
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -69,7 +84,7 @@ export const AuthProvider = ({ children }) => {
                 const response = await fetch(getApiUrl('/api/auth/validate-session'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: currentUser.email, token: token })
+                    body: JSON.stringify({ email: currentUser.email, token: token, device_id: getDeviceId() })
                 });
                 return await response.json();
             } catch (err) {
@@ -89,15 +104,22 @@ export const AuthProvider = ({ children }) => {
                 const response = await fetch(getApiUrl('/api/auth/register-session'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ email, device_id: getDeviceId() })
                 });
                 const data = await response.json();
+
+                if (data.error === 'device_not_authorized') {
+                    alert('Este dispositivo não está autorizado para esta conta. Contacte o administrador.');
+                    await logout(true);
+                    return null;
+                }
+
                 const token = data.token;
                 localStorage.setItem('session_token', token);
-                console.log("[Auth] New session registered:", token.slice(-8));
+                console.log('[Auth] New session registered:', token.slice(-8));
                 return token;
             } catch (err) {
-                console.error("[Auth] Failed to register session:", err);
+                console.error('[Auth] Failed to register session:', err);
                 return null;
             }
         };
@@ -121,10 +143,12 @@ export const AuthProvider = ({ children }) => {
 
                     if (!validation.valid) {
                         console.warn("[Auth] Token invalid on load:", validation.reason);
-                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout') {
+                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout' || validation.reason === 'device_not_authorized') {
                             const msg = validation.reason === 'inactivity_timeout'
                                 ? "Sessão expirada por inatividade. Faça login novamente."
-                                : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
+                                : validation.reason === 'device_not_authorized'
+                                    ? "Este dispositivo não está autorizado para esta conta."
+                                    : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
                             alert(msg);
                             await logout(true);
                             return;
@@ -164,11 +188,13 @@ export const AuthProvider = ({ children }) => {
 
                     if (!validation.valid) {
                         console.warn("[Auth] Heartbeat failed:", validation.reason);
-                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout') {
+                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout' || validation.reason === 'device_not_authorized') {
                             clearInterval(heartbeatInterval);
                             const msg = validation.reason === 'inactivity_timeout'
                                 ? "Sessão expirada por inatividade. Faça login novamente."
-                                : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
+                                : validation.reason === 'device_not_authorized'
+                                    ? "Este dispositivo não está autorizado para esta conta."
+                                    : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
                             alert(msg);
                             await logout(true);
                         }

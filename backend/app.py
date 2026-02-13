@@ -393,13 +393,16 @@ def register_session_endpoint():
         from flask import request
         data = request.json
         email = data.get('email')
+        device_id = data.get('device_id')
         
         if not email:
             return jsonify({"error": "Email required"}), 400
             
         from services.auth_service import register_user_session
-        res = register_user_session(email)
+        res = register_user_session(email, device_id)
         
+        if res.get("error") == "device_not_authorized":
+            return jsonify(res), 403
         if "error" in res:
             return jsonify(res), 500
         return jsonify(res)
@@ -414,12 +417,33 @@ def validate_session_endpoint():
         data = request.json
         email = data.get('email')
         token = data.get('token')
+        device_id = data.get('device_id')
         
         if not email or not token:
             return jsonify({"error": "Email and token required"}), 400
             
         from services.auth_service import validate_user_session
-        res = validate_user_session(email, token)
+        res = validate_user_session(email, token, device_id)
+        
+        if "error" in res:
+            return jsonify(res), 500
+        return jsonify(res)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/reset-device', methods=['POST'])
+def reset_device_endpoint():
+    try:
+        from flask import request
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({"error": "Email required"}), 400
+        
+        from services.auth_service import reset_device_binding
+        res = reset_device_binding(email)
         
         if "error" in res:
             return jsonify(res), 500

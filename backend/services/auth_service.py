@@ -5,8 +5,6 @@ import uuid
 from datetime import datetime, timezone
 import os
 
-# Reusing the db connection logic to ensure singleton behavior if possible, 
-# or safe re-initialization.
 _db = None
 
 def _get_db():
@@ -17,7 +15,6 @@ def _get_db():
     try:
         app = firebase_admin.get_app()
     except ValueError:
-        # Not initialized
         basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         cred_path = os.path.join(basedir, 'service_account.json')
         
@@ -37,41 +34,57 @@ def _get_db():
 
 INACTIVITY_TIMEOUT_SECONDS = 15 * 60  # 15 minutes
 
-def register_user_session(email):
+def register_user_session(email, device_id=None):
     """
     Generates a new session token for the user and saves it to Firestore.
-    Overwrites any existing session, effectively invalidating previous devices.
+    If user has an authorized_device, only that device can register a session.
+    If no authorized_device exists yet, the current device_id becomes authorized.
     """
     try:
         db = _get_db()
-        token = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
         
-        # We use the email as the document ID for 'active_sessions'
-        # ensuring 1 session per email.
-        # Collection: active_sessions
-        # Doc: email
-        # Fields: token, last_login_at
-        
         doc_ref = db.collection('active_sessions').document(email)
-        doc_ref.set({
+        doc = doc_ref.get()
+        
+        # Check device authorization
+        if device_id and doc.exists:
+            data = doc.to_dict()
+            authorized_device = data.get('authorized_device')
+            
+            if authorized_device and authorized_device != device_id:
+                print(f"[AUTH] Device rejected for {email}. Incoming: {device_id[-8:]} | Authorized: {authorized_device[-8:]}")
+                return {"error": "device_not_authorized", "message": "Este dispositivo não está autorizado para esta conta."}
+        
+        token = str(uuid.uuid4())
+        
+        session_data = {
             'token': token,
             'last_login_at': now,
             'last_activity': now,
             'email': email
-        })
+        }
         
-        print(f"[AUTH] New session registered for {email}: {token[-8:]}")
+        # Bind device on first login or keep existing binding
+        if device_id:
+            if doc.exists:
+                existing = doc.to_dict()
+                session_data['authorized_device'] = existing.get('authorized_device') or device_id
+            else:
+                session_data['authorized_device'] = device_id
+        
+        doc_ref.set(session_data)
+        
+        print(f"[AUTH] Session registered for {email}: token={token[-8:]}, device={device_id[-8:] if device_id else 'none'}")
         return {"success": True, "token": token}
         
     except Exception as e:
         print(f"[AUTH ERROR] register_user_session: {e}")
         return {"error": str(e)}
 
-def validate_user_session(email, token):
+def validate_user_session(email, token, device_id=None):
     """
-    Checks if the provided token matches the trusted token in Firestore.
-    Also checks for inactivity timeout (15 minutes).
+    Checks token + device_id + inactivity timeout.
     """
     try:
         db = _get_db()
@@ -79,15 +92,22 @@ def validate_user_session(email, token):
         doc = doc_ref.get()
         
         if not doc.exists:
-            # No session found ??? implies invalid or expired
             return {"valid": False, "reason": "no_session"}
             
         data = doc.to_dict()
         active_token = data.get('token')
         
+        # Check token
         if active_token != token:
             print(f"[AUTH] Token Mismatch for {email}. Incoming: {token[-8:]} | Active: {active_token[-8:]}")
             return {"valid": False, "reason": "token_mismatch"}
+        
+        # Check device
+        if device_id:
+            authorized_device = data.get('authorized_device')
+            if authorized_device and authorized_device != device_id:
+                print(f"[AUTH] Device Mismatch for {email}. Incoming: {device_id[-8:]} | Authorized: {authorized_device[-8:]}")
+                return {"valid": False, "reason": "device_not_authorized"}
         
         # Check inactivity timeout
         last_activity = data.get('last_activity')
@@ -95,14 +115,33 @@ def validate_user_session(email, token):
             elapsed = (datetime.now(timezone.utc) - last_activity).total_seconds()
             if elapsed > INACTIVITY_TIMEOUT_SECONDS:
                 print(f"[AUTH] Inactivity timeout for {email}: {elapsed:.0f}s idle")
-                # Delete the session so they must re-login
                 doc_ref.delete()
                 return {"valid": False, "reason": "inactivity_timeout"}
         
-        # Token matches and session is active — update last_activity
+        # All checks passed — update last_activity
         doc_ref.update({'last_activity': datetime.now(timezone.utc)})
         return {"valid": True}
             
     except Exception as e:
         print(f"[AUTH ERROR] validate_user_session: {e}")
+        return {"error": str(e)}
+
+def reset_device_binding(email):
+    """
+    Clears the authorized_device for a user, allowing them to login from a new device.
+    """
+    try:
+        db = _get_db()
+        doc_ref = db.collection('active_sessions').document(email)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return {"success": True, "message": "No active session found, device binding cleared."}
+        
+        doc_ref.update({'authorized_device': firestore.DELETE_FIELD})
+        print(f"[AUTH] Device binding reset for {email}")
+        return {"success": True, "message": f"Device binding reset for {email}. Next login will bind to new device."}
+        
+    except Exception as e:
+        print(f"[AUTH ERROR] reset_device_binding: {e}")
         return {"error": str(e)}
