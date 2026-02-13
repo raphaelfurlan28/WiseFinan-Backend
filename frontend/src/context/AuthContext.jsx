@@ -7,7 +7,7 @@ import {
     updateProfile
 } from "firebase/auth";
 import { auth } from '../services/firebaseConfig';
-import axios from 'axios';
+import { getApiUrl } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -66,11 +66,12 @@ export const AuthProvider = ({ children }) => {
 
                 if (!token) return { valid: false, reason: 'no_token_locally' };
 
-                const response = await axios.post('/api/auth/validate-session', {
-                    email: currentUser.email,
-                    token: token
+                const response = await fetch(getApiUrl('/api/auth/validate-session'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUser.email, token: token })
                 });
-                return response.data;
+                return await response.json();
             } catch (err) {
                 console.error("[Auth] Validation error:", err);
                 if (retries > 0) {
@@ -85,8 +86,13 @@ export const AuthProvider = ({ children }) => {
 
         const registerNewSession = async (email) => {
             try {
-                const response = await axios.post('/api/auth/register-session', { email });
-                const token = response.data.token;
+                const response = await fetch(getApiUrl('/api/auth/register-session'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                const token = data.token;
                 localStorage.setItem('session_token', token);
                 console.log("[Auth] New session registered:", token.slice(-8));
                 return token;
@@ -255,10 +261,10 @@ export const AuthProvider = ({ children }) => {
             });
 
             try {
-                await axios.post('/api/user/update', {
-                    email: user.email,
-                    name: newName,
-                    photo: newPhoto
+                await fetch(getApiUrl('/api/user/update'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, name: newName, photo: newPhoto })
                 });
             } catch (err) {
                 console.warn("Backend sync failed, but Firebase updated.", err);
