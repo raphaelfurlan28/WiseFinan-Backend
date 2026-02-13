@@ -822,40 +822,46 @@ const Home = ({ onNavigate }) => {
                                                     marginTop: '0'
                                                 }}>
                                                     {putsCount > 0 && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                            <div style={{
-                                                                padding: '6px 12px',
-                                                                background: 'rgba(239, 68, 68, 0.15)',
-                                                                color: '#ef4444',
-                                                                borderRadius: '20px',
-                                                                fontSize: '0.75rem',
-                                                                whiteSpace: 'nowrap',
-                                                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Venda Coberta</span>
+                                                        <div>
+                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Renda Extra :</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
+                                                                <div style={{
+                                                                    padding: '6px 12px',
+                                                                    background: 'rgba(239, 68, 68, 0.15)',
+                                                                    color: '#ef4444',
+                                                                    borderRadius: '20px',
+                                                                    fontSize: '0.75rem',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
+                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Venda Coberta</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {callsCount > 0 && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                            <div style={{
-                                                                padding: '6px 12px',
-                                                                background: 'rgba(56, 189, 248, 0.15)',
-                                                                color: '#38bdf8',
-                                                                borderRadius: '20px',
-                                                                fontSize: '0.75rem',
-                                                                whiteSpace: 'nowrap',
-                                                                border: '1px solid rgba(56, 189, 248, 0.2)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
+                                                        <div>
+                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Alavancagem de Capital :</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
+                                                                <div style={{
+                                                                    padding: '6px 12px',
+                                                                    background: 'rgba(56, 189, 248, 0.15)',
+                                                                    color: '#38bdf8',
+                                                                    borderRadius: '20px',
+                                                                    fontSize: '0.75rem',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
+                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
@@ -864,7 +870,8 @@ const Home = ({ onNavigate }) => {
                                         );
                                     })}
                                 </div>
-                            )}
+                            )
+                            }
                         </div>
                     </div>
                 </div>
@@ -997,40 +1004,46 @@ const Home = ({ onNavigate }) => {
                                                     marginTop: '0'
                                                 }}>
                                                     {callsCount > 0 && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                            <div style={{
-                                                                padding: '6px 12px',
-                                                                background: 'rgba(56, 189, 248, 0.15)',
-                                                                color: '#38bdf8',
-                                                                borderRadius: '20px',
-                                                                fontSize: '0.75rem',
-                                                                whiteSpace: 'nowrap',
-                                                                border: '1px solid rgba(56, 189, 248, 0.2)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Lançamento Coberto</span>
+                                                        <div>
+                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Renda Extra :</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
+                                                                <div style={{
+                                                                    padding: '6px 12px',
+                                                                    background: 'rgba(56, 189, 248, 0.15)',
+                                                                    color: '#38bdf8',
+                                                                    borderRadius: '20px',
+                                                                    fontSize: '0.75rem',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
+                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Lançamento Coberto</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {putsCount > 0 && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                            <div style={{
-                                                                padding: '6px 12px',
-                                                                background: 'rgba(239, 68, 68, 0.15)',
-                                                                color: '#ef4444',
-                                                                borderRadius: '20px',
-                                                                fontSize: '0.75rem',
-                                                                whiteSpace: 'nowrap',
-                                                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
+                                                        <div>
+                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Alavancagem de Capital :</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
+                                                                <div style={{
+                                                                    padding: '6px 12px',
+                                                                    background: 'rgba(239, 68, 68, 0.15)',
+                                                                    color: '#ef4444',
+                                                                    borderRadius: '20px',
+                                                                    fontSize: '0.75rem',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
+                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
