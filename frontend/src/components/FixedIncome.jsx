@@ -229,8 +229,8 @@ const ComparativeChart = ({ data }) => {
         <div className="rf-card glass-card" style={{ marginTop: '20px', padding: '20px' }}>
             <div className="rf-card-header">
                 <div>
-                    <h3>Rentabilidade Acumulada (10 Anos)</h3>
-                    <p style={{ fontSize: '0.8rem', color: '#999', margin: '4px 0 0' }}>Mostra a evolução de R$ 100 investidos há 10 anos.</p>
+                    <h3>Rentabilidade Acumulada (5 Anos)</h3>
+                    <p style={{ fontSize: '0.8rem', color: '#999', margin: '4px 0 0' }}>Mostra a evolução de R$ 100 investidos há 5 anos.</p>
                 </div>
             </div>
             <div style={{ width: '100%', height: 350, marginTop: '20px' }}>
@@ -256,7 +256,6 @@ const ComparativeChart = ({ data }) => {
                                 let color = '#fff';
                                 if (name === 'Ibovespa') color = '#4ade80';
                                 if (name === 'Selic Acum.') color = '#38bdf8';
-                                if (name === 'CDI Acum.') color = '#facc15';
                                 if (name === 'Poupança') color = '#a855f7';
                                 return [<span style={{ color: color, fontWeight: 'bold' }}>R$ {parseFloat(value).toFixed(2).replace('.', ',')}</span>, name];
                             }}
@@ -265,7 +264,6 @@ const ComparativeChart = ({ data }) => {
                         />
                         <Line type="monotone" dataKey="ibov" name="Ibovespa" stroke="#4ade80" strokeWidth={2} dot={false} />
                         <Line type="monotone" dataKey="selic" name="Selic Acum." stroke="#38bdf8" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="cdi" name="CDI Acum." stroke="#facc15" strokeWidth={2} dot={false} />
                         <Line type="monotone" dataKey="poupanca" name="Poupança" stroke="#a855f7" strokeWidth={2} dot={false} />
                         {/* Legend */}
                         <text x="50%" y="10" textAnchor="middle" fill="#999" fontSize="12">
@@ -282,10 +280,6 @@ const ComparativeChart = ({ data }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: 12, height: 12, backgroundColor: '#38bdf8', borderRadius: '50%' }}></div>
                     <span style={{ color: '#ccc' }}>Selic</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 12, height: 12, backgroundColor: '#facc15', borderRadius: '50%' }}></div>
-                    <span style={{ color: '#ccc' }}>CDI</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: 12, height: 12, backgroundColor: '#a855f7', borderRadius: '50%' }}></div>

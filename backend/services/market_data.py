@@ -7,120 +7,135 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from services.cache import cached
 
 @cached(ttl_seconds=1800)  # 30 min cache — data is monthly, no need for real-time
-def get_comparative_data(years=10):
+def get_comparative_data(years=5):
     """
-    Fetches historical data for IBOV, Selic, CDI, and Poupança for the last 'years'.
-    Normalizes all series to base 100.
-    Returns a list of dicts suitable for Recharts.
-    Uses ThreadPoolExecutor to fetch all 4 sources in parallel.
+    Returns comparative data for the last 'years' (default 5).
+    Base 100 for all series.
+    Returns None if any of the required series (IBOV, Selic, Poupanca) fails to load.
     """
     end_date = datetime.now()
     start_date = end_date - timedelta(days=years*365)
-    start_str = start_date.strftime('%d/%m/%Y')  # BCB format
-
-    # --- Individual fetch functions ---
+    
+    # --- Helper fetch functions ---
     def fetch_ibov():
         try:
+            print(f"Fetching IBOV from {start_date} to {end_date}")
             ibov = yf.download("^BVSP", start=start_date, end=end_date, progress=False)
             if not ibov.empty:
+                # Handle MultiIndex columns (yfinance > 0.2)
                 if isinstance(ibov.columns, pd.MultiIndex):
                     ibov.columns = ibov.columns.get_level_values(0)
+                
                 col_name = 'Adj Close' if 'Adj Close' in ibov.columns else 'Close'
                 if col_name in ibov.columns:
-                    ibov_monthly = ibov[col_name].resample('ME').last()
-                    if not ibov_monthly.empty:
-                        base_value = ibov_monthly.iloc[0]
-                        if base_value and base_value != 0:
-                            return ('IBOV', (ibov_monthly / base_value) * 100)
+                    # Resample to monthly, normalize to 100
+                    monthly = ibov[col_name].resample('ME').last().ffill()
+                    if monthly.empty: return None
+                    first_val = monthly.iloc[0]
+                    
+                    # Normalize
+                    normalized = (monthly / first_val) * 100
+                    return ('IBOV', normalized)
         except Exception as e:
             print(f"Error fetching IBOV: {e}")
         return None
 
     def fetch_selic():
         try:
-            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial={start_str}"
-            r = requests.get(url, timeout=10)
+            print("Fetching Selic...")
+            # Using sgs code 11 (Daily Selic Rate)
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial={start_date.strftime('%d/%m/%Y')}&dataFinal={end_date.strftime('%d/%m/%Y')}"
+            r = requests.get(url, timeout=10) # 10s timeout
             if r.status_code == 200:
-                df = pd.DataFrame(r.json())
+                data = r.json()
+                df = pd.DataFrame(data)
                 df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
                 df['valor'] = pd.to_numeric(df['valor'])
                 df = df.set_index('data').sort_index()
                 df = df[df.index >= start_date]
-                df['factor'] = 1 + (df['valor'] / 100)
-                df['Accumulated'] = 100 * df['factor'].cumprod()
-                return ('Selic', df['Accumulated'].resample('ME').last())
+                
+                # Accumulate: (1 + rate/100).cumprod()
+                # Daily rate is %, so /100.
+                factor = 1 + (df['valor'] / 100)
+                accumulated = 100 * factor.cumprod()
+                
+                # Resample to monthly end
+                resampled = accumulated.resample('ME').last()
+                return ('Selic', resampled)
         except Exception as e:
             print(f"Error fetching Selic: {e}")
         return None
 
-    def fetch_cdi():
-        try:
-            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial={start_str}"
-            r = requests.get(url, timeout=10)
-            if r.status_code == 200:
-                df = pd.DataFrame(r.json())
-                df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
-                df['valor'] = pd.to_numeric(df['valor'])
-                df = df.set_index('data').sort_index()
-                df = df[df.index >= start_date]
-                df['factor'] = 1 + (df['valor'] / 100)
-                df['Accumulated'] = 100 * df['factor'].cumprod()
-                return ('CDI', df['Accumulated'].resample('ME').last())
-        except Exception as e:
-            print(f"Error fetching CDI: {e}")
-        return None
-
     def fetch_poupanca():
         try:
-            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados?formato=json&dataInicial={start_str}"
+            print("Fetching Poupanca...")
+            # BCB Code 196 = Poupança - rendimento mês
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.196/dados?formato=json&dataInicial={start_date.strftime('%d/%m/%Y')}&dataFinal={end_date.strftime('%d/%m/%Y')}"
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
-                df = pd.DataFrame(r.json())
+                data = r.json()
+                df = pd.DataFrame(data)
                 df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
                 df['valor'] = pd.to_numeric(df['valor'])
                 df = df.set_index('data').sort_index()
                 df = df[df.index >= start_date]
+                
+                # Accumulate monthly yield
                 monthly_rates = df['valor'].resample('MS').first().ffill()
                 factor = 1 + (monthly_rates / 100)
                 accumulated = 100 * factor.cumprod()
-                return ('Poupanca', accumulated.resample('ME').last())
+                
+                resampled = accumulated.resample('ME').last()
+                return ('Poupanca', resampled)
         except Exception as e:
             print(f"Error fetching Poupanca: {e}")
         return None
 
     # --- Parallel execution ---
     data_frames = {}
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         futures = [
             executor.submit(fetch_ibov),
             executor.submit(fetch_selic),
-            executor.submit(fetch_cdi),
             executor.submit(fetch_poupanca),
         ]
         for future in as_completed(futures):
-            result = future.result()
-            if result:
-                name, series = result
-                data_frames[name] = series
+            try:
+                result = future.result()
+                if result:
+                    name, series = result
+                    data_frames[name] = series
+            except Exception as e:
+                print(f"Error in future result: {e}")
+
+    # STRICT validation: Ensure ALL 3 are present
+    required_series = ['IBOV', 'Selic', 'Poupanca']
+    keys_present = list(data_frames.keys())
+    print(f"Comparative Data Keys Present: {keys_present}")
+    
+    if not all(k in data_frames for k in required_series):
+        print(f"Missing comparative data. Got: {keys_present}")
+        return None # Return None implies partial data is not accepted
 
     # Merge DataFrames
-    if not data_frames:
-        return []
-
-    merged = pd.DataFrame(data_frames)
-    merged = merged.ffill().dropna()
-    merged.index.name = 'Date'
-    merged.reset_index(inplace=True)
-    merged['date'] = merged['Date'].dt.strftime('%Y-%m')
+    try:
+        merged = pd.DataFrame(data_frames)
+        print(f"Merged Shape: {merged.shape}")
+        merged = merged.ffill().dropna()
+        merged.index.name = 'Date'
+        merged.reset_index(inplace=True)
+        merged['date'] = merged['Date'].dt.strftime('%Y-%m')
+    except Exception as e:
+        print(f"Error merging frames: {e}")
+        return None
 
     result = []
     for _, row in merged.iterrows():
         item = {
             "date": row['date'],
-            "ibov": round(row.get('IBOV', 0), 2) if 'IBOV' in row else None,
-            "selic": round(row.get('Selic', 0), 2) if 'Selic' in row else None,
-            "cdi": round(row.get('CDI', 0), 2) if 'CDI' in row else None,
-            "poupanca": round(row.get('Poupanca', 0), 2) if 'Poupanca' in row else None
+            "ibov": round(row.get('IBOV', 0), 2),
+            "selic": round(row.get('Selic', 0), 2),
+            "poupanca": round(row.get('Poupanca', 0), 2)
         }
         result.append(item)
 
