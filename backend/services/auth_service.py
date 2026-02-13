@@ -2,7 +2,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Reusing the db connection logic to ensure singleton behavior if possible, 
@@ -45,7 +45,7 @@ def register_user_session(email):
     try:
         db = _get_db()
         token = str(uuid.uuid4())
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # We use the email as the document ID for 'active_sessions'
         # ensuring 1 session per email.
@@ -92,7 +92,7 @@ def validate_user_session(email, token):
         # Check inactivity timeout
         last_activity = data.get('last_activity')
         if last_activity:
-            elapsed = (datetime.utcnow() - last_activity).total_seconds()
+            elapsed = (datetime.now(timezone.utc) - last_activity).total_seconds()
             if elapsed > INACTIVITY_TIMEOUT_SECONDS:
                 print(f"[AUTH] Inactivity timeout for {email}: {elapsed:.0f}s idle")
                 # Delete the session so they must re-login
@@ -100,7 +100,7 @@ def validate_user_session(email, token):
                 return {"valid": False, "reason": "inactivity_timeout"}
         
         # Token matches and session is active — update last_activity
-        doc_ref.update({'last_activity': datetime.utcnow()})
+        doc_ref.update({'last_activity': datetime.now(timezone.utc)})
         return {"valid": True}
             
     except Exception as e:
