@@ -3,162 +3,116 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from services.cache import cached
 
+@cached(ttl_seconds=1800)  # 30 min cache — data is monthly, no need for real-time
 def get_comparative_data(years=10):
     """
-    Fetches historical data for IBOV, Selic, and IPCA for the last 'years'.
+    Fetches historical data for IBOV, Selic, CDI, and Poupança for the last 'years'.
     Normalizes all series to base 100.
     Returns a list of dicts suitable for Recharts.
+    Uses ThreadPoolExecutor to fetch all 4 sources in parallel.
     """
     end_date = datetime.now()
     start_date = end_date - timedelta(days=years*365)
-    start_str = start_date.strftime('%d/%m/%Y') # BCB format
-    
+    start_str = start_date.strftime('%d/%m/%Y')  # BCB format
+
+    # --- Individual fetch functions ---
+    def fetch_ibov():
+        try:
+            ibov = yf.download("^BVSP", start=start_date, end=end_date, progress=False)
+            if not ibov.empty:
+                if isinstance(ibov.columns, pd.MultiIndex):
+                    ibov.columns = ibov.columns.get_level_values(0)
+                col_name = 'Adj Close' if 'Adj Close' in ibov.columns else 'Close'
+                if col_name in ibov.columns:
+                    ibov_monthly = ibov[col_name].resample('ME').last()
+                    if not ibov_monthly.empty:
+                        base_value = ibov_monthly.iloc[0]
+                        if base_value and base_value != 0:
+                            return ('IBOV', (ibov_monthly / base_value) * 100)
+        except Exception as e:
+            print(f"Error fetching IBOV: {e}")
+        return None
+
+    def fetch_selic():
+        try:
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial={start_str}"
+            r = requests.get(url, timeout=10)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json())
+                df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
+                df['valor'] = pd.to_numeric(df['valor'])
+                df = df.set_index('data').sort_index()
+                df = df[df.index >= start_date]
+                df['factor'] = 1 + (df['valor'] / 100)
+                df['Accumulated'] = 100 * df['factor'].cumprod()
+                return ('Selic', df['Accumulated'].resample('ME').last())
+        except Exception as e:
+            print(f"Error fetching Selic: {e}")
+        return None
+
+    def fetch_cdi():
+        try:
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial={start_str}"
+            r = requests.get(url, timeout=10)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json())
+                df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
+                df['valor'] = pd.to_numeric(df['valor'])
+                df = df.set_index('data').sort_index()
+                df = df[df.index >= start_date]
+                df['factor'] = 1 + (df['valor'] / 100)
+                df['Accumulated'] = 100 * df['factor'].cumprod()
+                return ('CDI', df['Accumulated'].resample('ME').last())
+        except Exception as e:
+            print(f"Error fetching CDI: {e}")
+        return None
+
+    def fetch_poupanca():
+        try:
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados?formato=json&dataInicial={start_str}"
+            r = requests.get(url, timeout=10)
+            if r.status_code == 200:
+                df = pd.DataFrame(r.json())
+                df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
+                df['valor'] = pd.to_numeric(df['valor'])
+                df = df.set_index('data').sort_index()
+                df = df[df.index >= start_date]
+                monthly_rates = df['valor'].resample('MS').first().ffill()
+                factor = 1 + (monthly_rates / 100)
+                accumulated = 100 * factor.cumprod()
+                return ('Poupanca', accumulated.resample('ME').last())
+        except Exception as e:
+            print(f"Error fetching Poupanca: {e}")
+        return None
+
+    # --- Parallel execution ---
     data_frames = {}
-
-    # 1. Fetch IBOV (Yahoo Finance)
-    try:
-        # yfinance may return MultiIndex.
-        ibov = yf.download("^BVSP", start=start_date, end=end_date, progress=False)
-        
-        if not ibov.empty:
-            # Flatten columns if MultiIndex
-            if isinstance(ibov.columns, pd.MultiIndex):
-                # Columns are like ('Close', '^BVSP')
-                # We want just 'Close'
-                ibov.columns = ibov.columns.get_level_values(0)
-            
-            # Select column (prefer Adj Close, fallback to Close)
-            col_name = 'Adj Close' if 'Adj Close' in ibov.columns else 'Close'
-            
-            if col_name in ibov.columns:
-                # Resample to Monthly (End of Month)
-                ibov_monthly = ibov[col_name].resample('ME').last()
-                
-                # Normalize to 100
-                if not ibov_monthly.empty:
-                    base_value = ibov_monthly.iloc[0]
-                    # Avoid division by zero
-                    if base_value and base_value != 0:
-                        ibov_normalized = (ibov_monthly / base_value) * 100
-                        data_frames['IBOV'] = ibov_normalized
-            else:
-                print(f"IBOV Error: Column {col_name} not found. Available: {ibov.columns}")
-                
-    except Exception as e:
-        print(f"Error fetching IBOV: {e}")
-
-    # 2. Fetch Selic (BCB Series 11 - Daily Taxa Selic)
-    # Ideally, we compound daily rates to get the index.
-    # Alternatively, use series 432 (Meta Selic) but that's not return.
-    # We will use Series 11 (Daily % a.a / 252? No, Series 11 is % a.d. or % a.a.? 
-    # Series 11 is "Taxa de juros - Selic - % a.d." usually. Let's check.
-    # Actually, Series 11 is % per day.
-    # Creating an index: Index_t = Index_{t-1} * (1 + rate_t/100)
-    try:
-        # Fetching JSON from BCB
-        # API: https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?formato=json&dataInicial={date}
-        url_selic = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial={start_str}"
-        r_selic = requests.get(url_selic, timeout=5)
-        if r_selic.status_code == 200:
-            df_selic = pd.DataFrame(r_selic.json())
-            df_selic['data'] = pd.to_datetime(df_selic['data'], format='%d/%m/%Y')
-            df_selic['valor'] = pd.to_numeric(df_selic['valor'])
-            df_selic = df_selic.set_index('data').sort_index()
-            
-            # Filter by start_date (API might return more)
-            df_selic = df_selic[df_selic.index >= start_date]
-
-            # Compound: (1 + rate/100).cumprod()
-            # Initial investment = 100
-            df_selic['factor'] = 1 + (df_selic['valor'] / 100)
-            df_selic['Accumulated'] = 100 * df_selic['factor'].cumprod()
-            
-            # Resample to Monthly for Chart clarity
-            selic_monthly = df_selic['Accumulated'].resample('ME').last()
-            data_frames['Selic'] = selic_monthly
-            
-    except Exception as e:
-        print(f"Error fetching Selic: {e}")
-
-    # 3. Fetch CDI (BCB Series 12 - Daily % a.d.)
-    try:
-        url_cdi = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial={start_str}"
-        r_cdi = requests.get(url_cdi, timeout=5)
-        if r_cdi.status_code == 200:
-            df_cdi = pd.DataFrame(r_cdi.json())
-            df_cdi['data'] = pd.to_datetime(df_cdi['data'], format='%d/%m/%Y')
-            df_cdi['valor'] = pd.to_numeric(df_cdi['valor'])
-            df_cdi = df_cdi.set_index('data').sort_index()
-            
-            # Filter
-            df_cdi = df_cdi[df_cdi.index >= start_date]
-
-            # Compound
-            df_cdi['factor'] = 1 + (df_cdi['valor'] / 100)
-            df_cdi['Accumulated'] = 100 * df_cdi['factor'].cumprod()
-            
-            # Resample to Monthly
-            cdi_monthly = df_cdi['Accumulated'].resample('ME').last()
-            data_frames['CDI'] = cdi_monthly
-            
-    except Exception as e:
-        print(f"Error fetching CDI: {e}")
-
-    # 4. Fetch Poupança (BCB Series 195 - Monthly % a.m.)
-    # Note: Series 195 provides the yield for deposits starting on each day.
-    # It returns DAILY data, where each value is the % return for the NEXT month.
-    # If we sum/cumprod all of them, we are compounding 0.5% daily which is wrong.
-    # We must pick one reference date per month (e.g. 1st day) to simulate a single deposit.
-    try:
-        url_poup = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados?formato=json&dataInicial={start_str}"
-        r_poup = requests.get(url_poup, timeout=5)
-        if r_poup.status_code == 200:
-            df_poup = pd.DataFrame(r_poup.json())
-            df_poup['data'] = pd.to_datetime(df_poup['data'], format='%d/%m/%Y')
-            df_poup['valor'] = pd.to_numeric(df_poup['valor'])
-            df_poup = df_poup.set_index('data').sort_index()
-
-            # Filter start date
-            df_poup = df_poup[df_poup.index >= start_date]
-
-            # FIX: Resample to Monthly First (simulate investment on 1st of month)
-            # Use 'MS' (Month Start) and take first available rate
-            df_poup_monthly_rates = df_poup['valor'].resample('MS').first()
-            
-            # If no data for a month, ffill
-            df_poup_monthly_rates = df_poup_monthly_rates.ffill()
-
-            # Compound (Monthly data)
-            # data is Series now
-            df_poup_factor = 1 + (df_poup_monthly_rates / 100)
-            poup_accumulated = 100 * df_poup_factor.cumprod()
-
-            # Re-align to 'ME' (Month End) for merging consistency with other series
-            poup_monthly = poup_accumulated.resample('ME').last()
-            
-            data_frames['Poupanca'] = poup_monthly
-
-    except Exception as e:
-        print(f"Error fetching Poupanca: {e}")
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(fetch_ibov),
+            executor.submit(fetch_selic),
+            executor.submit(fetch_cdi),
+            executor.submit(fetch_poupanca),
+        ]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                name, series = result
+                data_frames[name] = series
 
     # Merge DataFrames
     if not data_frames:
         return []
 
     merged = pd.DataFrame(data_frames)
-    # Forward fill missing data
     merged = merged.ffill().dropna()
-
-    # Ensure index is named Date
     merged.index.name = 'Date'
-
-    # Reset index to string for JSON serialization
     merged.reset_index(inplace=True)
-    
-    merged['date'] = merged['Date'].dt.strftime('%Y-%m') # Format YYYY-MM
-    
-    # Clean up column names and structure
+    merged['date'] = merged['Date'].dt.strftime('%Y-%m')
+
     result = []
     for _, row in merged.iterrows():
         item = {
@@ -169,9 +123,10 @@ def get_comparative_data(years=10):
             "poupanca": round(row.get('Poupanca', 0), 2) if 'Poupanca' in row else None
         }
         result.append(item)
-    
+
     return result
 
+@cached(ttl_seconds=1800)  # 30 min cache
 def get_treasury_etfs():
     """
     Fetches real-time(ish) data for LFTS11 and LFTB11 using yfinance.
@@ -323,33 +278,33 @@ def get_rss_news(limit=20, topic='BRASIL'):
     """
     Fetches finance news from Google News RSS.
     Topic: 'BRASIL' or 'MUNDO'
+    Uses 'when:7d' to restrict results to the last 7 days.
     """
     news_items = []
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
         
         if topic == 'MUNDO':
-            url = "https://news.google.com/rss/search?q=mercado+financeiro+global+economia+internacional&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+            # Focused query: world economy/finance + recency filter
+            url = "https://news.google.com/rss/search?q=economia+mundial+OR+mercados+internacionais+OR+wall+street+OR+fed+OR+bolsas+globais+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
         else:
-            # Default to Brasil
-            url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+            # Brasil: focused on Brazilian financial market + recency filter
+            url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil+OR+ibovespa+OR+selic+OR+bolsa+brasileira+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
 
-        # Reduced timeout to prevent worker kill
-        r = requests.get(url, headers=headers, timeout=3)
+        r = requests.get(url, headers=headers, timeout=5)
         if r.status_code == 200:
             try:
-                # ET.fromstring handles bytes usually
                 root = ET.fromstring(r.content)
             except:
-                 # Fallback if encoding issue
                 root = ET.fromstring(r.text)
 
-            # Iterate over items
+            # Date cutoff: reject articles older than 7 days
+            from email.utils import parsedate_to_datetime
+            cutoff = datetime.now() - timedelta(days=7)
+
             count = 0
-            # RSS structure: rss > channel > item
-            # .findall('.//item') works recursively
             for item in root.findall('.//item'):
                 if count >= limit: break
                 
@@ -357,6 +312,15 @@ def get_rss_news(limit=20, topic='BRASIL'):
                 link = item.find('link').text if item.find('link') is not None else "#"
                 pubDate = item.find('pubDate').text if item.find('pubDate') is not None else ""
                 source = item.find('source').text if item.find('source') is not None else "Google News"
+                
+                # Filter out old articles
+                if pubDate:
+                    try:
+                        article_date = parsedate_to_datetime(pubDate)
+                        if article_date.replace(tzinfo=None) < cutoff:
+                            continue  # Skip old articles
+                    except:
+                        pass  # If we can't parse date, include the article
                 
                 # Simple cleanup
                 if " - " in title:
@@ -367,10 +331,8 @@ def get_rss_news(limit=20, topic='BRASIL'):
                 image_url = None
                 description = item.find('description').text if item.find('description') is not None else ""
                 
-                # Check for img src inside description (Google News often puts it there)
                 if description:
                     import re
-                    # Look for src="..."
                     img_match = re.search(r'src="([^"]+)"', description)
                     if img_match:
                         image_url = img_match.group(1)
@@ -386,7 +348,15 @@ def get_rss_news(limit=20, topic='BRASIL'):
                 count += 1
     except Exception as e:
         print(f"Error fetching RSS ({topic}): {e}")
-        # Return empty list on error, do not crash
+    
+    # Sort by date, newest first
+    from email.utils import parsedate_to_datetime as _parse_date
+    def _sort_key(item):
+        try:
+            return _parse_date(item['date'])
+        except:
+            return datetime.min
+    news_items.sort(key=_sort_key, reverse=True)
     
     return news_items
 

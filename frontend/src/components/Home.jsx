@@ -1140,7 +1140,7 @@ const Home = ({ onNavigate }) => {
                         {topLosers.length > 0 ? (
                             topLosers.map((stock, idx) => (
                                 <React.Fragment key={idx}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             {stock.image_url ? (
                                                 <img
@@ -1864,7 +1864,7 @@ const Home = ({ onNavigate }) => {
                     </h2>
                 </div>
 
-                <div style={{ padding: '16px' }}>
+                <div style={{ padding: '20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {generalQuotes.map((quote, index) => {
                             const isPositive = quote.change >= 0;
@@ -1887,9 +1887,7 @@ const Home = ({ onNavigate }) => {
                             return (
                                 <React.Fragment key={quote.id}>
                                     <div style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                        padding: '12px 0',
-                                        borderBottom: index < generalQuotes.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                     }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <div style={{
@@ -1919,6 +1917,9 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                     </div>
+                                    {index < generalQuotes.length - 1 && (
+                                        <div style={{ margin: '12px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
+                                    )}
                                 </React.Fragment>
                             );
                         })}
@@ -1948,26 +1949,31 @@ const Home = ({ onNavigate }) => {
                         </div>
                         <h3>Próximos Dividendos</h3>
                     </div>
-                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
                         {homeCalendar.dividends.length > 0 ? (
                             homeCalendar.dividends.map((evt, idx) => {
                                 const stock = stocksMap[evt.ticker] || {};
                                 return (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
+                                    <React.Fragment key={idx}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                    {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
+                                                </div>
+                                                <div>
+                                                    <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                    <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
-                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                <span style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 'bold' }}>PREVISTO</span>
+                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                            <span style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 'bold' }}>PREVISTO</span>
-                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
-                                        </div>
-                                    </div>
+                                        {idx < homeCalendar.dividends.length - 1 && (
+                                            <div style={{ margin: '12px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })
                         ) : (
@@ -1987,26 +1993,31 @@ const Home = ({ onNavigate }) => {
                         </div>
                         <h3>Resultados Trimestrais</h3>
                     </div>
-                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
                         {homeCalendar.earnings.length > 0 ? (
                             homeCalendar.earnings.map((evt, idx) => {
                                 const stock = stocksMap[evt.ticker] || {};
                                 return (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
+                                    <React.Fragment key={idx}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                    {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
+                                                </div>
+                                                <div>
+                                                    <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                    <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
-                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 'bold' }}>RESULTADO</span>
+                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                            <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 'bold' }}>RESULTADO</span>
-                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
-                                        </div>
-                                    </div>
+                                        {idx < homeCalendar.earnings.length - 1 && (
+                                            <div style={{ margin: '12px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })
                         ) : (

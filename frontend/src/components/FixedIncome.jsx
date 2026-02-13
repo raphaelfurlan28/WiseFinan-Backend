@@ -307,26 +307,19 @@ export default function FixedIncome() {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // Progressive Loading: Trigger all fetches but don't wait for all to finish before rendering
-        const loadData = () => {
+        // Progressive Loading: Fire all fetches in parallel with Promise.all
+        const loadData = async () => {
             setIsUpdating(true);
 
-            // 1. Indices (Fastest usually, or cached)
-            fetchIndices();
+            // All 4 fetches run in parallel
+            await Promise.all([
+                fetchIndices(),
+                fetchFixedIncome(),
+                fetchChartData(),
+                fetchTreasuryEtfs()
+            ]);
 
-            // 2. Fixed Income List (Google Sheets)
-            fetchFixedIncome();
-
-            // 3. Charts (History)
-            fetchChartData();
-
-            // 4. Treasury (ETFs)
-            fetchTreasuryEtfs();
-
-            // We can set updating to false after a timeout or when all are done,
-            // but for progressive UI, we just let them populate.
-            // Let's keep isUpdating true for a bit or manage it individually?
-            // Actually, we don't need a global loader blocking the view.
+            setIsUpdating(false);
         };
 
         loadData();
