@@ -800,14 +800,14 @@ const Home = ({ onNavigate }) => {
                                                         )}
                                                         <div>
                                                             <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1' }}>{stock.ticker}</h3>
-                                                            <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                            <span style={{ fontSize: '0.65rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Price and Volatility Circle */}
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                         <div style={{ textAlign: 'right' }}>
-                                                            <span style={{ display: 'block', fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
+                                                            <span style={{ display: 'block', fontSize: '0.45rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
                                                             <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
                                                         </div>
                                                         {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
@@ -975,14 +975,14 @@ const Home = ({ onNavigate }) => {
                                                         )}
                                                         <div>
                                                             <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1' }}>{stock.ticker}</h3>
-                                                            <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                            <span style={{ fontSize: '0.65rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Price and Volatility Circle */}
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                         <div style={{ textAlign: 'right' }}>
-                                                            <span style={{ display: 'block', fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
+                                                            <span style={{ display: 'block', fontSize: '0.45rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
                                                             <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
                                                         </div>
                                                         {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
@@ -1075,7 +1075,7 @@ const Home = ({ onNavigate }) => {
                         {topGainers.length > 0 ? (
                             topGainers.map((stock, idx) => (
                                 <React.Fragment key={idx}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             {stock.image_url ? (
                                                 <img
@@ -1140,7 +1140,7 @@ const Home = ({ onNavigate }) => {
                         {topLosers.length > 0 ? (
                             topLosers.map((stock, idx) => (
                                 <React.Fragment key={idx}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             {stock.image_url ? (
                                                 <img
