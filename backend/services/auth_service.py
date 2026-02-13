@@ -35,6 +35,8 @@ def _get_db():
     _db = firestore.client()
     return _db
 
+INACTIVITY_TIMEOUT_SECONDS = 15 * 60  # 15 minutes
+
 def register_user_session(email):
     """
     Generates a new session token for the user and saves it to Firestore.
@@ -43,6 +45,7 @@ def register_user_session(email):
     try:
         db = _get_db()
         token = str(uuid.uuid4())
+        now = datetime.utcnow()
         
         # We use the email as the document ID for 'active_sessions'
         # ensuring 1 session per email.
@@ -53,11 +56,12 @@ def register_user_session(email):
         doc_ref = db.collection('active_sessions').document(email)
         doc_ref.set({
             'token': token,
-            'last_login_at': datetime.utcnow(),
+            'last_login_at': now,
+            'last_activity': now,
             'email': email
         })
         
-        print(f"[AUTH] New session registered for {email}: {token}")
+        print(f"[AUTH] New session registered for {email}: {token[-8:]}")
         return {"success": True, "token": token}
         
     except Exception as e:
@@ -67,6 +71,7 @@ def register_user_session(email):
 def validate_user_session(email, token):
     """
     Checks if the provided token matches the trusted token in Firestore.
+    Also checks for inactivity timeout (15 minutes).
     """
     try:
         db = _get_db()
@@ -80,14 +85,23 @@ def validate_user_session(email, token):
         data = doc.to_dict()
         active_token = data.get('token')
         
-        if active_token == token:
-            # Update heartbeat/last_seen if needed? 
-            # For now just validate.
-            # print(f"[AUTH DEBUG] Valid session for {email}")
-            return {"valid": True}
-        else:
-            print(f"[AUTH DEBUG] Token Mismatch for {email}. Incoming: {token[-5:]} | Active: {active_token[-5:]}")
+        if active_token != token:
+            print(f"[AUTH] Token Mismatch for {email}. Incoming: {token[-8:]} | Active: {active_token[-8:]}")
             return {"valid": False, "reason": "token_mismatch"}
+        
+        # Check inactivity timeout
+        last_activity = data.get('last_activity')
+        if last_activity:
+            elapsed = (datetime.utcnow() - last_activity).total_seconds()
+            if elapsed > INACTIVITY_TIMEOUT_SECONDS:
+                print(f"[AUTH] Inactivity timeout for {email}: {elapsed:.0f}s idle")
+                # Delete the session so they must re-login
+                doc_ref.delete()
+                return {"valid": False, "reason": "inactivity_timeout"}
+        
+        # Token matches and session is active — update last_activity
+        doc_ref.update({'last_activity': datetime.utcnow()})
+        return {"valid": True}
             
     except Exception as e:
         print(f"[AUTH ERROR] validate_user_session: {e}")

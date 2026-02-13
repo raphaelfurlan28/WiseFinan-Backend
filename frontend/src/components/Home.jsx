@@ -745,31 +745,9 @@ const Home = ({ onNavigate }) => {
                                     {opportunities.map((item, idx) => {
                                         const stock = item.stock;
 
-                                        // Filter Logic Helper
-                                        const isDateValid = (dateStr, minMonths, maxMonths) => {
-                                            if (!dateStr) return false;
-                                            const now = new Date();
-                                            now.setHours(0, 0, 0, 0);
-                                            const [y, m, d] = dateStr.split('-').map(Number);
-                                            const date = new Date(y, m - 1, d);
-
-                                            if (maxMonths !== null) {
-                                                const max = new Date(now);
-                                                max.setMonth(max.getMonth() + maxMonths);
-                                                max.setHours(23, 59, 59, 999);
-                                                if (date > max) return false;
-                                            }
-                                            if (minMonths !== null) {
-                                                const min = new Date(now);
-                                                min.setMonth(min.getMonth() + minMonths);
-                                                if (date <= min) return false;
-                                            }
-                                            return true;
-                                        };
-
-                                        // Cheap: Puts = Sell (<=2m), Calls = Buy (>3m)
-                                        const validPuts = (item.options?.puts || []).filter(o => isDateValid(o.expiration, null, 2));
-                                        const validCalls = (item.options?.calls || []).filter(o => isDateValid(o.expiration, 3, null));
+                                        // Backend already filters by date/strategy
+                                        const validPuts = item.options?.puts || [];
+                                        const validCalls = item.options?.calls || [];
 
                                         const putsCount = validPuts.length;
                                         const callsCount = validCalls.length;
@@ -941,31 +919,9 @@ const Home = ({ onNavigate }) => {
                                     {expensiveOpportunities.map((item, idx) => {
                                         const stock = item.stock;
 
-                                        // Filter Logic Helper
-                                        const isDateValid = (dateStr, minMonths, maxMonths) => {
-                                            if (!dateStr) return false;
-                                            const now = new Date();
-                                            now.setHours(0, 0, 0, 0);
-                                            const [y, m, d] = dateStr.split('-').map(Number);
-                                            const date = new Date(y, m - 1, d);
-
-                                            if (maxMonths !== null) {
-                                                const max = new Date(now);
-                                                max.setMonth(max.getMonth() + maxMonths);
-                                                max.setHours(23, 59, 59, 999);
-                                                if (date > max) return false;
-                                            }
-                                            if (minMonths !== null) {
-                                                const min = new Date(now);
-                                                min.setMonth(min.getMonth() + minMonths);
-                                                if (date <= min) return false;
-                                            }
-                                            return true;
-                                        };
-
-                                        // expensive: Calls = Sell (<=2m), Puts = Buy (>3m)
-                                        const validCalls = (item.options?.calls || []).filter(o => isDateValid(o.expiration, null, 2));
-                                        const validPuts = (item.options?.puts || []).filter(o => isDateValid(o.expiration, 3, null));
+                                        // Backend already filters by date/strategy
+                                        const validCalls = item.options?.calls || [];
+                                        const validPuts = item.options?.puts || [];
 
                                         const callsCount = validCalls.length;
                                         const putsCount = validPuts.length;

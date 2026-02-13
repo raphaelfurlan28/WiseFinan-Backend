@@ -567,6 +567,7 @@ function FundamentalsSection({ ticker }) {
                 Análise Fundamentalista
             </h3>
 
+
             <ChartContainer title="Lucro Líquido" icon={TrendingUp} color="#4ade80">
                 <ComposedChart data={dataWithTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />

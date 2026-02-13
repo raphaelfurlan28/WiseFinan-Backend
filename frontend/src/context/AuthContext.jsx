@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -13,10 +13,18 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
+// Inactivity timeout: 15 minutes in ms
+const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [authError, setAuthError] = useState(null);
+
+    // Ref to track if the current auth event came from an explicit login/register
+    const justLoggedInRef = useRef(false);
+    // Ref to track last user activity timestamp
+    const lastActivityRef = useRef(Date.now());
 
     const handleAuthError = (error) => {
         let msg = "Ocorreu um erro.";
@@ -34,12 +42,25 @@ export const AuthProvider = ({ children }) => {
         setAuthError(msg);
     };
 
+    // Update last activity on any user interaction
+    const resetActivity = useCallback(() => {
+        lastActivityRef.current = Date.now();
+    }, []);
+
+    // Register activity listeners
+    useEffect(() => {
+        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+        events.forEach(evt => window.addEventListener(evt, resetActivity, { passive: true }));
+        return () => {
+            events.forEach(evt => window.removeEventListener(evt, resetActivity));
+        };
+    }, [resetActivity]);
+
     useEffect(() => {
         let heartbeatInterval;
 
         const validateWithRetry = async (currentUser, tokenObj, retries = 3) => {
             try {
-                // Determine which token to use
                 const localToken = localStorage.getItem('session_token');
                 const token = tokenObj || localToken;
 
@@ -57,68 +78,96 @@ export const AuthProvider = ({ children }) => {
                     await new Promise(r => setTimeout(r, 1000));
                     return validateWithRetry(currentUser, tokenObj, retries - 1);
                 }
-                // Network error or 500 - don't logout immediately, assume valid to avoid glitch
+                // Network error — don't logout immediately
                 return { valid: true, warning: 'network_error_assumed_valid' };
+            }
+        };
+
+        const registerNewSession = async (email) => {
+            try {
+                const response = await axios.post('/api/auth/register-session', { email });
+                const token = response.data.token;
+                localStorage.setItem('session_token', token);
+                console.log("[Auth] New session registered:", token.slice(-8));
+                return token;
+            } catch (err) {
+                console.error("[Auth] Failed to register session:", err);
+                return null;
             }
         };
 
         const manageSession = async (currentUser) => {
             if (!currentUser) return;
 
-            // 1. Check for existing local token
             let token = localStorage.getItem('session_token');
-            console.log("[Auth] Checking session. Existing token:", token);
 
             try {
-                if (token) {
-                    // Validate existing token
+                if (justLoggedInRef.current) {
+                    // Explicit login — always force a new session (invalidates other devices)
+                    justLoggedInRef.current = false;
+                    console.log("[Auth] Explicit login detected, forcing new session...");
+                    token = await registerNewSession(currentUser.email);
+                    if (!token) return;
+                } else if (token) {
+                    // Page reload — validate existing token
+                    console.log("[Auth] Page reload, validating existing token...");
                     const validation = await validateWithRetry(currentUser, token);
 
                     if (!validation.valid) {
                         console.warn("[Auth] Token invalid on load:", validation.reason);
-                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session') {
+                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout') {
+                            const msg = validation.reason === 'inactivity_timeout'
+                                ? "Sessão expirada por inatividade. Faça login novamente."
+                                : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
+                            alert(msg);
                             await logout(true);
                             return;
                         }
                     } else {
-                        console.log("[Auth] Token valid on load.");
+                        console.log("[Auth] Session valid on reload.");
                     }
                 } else {
-                    // No token (New Login scenario)
-                    console.log("[Auth] No token, registering new session...");
-                    const response = await axios.post('/api/auth/register-session', {
-                        email: currentUser.email
-                    });
-                    token = response.data.token;
-                    localStorage.setItem('session_token', token);
-                    console.log("[Auth] New session registered:", token);
+                    // No token at all (e.g. first visit, cleared storage) — register new
+                    console.log("[Auth] No token found, registering new session...");
+                    token = await registerNewSession(currentUser.email);
+                    if (!token) return;
                 }
 
-                // 2. Start Heartbeat
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                // Reset activity timestamp on session start
+                lastActivityRef.current = Date.now();
 
-                // Capture the token being used for this session to ensure we validate integrity
-                // against THIS session, not just whatever is in localStorage
+                // Start Heartbeat
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
                 const currentSessionToken = token;
 
                 heartbeatInterval = setInterval(async () => {
-                    if (currentUser && currentSessionToken) {
-                        // Pass the specific token we expect to be valid
-                        const validation = await validateWithRetry(currentUser, currentSessionToken, 2);
+                    if (!currentUser || !currentSessionToken) return;
 
-                        // console.log("[Auth] Heartbeat Result:", validation);
+                    // Client-side inactivity check
+                    const idleTime = Date.now() - lastActivityRef.current;
+                    if (idleTime > INACTIVITY_TIMEOUT_MS) {
+                        console.warn(`[Auth] Client idle for ${Math.round(idleTime / 1000)}s, forcing logout.`);
+                        clearInterval(heartbeatInterval);
+                        alert("Sessão expirada por inatividade. Faça login novamente.");
+                        await logout(true);
+                        return;
+                    }
 
-                        if (!validation.valid) {
-                            console.warn("[Auth] Heartbeat failed:", validation.reason);
-                            // Only logout on explicit rejections from server
-                            if (validation.reason === 'token_mismatch' || validation.reason === 'no_session') {
-                                clearInterval(heartbeatInterval);
-                                alert("Sessão encerrada. Sua conta foi conectada em outro dispositivo.");
-                                await logout(true);
-                            }
+                    // Server-side validation (also updates last_activity if user is active)
+                    const validation = await validateWithRetry(currentUser, currentSessionToken, 2);
+
+                    if (!validation.valid) {
+                        console.warn("[Auth] Heartbeat failed:", validation.reason);
+                        if (validation.reason === 'token_mismatch' || validation.reason === 'no_session' || validation.reason === 'inactivity_timeout') {
+                            clearInterval(heartbeatInterval);
+                            const msg = validation.reason === 'inactivity_timeout'
+                                ? "Sessão expirada por inatividade. Faça login novamente."
+                                : "Sessão encerrada. Sua conta foi conectada em outro dispositivo.";
+                            alert(msg);
+                            await logout(true);
                         }
                     }
-                }, 10000); // Check every 10s for faster feedback during debug, can revert to 30s later
+                }, 10000); // 10s heartbeat
 
             } catch (error) {
                 console.error("[Auth] Session management error:", error);
@@ -135,15 +184,10 @@ export const AuthProvider = ({ children }) => {
                     accessToken: firebaseUser.accessToken
                 };
                 setUser(u);
-
-                // If we are just logging in, ensure we don't accidentally reuse an old token
-                // logic in manageSession handles "if token exists, validate", "if not, create"
-                // But to be safe, if we just came from a "login" action, we might want to force create?
-                // For now, let's rely on manageSession's boolean check.
                 manageSession(u);
             } else {
                 setUser(null);
-                localStorage.removeItem('session_token'); // Clear on firebase auto-logout
+                localStorage.removeItem('session_token');
             }
             setLoading(false);
         });
@@ -157,12 +201,14 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         setAuthError(null);
         try {
-            // Clear any old token to force new session registration
+            // Clear old token and flag that this is an explicit login
             localStorage.removeItem('session_token');
+            justLoggedInRef.current = true;
             await signInWithEmailAndPassword(auth, email, password);
             return true;
         } catch (error) {
             console.error("Login Error:", error);
+            justLoggedInRef.current = false;
             handleAuthError(error);
             return false;
         }
@@ -172,6 +218,7 @@ export const AuthProvider = ({ children }) => {
         setAuthError(null);
         try {
             localStorage.removeItem('session_token');
+            justLoggedInRef.current = true;
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             if (name) {
                 await updateProfile(userCredential.user, { displayName: name });
@@ -180,6 +227,7 @@ export const AuthProvider = ({ children }) => {
             return true;
         } catch (error) {
             console.error("Registration Error:", error);
+            justLoggedInRef.current = false;
             handleAuthError(error);
             return false;
         }
@@ -191,7 +239,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             localStorage.removeItem('session_token');
             if (forced) {
-                window.location.href = "/"; // Redirect if forced
+                window.location.href = "/";
             }
         } catch (error) {
             console.error("Logout Error:", error);
@@ -206,8 +254,6 @@ export const AuthProvider = ({ children }) => {
                 photoURL: newPhoto
             });
 
-            // Sync with backend if needed (optional based on user request "link com firebase", usually firebase is enough)
-            // But if we want to keep the "Sheet" updated as a backup:
             try {
                 await axios.post('/api/user/update', {
                     email: user.email,
@@ -218,7 +264,6 @@ export const AuthProvider = ({ children }) => {
                 console.warn("Backend sync failed, but Firebase updated.", err);
             }
 
-            // Update local state
             setUser(prev => ({
                 ...prev,
                 name: newName,
