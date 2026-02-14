@@ -4,7 +4,10 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    updateProfile
+    updateProfile,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    updatePassword
 } from "firebase/auth";
 import { auth } from '../services/firebaseConfig';
 import { getApiUrl } from '../services/api';
@@ -311,8 +314,36 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUserPassword = async (currentPassword, newPassword) => {
+        if (!auth.currentUser) return { success: false, error: 'Usuário não autenticado.' };
+        try {
+            const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+            await updatePassword(auth.currentUser, newPassword);
+            return { success: true };
+        } catch (error) {
+            console.error("Password Update Error:", error);
+            handleAuthError(error);
+            return { success: false, error: authError || "Erro ao atualizar senha." };
+        }
+    };
+
+    const verifyPassword = async (password) => {
+        if (!auth.currentUser) return false;
+        try {
+            const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, authError, login, register, logout, updateUserProfile }}>
+        <AuthContext.Provider value={{
+            user, loading, authError, login, register, logout, updateUserProfile,
+            updateUserPassword, verifyPassword
+        }}>
             {children}
         </AuthContext.Provider>
     );

@@ -56,6 +56,7 @@ const Home = ({ onNavigate }) => {
     // Indices State
     const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
     const [generalQuotes, setGeneralQuotes] = useState([]);
+    const [qtPeriod, setQtPeriod] = useState('1D'); // 1D, 1S, 1M
 
     // Fetch Home Highlights
     useEffect(() => {
@@ -1336,7 +1337,7 @@ const Home = ({ onNavigate }) => {
 
                                         <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#cbd5e1' }}>
                                             <span>Min: {item.min_investimento}</span>
-                                            <span>Venc: {item.vencimento}</span>
+                                            <span>Venc: {formatDate(item.vencimento)}</span>
                                         </div>
                                     </div>
                                 );
@@ -1862,25 +1863,58 @@ const Home = ({ onNavigate }) => {
                     padding: '12px 16px',
                     background: 'linear-gradient(90deg, #1e3a8a 0%, #0f172a 100%)',
                     borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', gap: '12px'
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                 }}>
-                    <div style={{
-                        width: '32px', height: '32px', borderRadius: '8px',
-                        background: '#3b82f6',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
-                    }}>
-                        <TrendingUp size={18} color="#ffffff" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            background: '#3b82f6',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
+                        }}>
+                            <TrendingUp size={18} color="#ffffff" />
+                        </div>
+                        <h2 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0, fontWeight: 700, letterSpacing: '-0.3px' }}>
+                            Cotações Mundiais
+                        </h2>
                     </div>
-                    <h2 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0, fontWeight: 700, letterSpacing: '-0.3px' }}>
-                        Cotações Mundiais
-                    </h2>
+
+                    {/* Period Selector */}
+                    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2px' }}>
+                        {['1D', '1S', '1M'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setQtPeriod(p)}
+                                style={{
+                                    background: qtPeriod === p ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
+                                    color: qtPeriod === p ? '#fff' : '#94a3b8',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {p}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div style={{ padding: '20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {generalQuotes.map((quote, index) => {
-                            const isPositive = quote.change >= 0;
+                            // Determine which change to show based on period
+                            let displayChange = quote.change; // Default 1D
+                            if (qtPeriod === '1S') displayChange = quote.change_1w || 0;
+                            if (qtPeriod === '1M') displayChange = quote.change_1m || 0;
+
+                            // Fallback if backend doesn't send new fields yet (backward compatibility)
+                            if (displayChange === undefined) displayChange = quote.change;
+
+                            const isPositive = displayChange >= 0;
                             const color = isPositive ? '#4ade80' : '#ef4444';
                             const Sign = isPositive ? '+' : '';
 
@@ -1925,7 +1959,7 @@ const Home = ({ onNavigate }) => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 {isPositive ? <TrendingUp size={12} color={color} /> : <TrendingDown size={12} color={color} />}
                                                 <span style={{ fontSize: '0.75rem', color: color, fontWeight: 600 }}>
-                                                    {Sign}{quote.change.toFixed(2).replace('.', ',')}%
+                                                    {Sign}{displayChange.toFixed(2).replace('.', ',')}%
                                                 </span>
                                             </div>
                                         </div>

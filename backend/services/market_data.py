@@ -302,11 +302,11 @@ def get_rss_news(limit=20, topic='BRASIL'):
         }
         
         if topic == 'MUNDO':
-            # Focused query: world economy/finance + recency filter
-            url = "https://news.google.com/rss/search?q=economia+mundial+OR+mercados+internacionais+OR+wall+street+OR+fed+OR+bolsas+globais+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+            # Focused query: world economy/finance + recency filter (scoring=n for newest)
+            url = "https://news.google.com/rss/search?q=economia+mundial+OR+mercados+internacionais+OR+wall+street+OR+fed+OR+bolsas+globais+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419&scoring=n"
         else:
-            # Brasil: focused on Brazilian financial market + recency filter
-            url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil+OR+ibovespa+OR+selic+OR+bolsa+brasileira+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+            # Brasil: focused on Brazilian financial market + recency filter (scoring=n for newest)
+            url = "https://news.google.com/rss/search?q=mercado+financeiro+brasil+OR+ibovespa+OR+selic+OR+bolsa+brasileira+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419&scoring=n"
 
         r = requests.get(url, headers=headers, timeout=5)
         if r.status_code == 200:
@@ -319,10 +319,7 @@ def get_rss_news(limit=20, topic='BRASIL'):
             from email.utils import parsedate_to_datetime
             cutoff = datetime.now() - timedelta(days=7)
 
-            count = 0
             for item in root.findall('.//item'):
-                if count >= limit: break
-                
                 title = item.find('title').text if item.find('title') is not None else "Sem título"
                 link = item.find('link').text if item.find('link') is not None else "#"
                 pubDate = item.find('pubDate').text if item.find('pubDate') is not None else ""
@@ -360,7 +357,7 @@ def get_rss_news(limit=20, topic='BRASIL'):
                     "image": image_url,
                     "category": topic
                 })
-                count += 1
+
     except Exception as e:
         print(f"Error fetching RSS ({topic}): {e}")
     
@@ -373,7 +370,7 @@ def get_rss_news(limit=20, topic='BRASIL'):
             return datetime.min
     news_items.sort(key=_sort_key, reverse=True)
     
-    return news_items
+    return news_items[:limit]
 
 def get_home_news_highlights():
     """
@@ -386,7 +383,7 @@ def get_home_news_highlights():
 def get_general_quotes():
     """
     Fetches major market indicators: IBOV, Dollar, Bitcoin, Euro, Libra.
-    Returns a list of dicts with price and daily variation.
+    Returns a list of dicts with price and variations (1D, 1W, 1M).
     """
     quotes = []
     
@@ -400,44 +397,58 @@ def get_general_quotes():
     }
 
     try:
-        # Fetch data in batch or loop? Loop is fine for 5 items.
-        # Batch might be faster: yf.download(" ".join(tickers.keys()), period="2d")
-        
-        # Let's use Ticker(t).history(period="2d") to get today and yesterday
         for ticker, name in tickers.items():
             try:
                 t = yf.Ticker(ticker)
-                hist = t.history(period="5d") # Fetch 5 days to be safe over weekends
+                # Fetch 3 months to ensure we have enough data for 1M variation
+                # 1 month ~ 21 trading days. 3mo is safe.
+                hist = t.history(period="3mo")
                 
-                if not hist.empty and len(hist) >= 2:
+                if not hist.empty:
                     current = hist['Close'].iloc[-1]
-                    previous = hist['Close'].iloc[-2]
                     
-                    change = ((current - previous) / previous) * 100
+                    # 1 Day Variation (Previous Close)
+                    price_1d = hist['Close'].iloc[-2] if len(hist) >= 2 else current
+                    change_1d = ((current - price_1d) / price_1d) * 100 if price_1d else 0.0
+                    
+                    # 1 Week Variation (approx 5 trading days)
+                    price_1w = hist['Close'].iloc[-6] if len(hist) >= 6 else (hist['Close'].iloc[0] if len(hist) > 0 else current)
+                    change_1w = ((current - price_1w) / price_1w) * 100 if price_1w else 0.0
+
+                    # 1 Month Variation (approx 21 trading days)
+                    price_1m = hist['Close'].iloc[-22] if len(hist) >= 22 else (hist['Close'].iloc[0] if len(hist) > 0 else current)
+                    change_1m = ((current - price_1m) / price_1m) * 100 if price_1m else 0.0
                     
                     quotes.append({
                         "id": ticker,
                         "name": name,
                         "price": current,
-                        "change": change
+                        "change": change_1d,      # Backward compatibility / Default
+                        "change_1d": change_1d,
+                        "change_1w": change_1w,
+                        "change_1m": change_1m
                     })
-                elif not hist.empty:
-                     # Only one day of data?
-                    current = hist['Close'].iloc[-1]
+                else:
                     quotes.append({
                         "id": ticker,
                         "name": name,
-                        "price": current,
-                        "change": 0.0
+                        "price": 0.0,
+                        "change": 0.0,
+                        "change_1d": 0.0,
+                        "change_1w": 0.0,
+                        "change_1m": 0.0,
+                        "error": True
                     })
             except Exception as e:
                 print(f"Error fetching {ticker}: {e}")
-                # Fallback?
                 quotes.append({
                     "id": ticker,
                     "name": name,
                     "price": 0.0,
                     "change": 0.0,
+                    "change_1d": 0.0,
+                    "change_1w": 0.0,
+                    "change_1m": 0.0,
                     "error": True
                 })
 

@@ -181,6 +181,40 @@ const LeadBoard = () => {
         }
     };
 
+    const handleResetDevice = async (email) => {
+        if (!window.confirm(`Deseja resetar o dispositivo vinculado para o usuário ${email}? Ele poderá logar em um novo aparelho.`)) return;
+
+        // Find lead id for loading state visual feedback
+        const lead = leads.find(l => l.email === email);
+        if (lead) setUpdating(lead.id);
+
+        try {
+            const res = await fetch(getApiUrl('/api/admin/reset-device'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+
+            // Handle potential non-JSON responses gracefully
+            const contentType = res.headers.get("content-type");
+            let data = {};
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await res.json();
+            }
+
+            if (res.ok) {
+                alert('Dispositivo resetado com sucesso! O usuário já pode logar em um novo aparelho.');
+            } else {
+                alert('Erro ao resetar dispositivo: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (err) {
+            console.error('Error resetting device:', err);
+            alert('Erro de conexão ao tentar resetar dispositivo.');
+        } finally {
+            setUpdating(null);
+        }
+    };
+
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         alert('Senha copiada!');
@@ -411,7 +445,39 @@ const LeadBoard = () => {
                                 onBlur={(e) => handleStatusChange(lead.id, 'notes', e.target.value)}
                             />
 
-                            {/* User Creation Section */}
+                            {/* Active User Actions */}
+                            {lead.payment_status === 'approved' && lead.crm_status === 'converted' && lead.is_active_user && (
+                                <div className="lead-user-actions" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <CheckCircle size={14} color="#10b981" />
+                                            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Acesso Ativo</span>
+                                        </div>
+
+                                        <button
+                                            className="btn-generate-password"
+                                            style={{
+                                                background: 'rgba(245, 158, 11, 0.15)',
+                                                color: '#f59e0b',
+                                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '0.8rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => handleResetDevice(lead.email)}
+                                        >
+                                            <RefreshCw size={14} />
+                                            Resetar Dispositivo
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pending User Creation Section */}
                             {lead.payment_status === 'approved' && lead.crm_status === 'converted' && !lead.is_active_user && (
                                 <div className="lead-user-actions">
                                     <div className="user-action-divider"></div>
