@@ -51,12 +51,24 @@ export const NotificationProvider = ({ children }) => {
                 if ('setAppBadge' in navigator) {
                     navigator.setAppBadge(latestUnreadCount.current).catch(() => { });
                 }
-                // Also show a test notification to confirm it works
-                new Notification('WiseFinan - Alertas', {
-                    body: `Você tem ${latestUnreadCount.current} alerta(s) não lido(s).`,
-                    icon: '/icon-v2-192.png',
-                    badge: '/icon-v2-192.png'
-                });
+
+                // Use ServiceWorker for Notifications (Better for Android)
+                if (navigator.serviceWorker && (await navigator.serviceWorker.getRegistration())) {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    reg.showNotification('WiseFinan - Alertas', {
+                        body: `Você tem ${latestUnreadCount.current} alerta(s) não lido(s).`,
+                        icon: '/icon-v2-192.png',
+                        badge: '/icon-v2-192.png',
+                        vibrate: [200, 100, 200]
+                    });
+                } else {
+                    // Fallback
+                    new Notification('WiseFinan - Alertas', {
+                        body: `Você tem ${latestUnreadCount.current} alerta(s) não lido(s).`,
+                        icon: '/icon-v2-192.png',
+                        badge: '/icon-v2-192.png'
+                    });
+                }
             }
             return permission;
         } catch (err) {

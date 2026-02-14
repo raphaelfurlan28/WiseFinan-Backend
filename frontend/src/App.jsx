@@ -42,6 +42,20 @@ const AppContent = () => {
   // History Stack for Navigation
   const [history, setHistory] = useState([]);
 
+  // Sync with window.history for Android Back Button
+  useEffect(() => {
+    // Push initial state
+    window.history.replaceState({ view: 'home' }, '');
+
+    const handlePopState = (event) => {
+      // If user presses back button (or swipes back on Android)
+      handleBack();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [history, selectedStock]); // Re-bind when history/modal changes
+
   const handleBack = () => {
     // Priority 1: Close Modal
     if (selectedStock) {
@@ -57,7 +71,7 @@ const AppContent = () => {
     }
   };
 
-  // Custom Hook for Swipe Back
+  // Custom Hook for Swipe Back (Internal App Swipe)
   useSwipeBack(handleBack);
 
   // Global Loading
@@ -75,6 +89,10 @@ const AppContent = () => {
 
   const handleNavigate = (viewId) => {
     if (viewId === currentView) return;
+
+    // Push to window history so back button works
+    window.history.pushState({ view: viewId }, '');
+
     // Push current view to history before changing
     setHistory(prev => [...prev, currentView]);
     setCurrentView(viewId);

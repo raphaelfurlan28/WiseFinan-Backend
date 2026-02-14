@@ -175,13 +175,16 @@ export const AuthProvider = ({ children }) => {
 
                     // Client-side inactivity check
                     const idleTime = Date.now() - lastActivityRef.current;
+                    /* 
+                    // REMOVED AUTO-LOGOUT PER USER REQUEST
                     if (idleTime > INACTIVITY_TIMEOUT_MS) {
                         console.warn(`[Auth] Client idle for ${Math.round(idleTime / 1000)}s, forcing logout.`);
                         clearInterval(heartbeatInterval);
                         alert("Sessão expirada por inatividade. Faça login novamente.");
                         await logout(true);
                         return;
-                    }
+                    } 
+                    */
 
                     // Server-side validation (also updates last_activity if user is active)
                     const validation = await validateWithRetry(currentUser, currentSessionToken, 2);
