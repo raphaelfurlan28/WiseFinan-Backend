@@ -224,13 +224,22 @@ export default function StockDetail({ stock, onBack }) {
                                         return (
                                             <>
                                                 {/* Current Price Line */}
-                                                <ReferenceLine y={currentP} stroke="#fff" strokeWidth={1} />
-
-                                                {/* Custo Baixo Line */}
-                                                {lowP > 0 && <ReferenceLine y={lowP} stroke="#22c55e" strokeWidth={1} />}
-
-                                                {/* Custo Alto Line */}
-                                                {highP > 0 && <ReferenceLine y={highP} stroke="#ef4444" strokeWidth={1} />}
+                                                <ReferenceLine
+                                                    y={currentP}
+                                                    stroke="#fff"
+                                                    strokeWidth={0.5}
+                                                    strokeDasharray="3 3"
+                                                    label={{
+                                                        position: 'insideRight', // Moves it back inside/closer to the axis
+                                                        value: 'PREÇO ATUAL',
+                                                        fill: '#fff',
+                                                        fontSize: 8,
+                                                        fontWeight: 300,
+                                                        letterSpacing: 1,
+                                                        dx: 0, // Reset dx or small adjustment if needed, 0 keeps it aligned
+                                                        dy: -8
+                                                    }}
+                                                />
                                             </>
                                         );
                                     })()}
@@ -243,56 +252,7 @@ export default function StockDetail({ stock, onBack }) {
                         )}
                     </div>
 
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '12px',
-                        marginTop: '6px',
-                        padding: '2px',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {/* Preço Item */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '1px', background: '#ffffff' }}></div>
-                            <span style={{
-                                fontSize: '0.6rem', fontWeight: '700',
-                                background: 'linear-gradient(180deg, #ffffff, #94a3b8)',
-                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
-                                letterSpacing: '0.1px'
-                            }}>
-                                R$ {stock.price}
-                            </span>
-                        </div>
 
-                        {/* Baixo Item */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '1px', background: '#22c55e' }}></div>
-                            <span style={{
-                                fontSize: '0.6rem', fontWeight: '700',
-                                background: 'linear-gradient(180deg, #4ade80, #166534)',
-                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
-                                letterSpacing: '0.1px'
-                            }}>
-                                Min: {stock.min_val}
-                            </span>
-                        </div>
-
-                        {/* Alto Item */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '8px', height: '1px', background: '#ef4444' }}></div>
-                            <span style={{
-                                fontSize: '0.6rem', fontWeight: '700',
-                                background: 'linear-gradient(180deg, #f87171, #991b1b)',
-                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                textShadow: '0 1px 1px rgba(0,0,0,0.3)',
-                                letterSpacing: '0.1px'
-                            }}>
-                                Max: {stock.max_val}
-                            </span>
-                        </div>
-                    </div>
                 </div>
             </div>
 

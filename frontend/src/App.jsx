@@ -30,6 +30,8 @@ import './components/Dashboard.css'; // Global Dashboard Styles
 // Replace with your actual Google Client ID
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "477556815504-12btpjhrd9cr5qc86aqp2e7792oemvqj.apps.googleusercontent.com";
 
+import { useSwipeBack } from './hooks/useSwipeBack';
+
 const AppContent = () => {
   const { user, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
@@ -37,6 +39,8 @@ const AppContent = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home');
+  // History Stack for Navigation
+  const [history, setHistory] = useState([]);
 
   // Global Loading
   if (loading) {
@@ -52,9 +56,30 @@ const AppContent = () => {
   }
 
   const handleNavigate = (viewId) => {
+    if (viewId === currentView) return;
+    // Push current view to history before changing
+    setHistory(prev => [...prev, currentView]);
     setCurrentView(viewId);
     setSelectedStock(null);
   };
+
+  const handleBack = () => {
+    // Priority 1: Close Modal
+    if (selectedStock) {
+      setSelectedStock(null);
+      return;
+    }
+
+    // Priority 2: Pop History
+    if (history.length > 0) {
+      const previousView = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1)); // Remove last
+      setCurrentView(previousView);
+    }
+  };
+
+  // Custom Hook for Swipe Back
+  useSwipeBack(handleBack);
 
   const renderContent = () => {
     if (selectedStock) {

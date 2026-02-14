@@ -1253,7 +1253,7 @@ const Home = ({ onNavigate }) => {
                                 const isIPCA = titleUpper.includes("IPCA") || titleUpper.includes("RENDA+");
 
                                 let displayRate = rawRate;
-                                let periodLabel = "ao ano";
+                                let periodLabel = "ao Ano";
 
                                 // Ensure % symbol if missing
                                 if (!displayRate.includes('%')) displayRate += '%';
@@ -1276,7 +1276,7 @@ const Home = ({ onNavigate }) => {
                                         console.error("Error calculating Selic total", e);
                                     }
 
-                                    periodLabel = "ao dia útil";
+                                    periodLabel = "ao Ano";
                                 } else if (isIPCA) {
                                     displayRate = `IPCA + ${displayRate}`;
                                 }

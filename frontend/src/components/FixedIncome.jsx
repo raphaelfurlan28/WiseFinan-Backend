@@ -123,7 +123,7 @@ const Card = ({ title, data, icon: Icon, colorClass, ipcaValue, selicValue }) =>
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                     <span style={{ fontSize: '1rem', fontWeight: '700', color: '#4ade80' }}>{totalRate}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#aaa' }}>(dia útil)</span>
+                    <span style={{ fontSize: '0.7rem', color: '#aaa' }}>(ao Ano)</span>
                 </div>
             );
         }

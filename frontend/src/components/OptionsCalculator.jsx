@@ -18,6 +18,7 @@ const OptionsCalculator = () => {
     const [quantity, setQuantity] = useState(100);
     const [action, setAction] = useState('buy'); // 'buy' or 'sell'
     const [targetPrice, setTargetPrice] = useState(''); // Target exit price (user input)
+    const [manualPrice, setManualPrice] = useState(''); // User input for execution price
 
     // Fetch Options on Search
     useEffect(() => {
@@ -61,10 +62,34 @@ const OptionsCalculator = () => {
         setSelectedOption(opt);
         setSearchTerm(opt.ticker); // Set input to the selected option ticker
         setIsDropdownOpen(false);
+        // Initialize manual price with current market price
+        if (opt.price_val) {
+            setManualPrice(opt.price_val.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        } else {
+            setManualPrice('');
+        }
+    };
+
+    const handlePriceChange = (e) => {
+        let value = e.target.value;
+        // Remove non-digits
+        value = value.replace(/\D/g, "");
+
+        if (value) {
+            // Divide by 100 to get decimals
+            value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        }
+        setManualPrice(value);
     };
 
     // Calculations
     const getPrice = () => {
+        if (manualPrice) {
+            // Parse local string "1.000,00" -> float
+            // Remove dots (thousands) and replace comma with dot
+            const raw = manualPrice.replace(/\./g, '').replace(',', '.');
+            return parseFloat(raw) || 0;
+        }
         if (!selectedOption) return 0;
         // Check 'price_val' (Last Trade) or fallback
         // The API returns 'price' (string) and 'price_val' (float)
@@ -325,6 +350,34 @@ const OptionsCalculator = () => {
                                 </button>
                             </div>
 
+                            {/* Execution Price Input (NEW) */}
+                            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Preço de Execução (Unitário)</label>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center',
+                                    background: 'rgba(30, 41, 59, 0.6)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px'
+                                }}>
+                                    <span style={{ color: '#94a3b8', marginRight: '8px' }}>R$</span>
+                                    <input
+                                        type="text"
+                                        placeholder="0,00"
+                                        value={manualPrice}
+                                        onChange={handlePriceChange}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#fff',
+                                            width: '100%',
+                                            outline: 'none',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
                             {/* Target Price (Saída) */}
                             <div>
                                 <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Preço Alvo / Saída (Opcional)</label>
@@ -401,7 +454,9 @@ const OptionsCalculator = () => {
                                         </div>
                                         <div>
                                             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Vencimento</span>
-                                            <div style={{ fontSize: '1rem', color: '#e2e8f0' }}>{selectedOption.expiration}</div>
+                                            <div style={{ fontSize: '1rem', color: '#e2e8f0' }}>
+                                                {selectedOption.expiration.split('-').reverse().join('/')}
+                                            </div>
                                         </div>
                                         <div>
                                             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Tipo</span>

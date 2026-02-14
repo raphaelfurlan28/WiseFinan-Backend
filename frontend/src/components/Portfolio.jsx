@@ -686,7 +686,7 @@ const Portfolio = () => {
                                                                         </span>
                                                                         {!isStock && (
                                                                             <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '1px' }}>
-                                                                                {item.recommendationType === 'selic' ? (rec.name?.includes('LFTS11') ? 'ao Ano' : 'ao dia útil') : 'ao Ano'}
+                                                                                {item.recommendationType === 'selic' ? (rec.name?.includes('LFTS11') ? 'ao Ano' : 'ao Ano') : 'ao Ano'}
                                                                             </span>
                                                                         )}
                                                                     </div>
