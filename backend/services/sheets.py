@@ -371,16 +371,78 @@ def calculate_delta(S, K, T, r, sigma, option_type='call'):
 def get_filtered_opportunities():
     """
     Returns stocks that are 'Low Cost' opportunities.
+    Optimized: Fetches data sources in PARALLEL.
     """
     from datetime import datetime
     import numpy as np
+    from concurrent.futures import ThreadPoolExecutor
 
+    # Helper functions for parallel execution
+    def fetch_stocks_data():
+        try:
+            return get_sheet_data()
+        except Exception as e:
+            print(f"Error fetching stocks in parallel: {e}")
+            return []
+
+    def fetch_all_options():
+        try:
+            return get_options_data(None)
+        except Exception as e:
+            print(f"Error fetching options in parallel: {e}")
+            return []
+
+    def fetch_indices_data():
+        try:
+            return get_economic_indices()
+        except Exception as e:
+            print(f"Error fetching indices in parallel: {e}")
+            return {}
+
+    def fetch_fixed_income():
+        try:
+            return get_fixed_income_data()
+        except Exception as e:
+            print(f"Error fetching fixed income in parallel: {e}")
+            return []
+
+    def fetch_guarantee_etfs():
+        try:
+            from services.market_data import get_treasury_etfs
+            return get_treasury_etfs()
+        except Exception as e:
+            print(f"Error fetching ETFs in parallel: {e}")
+            return []
+
+    # --- PARALLEL FETCHING ---
+    stocks = []
+    all_options = []
+    indices = {}
+    raw_fixed = []
+    etfs = []
+
+    print("[OPPORTUNITIES] Starting parallel fetch...")
+    start_time = datetime.now()
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_stocks = executor.submit(fetch_stocks_data)
+        future_options = executor.submit(fetch_all_options)
+        future_indices = executor.submit(fetch_indices_data)
+        future_fixed = executor.submit(fetch_fixed_income)
+        future_etfs = executor.submit(fetch_guarantee_etfs)
+
+        stocks = future_stocks.result()
+        all_options = future_options.result()
+        indices = future_indices.result()
+        raw_fixed = future_fixed.result()
+        etfs = future_etfs.result()
+
+    end_time = datetime.now()
+    print(f"[OPPORTUNITIES] Parallel fetch done in {(end_time - start_time).total_seconds():.2f}s")
+    
+    # --- PROCESSING (CPU Bound) ---
     try:
-        stocks = get_sheet_data()
-        all_options = get_options_data(None)
-        
         # Get Risk-Free Rate (Selic)
-        indices = get_economic_indices()
         selic_str = indices.get('selic', '10.75').replace('%', '').replace(',', '.')
         try:
             r = float(selic_str) / 100.0
@@ -408,6 +470,7 @@ def get_filtered_opportunities():
     today_date = datetime.now().date()
     filtered_results = []
     
+    # Process Filter Logic
     for stock in stocks:
         try:
             ticker = stock.get('ticker', 'UNKNOWN').strip().upper()
@@ -602,11 +665,9 @@ def get_filtered_opportunities():
             print(f"Error processing stock {stock.get('ticker')}: {e}")
             continue
 
-    # --- FIXED INCOME STRATEGY ---
+    # --- FIXED INCOME PROCESSING ---
     fixed_data = []
     try:
-        raw_fixed = get_fixed_income_data()
-        
         # 1. Reserva (Selic)
         reserva = next((x for x in raw_fixed if "SELIC" in x.get('titulo', '').upper()), None)
         
@@ -649,11 +710,9 @@ def get_filtered_opportunities():
     except Exception as e:
         print(f"Error filtering fixed income: {e}")
 
-    # --- GUARANTEE (LFTS11) ---
+    # --- GUARANTEE (LFTS11) PROCESSING ---
     guarantee_data = []
     try:
-        from services.market_data import get_treasury_etfs
-        etfs = get_treasury_etfs()
         # Find LFTS11
         lfts = next((x for x in etfs if 'LFTS11' in x.get('titulo', '').upper()), None)
         if lfts:
