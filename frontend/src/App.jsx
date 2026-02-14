@@ -42,6 +42,24 @@ const AppContent = () => {
   // History Stack for Navigation
   const [history, setHistory] = useState([]);
 
+  const handleBack = () => {
+    // Priority 1: Close Modal
+    if (selectedStock) {
+      setSelectedStock(null);
+      return;
+    }
+
+    // Priority 2: Pop History
+    if (history.length > 0) {
+      const previousView = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1)); // Remove last
+      setCurrentView(previousView);
+    }
+  };
+
+  // Custom Hook for Swipe Back
+  useSwipeBack(handleBack);
+
   // Global Loading
   if (loading) {
     return <ModernLoader text="Carregando..." />;
@@ -62,24 +80,6 @@ const AppContent = () => {
     setCurrentView(viewId);
     setSelectedStock(null);
   };
-
-  const handleBack = () => {
-    // Priority 1: Close Modal
-    if (selectedStock) {
-      setSelectedStock(null);
-      return;
-    }
-
-    // Priority 2: Pop History
-    if (history.length > 0) {
-      const previousView = history[history.length - 1];
-      setHistory(prev => prev.slice(0, -1)); // Remove last
-      setCurrentView(previousView);
-    }
-  };
-
-  // Custom Hook for Swipe Back
-  useSwipeBack(handleBack);
 
   const renderContent = () => {
     if (selectedStock) {
