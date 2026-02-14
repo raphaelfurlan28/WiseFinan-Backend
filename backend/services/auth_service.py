@@ -113,10 +113,11 @@ def validate_user_session(email, token, device_id=None):
         last_activity = data.get('last_activity')
         if last_activity:
             elapsed = (datetime.now(timezone.utc) - last_activity).total_seconds()
-            if elapsed > INACTIVITY_TIMEOUT_SECONDS:
-                print(f"[AUTH] Inactivity timeout for {email}: {elapsed:.0f}s idle")
-                doc_ref.delete()
-                return {"valid": False, "reason": "inactivity_timeout"}
+            # REMOVED AUTO-LOGOUT PER USER REQUEST
+            # if elapsed > INACTIVITY_TIMEOUT_SECONDS:
+            #     print(f"[AUTH] Inactivity timeout for {email}: {elapsed:.0f}s idle")
+            #     doc_ref.delete()
+            #     return {"valid": False, "reason": "inactivity_timeout"}
         
         # All checks passed — update last_activity
         doc_ref.update({'last_activity': datetime.now(timezone.utc)})

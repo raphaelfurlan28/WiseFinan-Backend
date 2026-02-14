@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-v2-192.png', 'icon-v2-512.png'],
       manifest: {
         name: 'WiseFinan',
         short_name: 'WiseFinan',
