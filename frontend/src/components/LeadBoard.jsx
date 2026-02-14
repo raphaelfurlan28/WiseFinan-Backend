@@ -33,10 +33,38 @@ const LeadBoard = () => {
     const [filterCRM, setFilterCRM] = useState('all');
     const [showArchived, setShowArchived] = useState(false);
     const [updating, setUpdating] = useState(null);
+    const [manualEmail, setManualEmail] = useState('');
 
     useEffect(() => {
         fetchLeads();
     }, [showArchived]);
+
+    const handleManualReset = async (e) => {
+        e.preventDefault();
+        if (!manualEmail) return;
+        if (!window.confirm(`Deseja resetar o dispositivo vinculado para o usuário ${manualEmail}?`)) return;
+
+        setUpdating('manual');
+        try {
+            const res = await fetch(getApiUrl('/api/admin/reset-device'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: manualEmail })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Dispositivo resetado com sucesso!');
+                setManualEmail('');
+            } else {
+                alert('Erro ao resetar: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (err) {
+            console.error('Error resetting device:', err);
+            alert('Erro de conexão.');
+        } finally {
+            setUpdating(null);
+        }
+    };
 
     const fetchLeads = async () => {
         setLoading(true);
@@ -307,6 +335,61 @@ const LeadBoard = () => {
                         <div className="leadboard-stat-label">Convertidos</div>
                     </div>
                 </div>
+            </div>
+
+            {/* Admin Actions Panel */}
+            <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                background: 'rgba(30, 41, 59, 0.5)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                flexWrap: 'wrap'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600 }}>
+                    <AlertTriangle size={18} color="#f59e0b" />
+                    <span>Ações de Admin:</span>
+                </div>
+                <form onSubmit={handleManualReset} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                        type="email"
+                        placeholder="Email do usuário para resetar device..."
+                        value={manualEmail}
+                        onChange={e => setManualEmail(e.target.value)}
+                        style={{
+                            background: 'rgba(0,0,0,0.2)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            color: '#fff',
+                            minWidth: '250px',
+                            outline: 'none'
+                        }}
+                    />
+                    <button
+                        type="submit"
+                        disabled={!manualEmail || updating === 'manual'}
+                        style={{
+                            background: '#3b82f6',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            opacity: (!manualEmail || updating === 'manual') ? 0.5 : 1
+                        }}
+                    >
+                        <RefreshCw size={16} className={updating === 'manual' ? 'lead-spin' : ''} />
+                        {updating === 'manual' ? 'Resetando...' : 'Resetar Device'}
+                    </button>
+                </form>
             </div>
 
             {/* Filters */}
