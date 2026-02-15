@@ -353,17 +353,18 @@ const LeadBoard = () => {
                     <AlertTriangle size={18} color="#f59e0b" />
                     <span>Ações de Admin:</span>
                 </div>
-                <form onSubmit={handleManualReset} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <form onSubmit={handleManualReset} style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
                     <input
                         type="email"
-                        placeholder="Email do usuário para resetar device..."
+                        placeholder="Email para reset..."
                         value={manualEmail}
                         onChange={e => setManualEmail(e.target.value)}
                         style={{
                             background: 'rgba(0,0,0,0.2)',
                             border: '1px solid rgba(255,255,255,0.1)',
                             borderRadius: '6px',
-                            padding: '8px 12px',
+                            padding: '6px 10px',
+                            fontSize: '0.9rem',
                             color: '#fff',
                             minWidth: '250px',
                             outline: 'none'
@@ -376,17 +377,19 @@ const LeadBoard = () => {
                             background: '#3b82f6',
                             color: '#fff',
                             border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 16px',
+                            borderRadius: '4px',
+                            padding: '4px 10px',
+                            fontSize: '0.75rem',
                             cursor: 'pointer',
                             fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            opacity: (!manualEmail || updating === 'manual') ? 0.5 : 1
+                            gap: '4px',
+                            opacity: (!manualEmail || updating === 'manual') ? 0.5 : 1,
+                            height: '24px' // Enforce thinness
                         }}
                     >
-                        <RefreshCw size={16} className={updating === 'manual' ? 'lead-spin' : ''} />
+                        <RefreshCw size={12} className={updating === 'manual' ? 'lead-spin' : ''} />
                         {updating === 'manual' ? 'Resetando...' : 'Resetar Device'}
                     </button>
                 </form>

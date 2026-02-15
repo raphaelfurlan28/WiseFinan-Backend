@@ -176,7 +176,7 @@ def get_sheet_data():
 
 
 @cached(ttl_seconds=300)
-def get_options_data(ticker_filter=None):
+def _fetch_all_raw_options():
     creds = get_credentials()
     if not creds: return []
     service = build('sheets', 'v4', credentials=creds)
@@ -231,12 +231,6 @@ def get_options_data(ticker_filter=None):
         if idx_ativo != -1:
             option_ticker = get_val_safe(row, idx_ativo).strip()
         
-        # Filter Logic: Match Underlying OR Option Ticker
-        if ticker_filter:
-            tf = ticker_filter.upper()
-            if subjacente.upper() != tf and option_ticker.upper() != tf:
-                continue
-
         # Formatter helpers
         def to_float(val):
             if isinstance(val, str):
@@ -278,6 +272,24 @@ def get_options_data(ticker_filter=None):
         })
         
     return options
+
+def get_options_data(ticker_filter=None):
+    """
+    Returns options list.
+    Uses cached _fetch_all_raw_options to avoid re-parsing huge sheet.
+    """
+    all_options = _fetch_all_raw_options()
+    
+    if not ticker_filter:
+        return all_options
+        
+    tf = ticker_filter.upper()
+    filtered = []
+    for opt in all_options:
+        if opt['underlying'].upper() == tf or opt['ticker'].upper() == tf:
+            filtered.append(opt)
+            
+    return filtered
 
 # Helpers
 def smart_float(v):
@@ -507,6 +519,9 @@ def get_filtered_opportunities():
 
             for opt in stock_opts:
                 try:
+                    # COPY TO AVOID MODIFYING CACHED OBJECTS
+                    opt = opt.copy()
+                    
                     otype = opt.get('type', '').upper()
                     strike = smart_float(opt.get('strike', 0))
                     # prem_val IS THE YIELD (Premium / Stock Price), e.g. 0.01 = 1%
