@@ -25,6 +25,24 @@ CORS(app, resources={r"/api/*": {"origins": [
 def index():
     return "🚀 Backend WiseFinan rodando! Acesse /api/home para dados."
 
+@app.route('/api/market-summary', methods=['GET'])
+def get_market_summary():
+    try:
+        from services.sheets import get_market_summary_data
+        data = get_market_summary_data()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/opportunities', methods=['GET'])
+def get_opportunities():
+    try:
+        from services.sheets import get_opportunities_data
+        data = get_opportunities_data()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     try:
