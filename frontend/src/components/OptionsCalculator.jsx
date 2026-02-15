@@ -82,6 +82,16 @@ const OptionsCalculator = () => {
         setManualPrice(value);
     };
 
+    const handleTargetPriceChange = (e) => {
+        let value = e.target.value;
+        value = value.replace(/\D/g, "");
+
+        if (value) {
+            value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        }
+        setTargetPrice(value);
+    };
+
     // Calculations
     const getPrice = () => {
         if (manualPrice) {
@@ -352,7 +362,7 @@ const OptionsCalculator = () => {
 
                             {/* Execution Price Input (NEW) */}
                             <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Preço de Execução (Unitário)</label>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>Preço de Entrada (Unitário)</label>
                                 <div style={{
                                     display: 'flex', alignItems: 'center',
                                     background: 'rgba(30, 41, 59, 0.6)',
@@ -390,11 +400,10 @@ const OptionsCalculator = () => {
                                 }}>
                                     <span style={{ color: '#94a3b8', marginRight: '8px' }}>R$</span>
                                     <input
-                                        type="number"
+                                        type="text"
                                         placeholder="0,00"
                                         value={targetPrice}
-                                        onChange={(e) => setTargetPrice(e.target.value)}
-                                        step={0.01}
+                                        onChange={handleTargetPriceChange}
                                         style={{
                                             background: 'transparent',
                                             border: 'none',
@@ -473,7 +482,7 @@ const OptionsCalculator = () => {
                                         borderRadius: '12px', padding: '16px'
                                     }}>
                                         <span style={{ fontSize: '0.9rem', color: action === 'buy' ? '#f87171' : '#4ade80', display: 'block', marginBottom: '4px' }}>
-                                            {action === 'buy' ? 'Débito Estimado (Saída)' : 'Crédito Estimado (Entrada)'}
+                                            {action === 'buy' ? 'Débito Estimado (na Entrada)' : 'Crédito Estimado (Entrada)'}
                                         </span>
                                         <div style={{ fontSize: '2rem', fontWeight: 'bold', color: action === 'buy' ? '#f87171' : '#4ade80' }}>
                                             {action === 'buy' ? '-' : '+'} R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -488,7 +497,7 @@ const OptionsCalculator = () => {
                                         </div>
 
                                         {/* Projected Return Block (if Target Price is set) */}
-                                        {targetPrice && !isNaN(parseFloat(targetPrice.replace(',', '.'))) && (
+                                        {targetPrice && (
                                             <div style={{
                                                 background: 'rgba(255, 255, 255, 0.05)',
                                                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -498,7 +507,8 @@ const OptionsCalculator = () => {
                                                     Resultado Estimado (na Saída)
                                                 </span>
                                                 {(() => {
-                                                    const exitP = parseFloat(targetPrice.replace(',', '.'));
+                                                    const rawExit = targetPrice.replace(/\./g, '').replace(',', '.');
+                                                    const exitP = parseFloat(rawExit) || 0;
                                                     const totalEntry = totalValue; // Total paid/received initially
                                                     const totalExit = exitP * quantity;
 

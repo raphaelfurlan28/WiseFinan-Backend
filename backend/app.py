@@ -170,7 +170,7 @@ def get_news_dashboard():
             indicators = {}
 
         try:
-            news = get_rss_news(limit=20, topic=category)
+            news = get_rss_news(limit=10, topic=category)
         except Exception as e:
             print(f"News failed: {e}")
             news = []
