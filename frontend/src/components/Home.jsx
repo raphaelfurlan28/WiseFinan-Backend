@@ -45,7 +45,6 @@ const Home = ({ onNavigate }) => {
     const [loading, setLoading] = useState(true);
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
     const [selectedOperation, setSelectedOperation] = useState(null);
-    const [loadingOpportunities, setLoadingOpportunities] = useState(true);
 
     // Home Highlights State
     const [homeNews, setHomeNews] = useState([]);
@@ -574,47 +573,49 @@ const Home = ({ onNavigate }) => {
 
 
     useEffect(() => {
-        const loadDashboard = async () => {
+        const fetchWithRetry = async (retries = 3, delay = 1500) => {
             try {
-                // 1. Load Market Summary (Lightweight)
-                try {
-                    const resSummary = await fetch(getApiUrl('/api/market-summary'));
-                    if (resSummary.ok) {
-                        const jsonSummary = await resSummary.json();
-                        // Merge indices to keep existing structure
-                        if (jsonSummary.indices) setIndices(prev => ({ ...prev, ...jsonSummary.indices }));
-                        if (jsonSummary.fixed_income) setFixedOpportunities(jsonSummary.fixed_income);
-                        if (jsonSummary.guarantee) setGuaranteeOpportunities(jsonSummary.guarantee);
+                const res = await fetch(getApiUrl('/api/home'));
+                const json = await res.json();
+
+                let hasData = false;
+
+                // Handle new dictionary structure
+                if (json.cheap && Array.isArray(json.cheap)) {
+                    if (json.cheap.length > 0 || (json.expensive && json.expensive.length > 0)) {
+                        hasData = true;
                     }
-                } catch (e) {
-                    console.error("Error loading market summary", e);
-                } finally {
-                    setLoading(false); // Unblock Main UI quickly
+                    setOpportunities(json.cheap);
+                    setExpensiveOpportunities(json.expensive || []);
+                    setFixedOpportunities(json.fixed_income || []);
+                    setGuaranteeOpportunities(json.guarantee || []);
+                } else if (Array.isArray(json)) {
+                    // Fallback for old API
+                    if (json.length > 0) hasData = true;
+                    setOpportunities(json);
+                    setExpensiveOpportunities([]);
                 }
 
-                // 2. Load Opportunities (Heavy) - Delayed slightly
-                setTimeout(async () => {
-                    try {
-                        const resOpp = await fetch(getApiUrl('/api/opportunities'));
-                        if (resOpp.ok) {
-                            const jsonOpp = await resOpp.json();
-                            setOpportunities(jsonOpp.cheap || []);
-                            setExpensiveOpportunities(jsonOpp.expensive || []);
-                        }
-                    } catch (e) {
-                        console.error("Error loading opportunities", e);
-                    } finally {
-                        setLoadingOpportunities(false);
-                    }
-                }, 500);
+                // If no data and we have retries left, wait and retry
+                if (!hasData && retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(retries - 1, delay);
+                }
+
+                // Success or out of retries
+                setLoading(false);
 
             } catch (err) {
-                console.error("Error loading dashboard", err);
+                console.error("Error fetching home data:", err);
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(retries - 1, delay);
+                }
                 setLoading(false);
-                setLoadingOpportunities(false);
             }
         };
-        loadDashboard();
+
+        fetchWithRetry();
     }, []);
 
 
@@ -732,12 +733,7 @@ const Home = ({ onNavigate }) => {
                         </div>
 
                         <div style={{ padding: '24px' }}>
-                            {loadingOpportunities ? (
-                                <div className="rf-empty" style={{ marginTop: '0', color: '#64748b' }}>
-                                    <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#00ff88', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '16px' }}></div>
-                                    <p>Carregando melhores oportunidades...</p>
-                                </div>
-                            ) : opportunities.length === 0 ? (
+                            {opportunities.length === 0 ? (
                                 <div className="rf-empty" style={{ marginTop: '0' }}>
                                     <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                                     <p>Nenhuma oportunidade encontrada.</p>
@@ -921,12 +917,7 @@ const Home = ({ onNavigate }) => {
                         </div>
 
                         <div style={{ padding: '24px' }}>
-                            {loadingOpportunities ? (
-                                <div className="rf-empty" style={{ marginTop: '0', color: '#64748b' }}>
-                                    <div style={{ display: 'inline', width: '24px', height: '24px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#ef4444', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '16px' }}></div>
-                                    <p>Carregando melhores oportunidades...</p>
-                                </div>
-                            ) : expensiveOpportunities.length === 0 ? (
+                            {expensiveOpportunities.length === 0 ? (
                                 <div className="rf-empty" style={{ marginTop: '0' }}>
                                     <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                                     <p>Nenhuma oportunidade encontrada.</p>

@@ -1019,11 +1019,61 @@ def debug_pomo_data_safe():
     except Exception as e:
         return {"error": str(e)}
 
+# Alias for backward compatibility
+get_history_data = get_stock_history
 
+def get_users():
+    """
+    Fetches allowed users from the 'User' tab.
+    Returns a list of dicts: {'name': ..., 'email': ..., 'photo': ..., 'row': ...}
+    """
+    return []
+    creds = get_credentials()
+    if not creds: return []
+    service = build('sheets', 'v4', credentials=creds)
+    SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
+    RANGE_NAME = "User!A:C" # A=Name, B=Email, C=Photo
+    
+    try:
+        result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID,
+                                    range=RANGE_NAME).execute()
+        values = result.get('values', [])
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return []
 
-def get_users_sheet():
-    # Helper to get users sheet if needed
-    return None
+    if not values: return []
+    
+    headers = [h.strip().upper() for h in values[0]]
+    idx_name = 0
+    idx_email = 1
+    idx_photo = 2
+    
+    # Try dynamic find
+    for i, h in enumerate(headers):
+        if "NOME" in h: idx_name = i
+        if "E-MAIL" in h or "EMAIL" in h: idx_email = i
+        if "FOTO" in h or "PHOTO" in h: idx_photo = i
+        
+    users = []
+    # Start from row 2 (index 1), so row number in sheet is i + 2
+    for i, row in enumerate(values[1:]): 
+        if len(row) <= idx_email: continue # No Email
+        
+        email = row[idx_email].strip()
+        if not email: continue
+        
+        name = row[idx_name].strip() if len(row) > idx_name else ""
+        photo = row[idx_photo].strip() if len(row) > idx_photo else ""
+        
+        users.append({
+            "name": name,
+            "email": email,
+            "photo": photo,
+            "row_number": i + 2 # 1-based index for API
+        })
+        
+    return users
 
 def check_user_allowed(email):
     """
@@ -1044,298 +1094,96 @@ def check_user_allowed(email):
             "email": user_email,
             "name": user_email.split('@')[0], 
             "photo": "",
-            "role": "admin" if is_admin else "user"
+            "role": "admin" if is_admin else "user",
+            "row_number": 0 # Legacy field compatibility
         }
     except Exception as e:
         print(f"Error checking user allowed: {e}")
-        # Em caso de erro, nega por segurança? Ou permite como user?
-        # Permite como user para não bloquear acesso
+        # Em caso de erro, permite como user para não bloquear
         return {
             "authorized": True,
             "email": email,
-            "role": "user"
+            "role": "user", 
+            "row_number": 0
         }
 
-def update_user_profile(email, name, photo):
-    # Stub for updating user profile
-    # For now, we don't persist this change to a sheet as we haven't identified the 'Users' sheet
-    return {
-        "status": "success", 
-        "user": {
-            "email": email,
-            "name": name,
-            "photo": photo
-        }
-    }
+def update_user_profile(email, new_name=None, new_photo=None):
+    """
+    Updates Name and/or Photo for a specific email.
+    """
+    user = check_user_allowed(email)
+    if not user:
+        return {"error": "User not found"}
+        
+    row_num = user['row_number']
+    
+    creds = Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    service = build('sheets', 'v4', credentials=creds)
+    SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
+    
+    # We assume Column A is Name, Column C is Photo based on get_users default logic
+    # Or strict ranges: User!A{row} and User!C{row}
+    
+    try:
+        if new_name is not None:
+             range_name = f"User!A{row_num}"
+             body = {'values': [[new_name]]}
+             service.spreadsheets().values().update(
+                 spreadsheetId=SPREADSHEET_ID, range=range_name,
+                 valueInputOption="RAW", body=body).execute()
+                 
+        if new_photo is not None:
+             range_name = f"User!C{row_num}"
+             body = {'values': [[new_photo]]}
+             service.spreadsheets().values().update(
+                 spreadsheetId=SPREADSHEET_ID, range=range_name,
+                 valueInputOption="RAW", body=body).execute()
+                 
+        return {"status": "success"}
+    except Exception as e:
+        return {"error": str(e)}
 
 def append_subscription_request(data):
-    # Stub for subscription request
-    print(f"Subscription request received: {data}")
-    return {"status": "success"}
-
-def get_all_users():
-    return []
-
-def add_user(email, password, role):
-    return {"status": "success"}
-
-def get_user_by_email(email):
-    return check_user_allowed(email)
-
-def reset_device_fingerprint(email):
-    return {"status": "success"}
-
-def update_user_password(email, new_password):
-    return {"status": "success"}
-
-
-@cached(ttl_seconds=300)
-def get_market_summary_data():
     """
-    Returns lightweight market data: Indices, Fixed Income, ETFs.
+    Appends a new subscription request to the 'User' tab.
+    Data format: {'nome': ..., 'email': ..., 'whatsapp': ..., 'plano': ...}
     """
-    from concurrent.futures import ThreadPoolExecutor
+    from datetime import datetime, timedelta
     
-    def fetch_indices_data():
-        try:
-            return get_economic_indices()
-        except Exception as e:
-            print(f"Error fetching indices: {e}")
-            return {}
-
-    def fetch_fixed_income():
-        try:
-            return get_fixed_income_data()
-        except Exception as e:
-            print(f"Error fetching fixed income: {e}")
-            return []
-
-    def fetch_guarantee_etfs():
-        try:
-            from services.market_data import get_treasury_etfs
-            return get_treasury_etfs()
-        except Exception as e:
-            print(f"Error fetching ETFs: {e}")
-            return []
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        future_indices = executor.submit(fetch_indices_data)
-        future_fixed = executor.submit(fetch_fixed_income)
-        future_etfs = executor.submit(fetch_guarantee_etfs)
-
-        indices = future_indices.result()
-        fixed_data = future_fixed.result()
-        guarantee_data = future_etfs.result()
-        
-    return {
-        "indices": indices,
-        "fixed_income": fixed_data,
-        "guarantee": guarantee_data
+    creds = get_credentials()
+    if not creds: return {"error": "Credentials not found"}
+    service = build('sheets', 'v4', credentials=creds)
+    SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
+    RANGE_NAME = "User!A:F" # Expanded to column F for Date/Time
+    
+    # Get current time in Brasília (UTC-3)
+    # Note: For production on Render, we adjust manually if TZ is not set
+    now = datetime.utcnow() - timedelta(hours=3)
+    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    
+    # Rows: Name, Email, Whatsapp, Plan, Status (Pendente), Date/Time
+    values = [
+        [
+            data.get('nome', ''),
+            data.get('email', ''),
+            data.get('whatsapp', ''),
+            data.get('plano', ''),
+            'Pendente',
+            timestamp
+        ]
+    ]
+    
+    body = {
+        'values': values
     }
-
-@cached(ttl_seconds=300)
-def get_opportunities_data():
-    """
-    Returns only the heavy calculation part: Stock Opportunities (Cheap/Expensive).
-    """
-    from datetime import datetime
-    import numpy as np
     
     try:
-        stocks = get_sheet_data()
-    except:
-        return {"cheap": [], "expensive": []}
-        
-    try:
-        # This uses the cached singleton we created earlier
-        all_options = _fetch_all_raw_options()
-    except:
-        return {"cheap": [], "expensive": []}
+        result = service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME,
+            valueInputOption="RAW", body=body).execute()
+        return {"status": "success", "updatedRange": result.get('updates', {}).get('updatedRange')}
+    except Exception as e:
+        print(f"Error appending subscription request: {e}")
+        return {"error": str(e)}
 
-    try:
-        indices = get_economic_indices()
-        selic_str = indices.get('selic', '10.75').replace('%', '').replace(',', '.')
-        r = float(selic_str) / 100.0
-    except:
-        r = 0.1075
-
-    if not stocks: return {"cheap": [], "expensive": []}
-
-    # Map Options by Underlying
-    options_by_ticker = {}
-    if all_options:
-        for opt in all_options:
-            unk = opt.get('underlying', '').strip().upper()
-            if not unk: continue
-            if unk not in options_by_ticker:
-                options_by_ticker[unk] = []
-            options_by_ticker[unk].append(opt)
-    
-    filtered_results = []
-    
-    for stock in stocks:
-        try:
-            ticker = stock.get('ticker', 'UNKNOWN').strip().upper()
-            falta_val = stock.get('falta_val', -999.0)
-            
-            # Category Logic
-            is_cheap = falta_val >= -15.0
-            is_expensive = falta_val <= -50.0
-
-            if not is_cheap and not is_expensive:
-                continue
-                
-            stock_price = parse_price(stock.get('price', 0.0))
-            cost_val = parse_price(stock.get('min_val', 0.0))
-            max_val = parse_price(stock.get('max_val', 0.0))
-            
-            # Get Historical Volatility from Stock Data
-            vol_str = str(stock.get('vol_ano', '0')).replace('%', '').replace(',', '.')
-            try:
-               sigma = float(vol_str) / 100.0
-               if sigma <= 0: sigma = 0.40 
-            except:
-               sigma = 0.40
-
-            if cost_val <= 0 and max_val <= 0:
-                continue
-
-            stock_opts = options_by_ticker.get(ticker, [])
-            
-            valid_puts = []
-            valid_calls = []
-
-            for opt in stock_opts:
-                try:
-                    opt = opt.copy()
-                    
-                    otype = opt.get('type', '').upper()
-                    strike = smart_float(opt.get('strike', 0))
-                    prem_yield = float(opt.get('premium_val', 0.0)) 
-                    market_price = float(opt.get('price_val', 0.0))
-
-                    if strike <= 0: continue
-                    
-                    exp = opt.get('expiration', '')
-                    bdays = get_business_days(exp)
-                    
-                    if bdays <= 0: continue
-                    T = bdays / 252.0
-                    
-                    bs_price = 0.0
-                    delta = 0.0
-                    
-                    if HAS_BS_LIBS:
-                        bs_type = 'call' if 'CALL' in otype else 'put'
-                        try:
-                            bs_price = black_scholes_price(stock_price, strike, T, r, sigma, bs_type)
-                            delta = calculate_delta(stock_price, strike, T, r, sigma, bs_type)
-                        except:
-                            bs_price = 0.0
-                            delta = 0.0
-                    
-                    prob_success = 0.0
-                    edge_pct = 0.0
-                    if bs_price > 0:
-                        edge_pct = ((market_price - bs_price) / bs_price)
-                    
-                    opt['delta'] = delta
-                    opt['bs_price'] = bs_price
-                    if HAS_BS_LIBS:
-                        opt['edge_formatted'] = f"{edge_pct*100:.1f}%"
-                    else:
-                        opt['edge_formatted'] = None
-                    
-                    # --- FILTERS ---
-                    if is_cheap:
-                        if 'PUT' in otype or 'VENDA' in otype: 
-                            if prem_yield <= 0.01: continue
-                            if bdays > 40: continue
-                            if strike > cost_val * 1.08: continue
-
-                            if HAS_BS_LIBS:
-                                prob_success = 1 - abs(delta)
-                                opt['prob_success'] = f"{prob_success*100:.1f}%"
-                            opt['yield_display'] = f"{prem_yield*100:.2f}%"
-                            opt['last_price'] = market_price
-                            opt['sigma'] = f"{sigma*100:.1f}%"
-                            opt['delta_val'] = f"{delta:.3f}"
-                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
-                            valid_puts.append(opt)
-
-                        elif 'CALL' in otype or 'COMPRA' in otype: 
-                            if prem_yield > 0.02: continue
-                            if bdays <= 60: continue
-                            if strike <= stock_price * 1.10: continue
-
-                            if HAS_BS_LIBS:
-                                prob_success = abs(delta)
-                                opt['prob_success'] = f"{prob_success*100:.1f}%"
-                            opt['cost_display'] = f"{prem_yield*100:.2f}%"
-                            opt['last_price'] = market_price
-                            opt['sigma'] = f"{sigma*100:.1f}%"
-                            opt['delta_val'] = f"{delta:.3f}"
-                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
-                            valid_calls.append(opt)
-
-                    elif is_expensive:
-                        if 'PUT' in otype or 'COMPRA' in otype: 
-                            if prem_yield > 0.015: continue 
-                            if bdays <= 60: continue
-                            if strike >= stock_price * 0.90: continue 
-
-                            if HAS_BS_LIBS:
-                                prob_success = abs(delta)
-                                opt['prob_success'] = f"{prob_success*100:.1f}%"
-                            
-                            opt['cost_display'] = f"{prem_yield*100:.2f}%"
-                            opt['last_price'] = market_price
-                            opt['sigma'] = f"{sigma*100:.1f}%"
-                            opt['delta_val'] = f"{delta:.3f}"
-                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
-                            valid_puts.append(opt)
-                            
-                        elif 'CALL' in otype or 'VENDA' in otype: 
-                            if prem_yield <= 0.01: continue
-                            if bdays > 45: continue
-                            if strike < max_val * 0.95: continue
-
-                            if HAS_BS_LIBS:
-                                prob_success = 1 - abs(delta) 
-                                opt['prob_success'] = f"{prob_success*100:.1f}%"
-                            
-                            opt['yield_display'] = f"{prem_yield*100:.2f}%"
-                            opt['last_price'] = market_price
-                            opt['sigma'] = f"{sigma*100:.1f}%"
-                            opt['delta_val'] = f"{delta:.3f}"
-                            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
-                            valid_calls.append(opt)
-
-                except Exception as loop_e:
-                     continue
-
-            if len(valid_puts) > 0 or len(valid_calls) > 0:
-                filtered_results.append({
-                    "ticker": ticker,
-                    "company_name": stock.get('company_name', ticker),
-                    "sector": stock.get('sector', ''),
-                    "price": f"R$ {stock_price:.2f}".replace('.', ','),
-                    "min_val": f"R$ {cost_val:.2f}".replace('.', ','),
-                    "max_val": f"R$ {max_val:.2f}".replace('.', ','),
-                    "falta_pct": stock.get('falta_pct', '0%'),
-                    "falta_val": falta_val,
-                    "image_url": stock.get('image_url', ''),
-                    "change_day": stock.get('change_day', '0%'),
-                    "category": 'CHEAP' if is_cheap else 'EXPENSIVE',
-                    "puts": valid_puts,
-                    "calls": valid_calls
-                })
-
-        except Exception as e:
-            print(f"Error processing stock {stock.get('ticker')}: {e}")
-            continue
-    
-    return {
-        "cheap": [x for x in filtered_results if x['category'] == 'CHEAP'],
-        "expensive": [x for x in filtered_results if x['category'] == 'EXPENSIVE']
-    }
