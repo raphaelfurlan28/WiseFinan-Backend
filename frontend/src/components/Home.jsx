@@ -311,24 +311,47 @@ const Home = ({ onNavigate }) => {
                                 <button
                                     onClick={() => {
                                         const ticker = option.ticker; // Use option ticker
-                                        const deepLink = `btgpactual://investments/stock-exchange/order/create/${ticker}`; // Hypothetical Deep Link
-                                        const webLink = "https://www.btgpactual.com/"; // Fallback to Home
+                                        const deepLink = `btgtrader://trade?ticker=${ticker}`; // Best guess for BTG Trader
+                                        const webLink = "https://www.btgpactual.com/investimentos/home-broker"; // Fallback to Home Broker
+                                        const storeLink = "https://apps.apple.com/br/app/btg-trader/id1396349942"; // BTG Trader Store Link
 
-                                        // Web-only 'Try-to-open-app' Hack
+                                        // Enhanced App Detection
                                         const start = Date.now();
+                                        let appOpened = false;
+
+                                        // If the user switches apps (app opens), the page will hide/blur.
+                                        const handleVisibilityChange = () => {
+                                            if (document.hidden || document.webkitHidden) {
+                                                appOpened = true;
+                                            }
+                                        };
+                                        const handleBlur = () => {
+                                            appOpened = true;
+                                        };
+
+                                        document.addEventListener('visibilitychange', handleVisibilityChange);
+                                        window.addEventListener('blur', handleBlur);
+
                                         window.location.href = deepLink;
 
                                         setTimeout(() => {
-                                            const elapsed = Date.now() - start;
-                                            // If the browser was backgrounded (app opened), handling time would pause/delay.
-                                            // If we are still here and time is roughly valid, app likely didn't open.
-                                            // 2500ms allows for some dialog interaction time.
-                                            if (elapsed < 3000) {
-                                                if (window.confirm("Não detectamos o app do BTG instalado. Deseja acessar pelo navegador?")) {
-                                                    window.open(webLink, '_blank');
+                                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+                                            window.removeEventListener('blur', handleBlur);
+
+                                            // If appOpened is true, we succeeded.
+                                            // If not, we check time too.
+                                            // However, on iOS, the system dialog "Open in BTG Trader?" does NOT block execution or blur immediately.
+                                            // So we rely on a slightly longer timeout and user confirmation only if really needed.
+
+                                            if (!appOpened) {
+                                                // Ask user if they want to go to store/web
+                                                if (window.confirm(`Não detectamos o app BTG Trader aberto.\n\nDeseja acessar via Web ou instalar o App?`)) {
+                                                    // Check if mobile to suggest store, else web
+                                                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                                                    window.open(isMobile ? storeLink : webLink, '_blank');
                                                 }
                                             }
-                                        }, 2000);
+                                        }, 4000); // 4s timeout to allow system dialog interaction
                                     }}
                                     style={{
                                         alignSelf: 'flex-start',
