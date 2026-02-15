@@ -746,9 +746,24 @@ const Home = ({ onNavigate }) => {
                                     {opportunities.map((item, idx) => {
                                         const stock = item.stock;
 
-                                        // Backend already filters by date/strategy
-                                        const validPuts = item.options?.puts || [];
-                                        const validCalls = item.options?.calls || [];
+                                        // Filter Logic matching Modal (Cheap)
+                                        const now = new Date(); now.setHours(0, 0, 0, 0);
+
+                                        // Puts (Venda Coberta): <= 2 Months
+                                        const maxDate = new Date(now); maxDate.setMonth(maxDate.getMonth() + 2); maxDate.setHours(23, 59, 59, 999);
+                                        const validPuts = (item.options?.puts || []).filter(opt => {
+                                            const [y, m, d] = opt.expiration.split('-').map(Number);
+                                            const date = new Date(y, m - 1, d);
+                                            return date <= maxDate;
+                                        });
+
+                                        // Calls (Compra a Seco): > 3 Months
+                                        const minDate = new Date(now); minDate.setMonth(minDate.getMonth() + 3);
+                                        const validCalls = (item.options?.calls || []).filter(opt => {
+                                            const [y, m, d] = opt.expiration.split('-').map(Number);
+                                            const date = new Date(y, m - 1, d);
+                                            return date > minDate;
+                                        });
 
                                         const putsCount = validPuts.length;
                                         const callsCount = validCalls.length;
@@ -927,9 +942,24 @@ const Home = ({ onNavigate }) => {
                                     {expensiveOpportunities.map((item, idx) => {
                                         const stock = item.stock;
 
-                                        // Backend already filters by date/strategy
-                                        const validCalls = item.options?.calls || [];
-                                        const validPuts = item.options?.puts || [];
+                                        // Filter Logic matching Modal (Expensive)
+                                        const now = new Date(); now.setHours(0, 0, 0, 0);
+
+                                        // Calls (Lançamento Coberto): <= 2 Months
+                                        const maxDate = new Date(now); maxDate.setMonth(maxDate.getMonth() + 2); maxDate.setHours(23, 59, 59, 999);
+                                        const validCalls = (item.options?.calls || []).filter(opt => {
+                                            const [y, m, d] = opt.expiration.split('-').map(Number);
+                                            const date = new Date(y, m - 1, d);
+                                            return date <= maxDate;
+                                        });
+
+                                        // Puts (Compra a Seco): > 3 Months
+                                        const minDate = new Date(now); minDate.setMonth(minDate.getMonth() + 3);
+                                        const validPuts = (item.options?.puts || []).filter(opt => {
+                                            const [y, m, d] = opt.expiration.split('-').map(Number);
+                                            const date = new Date(y, m - 1, d);
+                                            return date > minDate;
+                                        });
 
                                         const callsCount = validCalls.length;
                                         const putsCount = validPuts.length;
