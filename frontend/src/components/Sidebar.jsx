@@ -92,7 +92,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <p>WiseFinan v1.0</p>
+                    <p>WiseFinan v2.0</p>
                 </div>
             </aside>
         </>

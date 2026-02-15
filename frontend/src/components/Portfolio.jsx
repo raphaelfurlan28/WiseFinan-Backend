@@ -213,7 +213,7 @@ const Portfolio = () => {
             data: [
                 { name: "Reserva de Emergência", value: 30, color: "#3b82f6", icon: Shield, desc: "Liquidez e Segurança", recommendationType: "selic" },
                 { name: "Proteção IPCA", value: 40, color: "#a855f7", icon: Umbrella, desc: "Longo Prazo e Aposentadoria", recommendationType: "ipca" },
-                { name: "Ações (Baixa Volatilidade)", value: 30, color: "#f59e0b", icon: Anchor, desc: "Setores Perenes: Energia, Seguros", isStock: true, recommendationType: "lowVol" }
+                { name: "Ações (Baixa Volatilidade)", value: 30, color: "#f59e0b", icon: Anchor, desc: "Setores Perenes: Energia, Saneamento, Seguros e Bancos", isStock: true, recommendationType: "lowVol" }
             ]
         },
         arrojado: {

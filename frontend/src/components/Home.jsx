@@ -307,6 +307,56 @@ const Home = ({ onNavigate }) => {
                                     <ChevronRight size={12} style={{ opacity: 0.6 }} />
                                 </button>
 
+                                {/* BTG Deep Link Button */}
+                                <button
+                                    onClick={() => {
+                                        const ticker = option.ticker; // Use option ticker
+                                        const deepLink = `btgpactual://investments/stock-exchange/order/create/${ticker}`; // Hypothetical Deep Link
+                                        const webLink = "https://www.btgpactual.com/"; // Fallback to Home
+
+                                        // Web-only 'Try-to-open-app' Hack
+                                        const start = Date.now();
+                                        window.location.href = deepLink;
+
+                                        setTimeout(() => {
+                                            const elapsed = Date.now() - start;
+                                            // If the browser was backgrounded (app opened), handling time would pause/delay.
+                                            // If we are still here and time is roughly valid, app likely didn't open.
+                                            // 2500ms allows for some dialog interaction time.
+                                            if (elapsed < 3000) {
+                                                if (window.confirm("Não detectamos o app do BTG instalado. Deseja acessar pelo navegador?")) {
+                                                    window.open(webLink, '_blank');
+                                                }
+                                            }
+                                        }, 2000);
+                                    }}
+                                    style={{
+                                        alignSelf: 'flex-start',
+                                        background: '#002561', // BTG Dark Blue
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
+                                        padding: '8px 14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: 'pointer',
+                                        color: '#fff',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        marginTop: '12px',
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        <TrendingUp size={10} color="#002561" />
+                                    </div>
+                                    <span>Negociar no BTG</span>
+                                    <ChevronRight size={12} style={{ opacity: 0.6 }} />
+                                </button>
+
                                 <div style={{
                                     display: 'flex',
                                     gap: '12px',
