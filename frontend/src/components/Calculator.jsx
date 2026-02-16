@@ -18,6 +18,7 @@ const Calculator = () => {
     const [rateAnnual, setRateAnnual] = useState(10.0);
     const [ipcaProj, setIpcaProj] = useState(4.5); // Default expected IPCA
     const [selicRate, setSelicRate] = useState(10.75); // Default Selic
+    const [selectedIR, setSelectedIR] = useState(0); // 0, 0.15 or 0.225
 
     // Result State
     const [results, setResults] = useState(null);
@@ -138,7 +139,7 @@ const Calculator = () => {
     // Calculation Effect
     useEffect(() => {
         calculateSimulation();
-    }, [initialAmount, monthlyAmount, maturityDate, rateAnnual]);
+    }, [initialAmount, monthlyAmount, maturityDate, rateAnnual, selectedIR]);
 
     const calculateSimulation = () => {
         if (!maturityDate || !rateAnnual) return;
@@ -180,11 +181,25 @@ const Calculator = () => {
             });
         }
 
-        setChartData(data);
+        setChartData(data.map(item => {
+            const grossYield = item.total - item.invested;
+            const netYield = grossYield * (1 - selectedIR);
+            return {
+                ...item,
+                total: parseFloat((item.invested + netYield).toFixed(2)),
+                grossTotal: item.total
+            };
+        }));
+
+        const finalGrossYield = currentTotal - currentInvested;
+        const finalNetYield = finalGrossYield * (1 - selectedIR);
+
         setResults({
             endInvested: currentInvested,
-            endTotal: currentTotal,
-            yield: currentTotal - currentInvested
+            endTotal: currentInvested + finalNetYield,
+            yield: finalNetYield,
+            grossTotal: currentTotal,
+            grossYield: finalGrossYield
         });
     };
 
@@ -439,55 +454,85 @@ const Calculator = () => {
                                 <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Rendimento</h3>
                             </div>
                             <div className="rf-card-content" style={{ padding: '4px 16px' }}>
-                                <span style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#38bdf8' }}>
-                                    + R$ {results ? results.yield.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"}
-                                </span>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                                    * Valor bruto. Sujeito a IR no resgate.
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                                    <span style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                                        + R$ {results ? results.yield.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : "0,00"}
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', marginBottom: '8px' }}>
+                                    {selectedIR > 0 ? `* Valor líquido após descontar ${selectedIR * 100}% de IR.` : '* Valor bruto. Sujeito a IR no resgate.'}
+                                </div>
+
+                                {/* IR Selection Buttons */}
+                                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', gap: '2px', width: 'fit-content' }}>
+                                    {[
+                                        { label: 'Bruto', val: 0 },
+                                        { label: '15%', val: 0.15 },
+                                        { label: '22.5%', val: 0.225 }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.label}
+                                            onClick={() => setSelectedIR(opt.val)}
+                                            style={{
+                                                background: selectedIR === opt.val ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                                                color: selectedIR === opt.val ? '#38bdf8' : '#64748b',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                padding: '2px 8px',
+                                                fontSize: '0.65rem',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Chart */}
-                    <div className="rf-card glass-card" style={{ flex: 1, minHeight: '400px', padding: '16px' }}>
-                        <div className="rf-card-header" style={{
-                            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
-                            borderRadius: '16px 16px 0 0',
-                            padding: '12px 16px',
-                            margin: '-16px -16px 16px -16px',
-                            display: 'flex', alignItems: 'center', gap: '12px'
-                        }}>
-                            <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                                <TrendingUp size={20} color="#000000" />
-                            </div>
-                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Evolução Patrimonial</h3>
+                {/* Chart */}
+                <div className="rf-card glass-card" style={{ flex: 1, minHeight: '400px', padding: '16px' }}>
+                    <div className="rf-card-header" style={{
+                        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent)',
+                        borderRadius: '16px 16px 0 0',
+                        padding: '12px 16px',
+                        margin: '-16px -16px 16px -16px',
+                        display: 'flex', alignItems: 'center', gap: '12px'
+                    }}>
+                        <div style={{ background: '#ffffff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                            <TrendingUp size={20} color="#000000" />
                         </div>
-                        <div className="rf-card-content" style={{ height: '350px', padding: '0' }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                    <XAxis dataKey="label" stroke="#666" tick={{ fill: '#666', fontSize: 12 }} minTickGap={30} />
-                                    <YAxis
-                                        stroke="#666"
-                                        tick={{ fill: '#666', fontSize: 12 }}
-                                        tickFormatter={(val) => `R$ ${val / 1000}k`}
-                                    />
-                                    <RechartsTooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #333', borderRadius: '8px' }}
-                                        formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="total" name="Total Acumulado" stroke="#4ade80" strokeWidth={3} dot={false} />
-                                    <Line type="monotone" dataKey="invested" name="Total Investido" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Evolução Patrimonial</h3>
                     </div>
+                    <div className="rf-card-content" style={{ height: '350px', padding: '0' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                <XAxis dataKey="label" stroke="#666" tick={{ fill: '#666', fontSize: 12 }} minTickGap={30} />
+                                <YAxis
+                                    stroke="#666"
+                                    tick={{ fill: '#666', fontSize: 12 }}
+                                    tickFormatter={(val) => `R$ ${val / 1000}k`}
+                                />
+                                <RechartsTooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #333', borderRadius: '8px' }}
+                                    formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                                />
+                                <Legend />
+                                <Line type="monotone" dataKey="total" name="Total Acumulado" stroke="#4ade80" strokeWidth={3} dot={false} />
+                                <Line type="monotone" dataKey="invested" name="Total Investido" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
 
-                </div >
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

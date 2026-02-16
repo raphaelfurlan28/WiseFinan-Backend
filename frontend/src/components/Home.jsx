@@ -6,10 +6,11 @@ import './OptionsModule.css'; // Import Options Styles
 import './Dashboard.css'; // Import Dashboard Styles
 import './News.css';
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling, Filter, ChevronLeft } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
+import StockDetail from './StockDetail';
 
 
 
@@ -45,6 +46,7 @@ const Home = ({ onNavigate }) => {
     const [loading, setLoading] = useState(true);
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
     const [selectedOperation, setSelectedOperation] = useState(null);
+    const [selectedStock, setSelectedStock] = useState(null);
 
     // Home Highlights State
     const [homeNews, setHomeNews] = useState([]);
@@ -58,6 +60,9 @@ const Home = ({ onNavigate }) => {
     const [generalQuotes, setGeneralQuotes] = useState([]);
     const [qtPeriod, setQtPeriod] = useState('1D'); // 1D, 1S, 1M
     const [moverPeriod, setMoverPeriod] = useState('1D'); // 1D, 1M, 1A
+    const [segMetric, setSegMetric] = useState('cagr_luc');
+    const [segOrder, setSegOrder] = useState('top'); // top or bottom
+    const [segmentedStocks, setSegmentedStocks] = useState([]);
 
     // Fetch Home Highlights
     useEffect(() => {
@@ -141,13 +146,10 @@ const Home = ({ onNavigate }) => {
             if (v === undefined || v === null) return 0;
             let num = 0;
             if (typeof v === 'number') {
-                num = Math.abs(v) < 1 ? v * 100 : v;
+                num = v;
             } else if (typeof v === 'string') {
-                let clean = v.replace('%', '').replace(',', '.');
+                let clean = v.replace('%', '').replace(',', '.').replace('R$', '').trim();
                 num = parseFloat(clean);
-                if (!v.includes('%') && Math.abs(num) < 1) {
-                    num = num * 100;
-                }
             }
             return isNaN(num) ? 0 : num;
         };
@@ -170,11 +172,70 @@ const Home = ({ onNavigate }) => {
         setTopLosers(sorted.slice(-3).reverse());
     }, [moverPeriod, stocksMap]);
 
+    // Effect for Segmentation Filter
+    useEffect(() => {
+        const stocksList = Object.values(stocksMap);
+        if (stocksList.length === 0) return;
+
+        const getVal = (v) => {
+            if (v === undefined || v === null) return 0;
+            let num = 0;
+            if (typeof v === 'number') {
+                num = v;
+            } else if (typeof v === 'string') {
+                let clean = v.replace('%', '').replace(',', '.').replace('R$', '').trim();
+                num = parseFloat(clean);
+            }
+            return isNaN(num) ? 0 : num;
+        };
+
+        const sorted = [...stocksList]
+            .filter(s => {
+                const val = getVal(s[segMetric]);
+                return val !== 0;
+            })
+            .sort((a, b) => {
+                const valA = getVal(a[segMetric]);
+                const valB = getVal(b[segMetric]);
+                return segOrder === 'top' ? valB - valA : valA - valB;
+            });
+
+        setSegmentedStocks(sorted.slice(0, 5));
+    }, [segMetric, segOrder, stocksMap]);
+
     // Helper for Calendar Dates
     const formatDateSimple = (dateStr) => {
         if (!dateStr) return '';
         const [y, m, d] = dateStr.split('-');
         return `${d}/${m}`;
+    };
+
+    const getMetricLabel = (m) => {
+        switch (m) {
+            case 'cagr_luc': return 'CAGR Lucro (5A)';
+            case 'cagr_pat': return 'CAGR Patr. (5A)';
+            case 'cagr_roe': return 'CAGR ROE (5A)';
+            case 'div_ebit': return 'Dív. Líq. / EBIT';
+            case 'div_pl': return 'Dív. Líq. / PL';
+            default: return '';
+        }
+    };
+
+    const formatSegValue = (v, m) => {
+        if (v === undefined || v === null || v === "") return '-';
+        let num = 0;
+        if (typeof v === 'number') {
+            num = v;
+        } else if (typeof v === 'string') {
+            let clean = v.replace('%', '').replace(',', '.').replace('R$', '').trim();
+            num = parseFloat(clean);
+        }
+
+        if (isNaN(num)) return '-';
+
+        let formatted = num.toFixed(2).replace('.', ',');
+        if (m.startsWith('cagr')) return `${formatted}%`;
+        return formatted;
     };
 
     useEffect(() => {
@@ -772,7 +833,7 @@ const Home = ({ onNavigate }) => {
             </div>
 
             {/* Renda Variável Header */}
-            <div style={{ marginBottom: '12px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px' }}>
+            <div style={{ padding: '0 8px', marginBottom: '12px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <TrendingUp size={24} color="#94a3b8" />
                 <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Renda Variável</h2>
             </div>
@@ -1176,13 +1237,13 @@ const Home = ({ onNavigate }) => {
             </div>
 
 
-            {/* Resumo do Dia: Maiores Altas e Baixas */}
+            {/* Resumo das Ações: Maiores Altas e Baixas */}
             < div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div >
 
             <div style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px', paddingRight: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <TrendingUp size={24} color="#94a3b8" />
-                    <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap' }}>Resumo do Dia</h2>
+                    <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap' }}>Resumo das Ações</h2>
                 </div>
 
                 {/* Period Selector for Movers */}
@@ -1350,8 +1411,151 @@ const Home = ({ onNavigate }) => {
                 </div>
             </div>
 
+            {/* Segmentation Filter Section */}
+            <div style={{ marginTop: '32px' }}>
+                <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Filter size={24} color="#94a3b8" />
+                        <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Filtro de Eficiência</h2>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {/* Metric Selector */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+                            {['cagr_luc', 'cagr_pat', 'cagr_roe', 'div_ebit', 'div_pl'].map(m => (
+                                <button
+                                    key={m}
+                                    onClick={() => setSegMetric(m)}
+                                    style={{
+                                        background: segMetric === m ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        color: segMetric === m ? '#fff' : '#64748b',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '4px 10px',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {getMetricLabel(m)}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Order Selector */}
+                        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px' }}>
+                            {[
+                                { id: 'top', label: 'Maiores 5' },
+                                { id: 'bottom', label: 'Menores 5' }
+                            ].map(o => (
+                                <button
+                                    key={o.id}
+                                    onClick={() => setSegOrder(o.id)}
+                                    style={{
+                                        background: segOrder === o.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                        color: segOrder === o.id ? '#fff' : '#64748b',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '4px 10px',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {o.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+                    <div style={{ padding: '16px' }}>
+                        {segmentedStocks.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                {segmentedStocks.map((stock, idx) => {
+                                    const val = stock[segMetric];
+                                    const formatted = formatSegValue(val, segMetric);
+
+                                    return (
+                                        <React.Fragment key={stock.ticker}>
+                                            <div
+                                                onClick={() => setSelectedStock(stock)}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                    cursor: 'pointer', padding: '6px 8px', borderRadius: '8px',
+                                                    transition: 'background 0.2s',
+                                                    backgroundColor: 'transparent'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        {stock.image_url ? (
+                                                            <img src={stock.image_url} alt={stock.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8' }}>{stock.ticker?.[0]}</span>
+                                                        )}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f1f5f9' }}>{stock.ticker}</span>
+                                                        <span style={{ fontSize: '0.7rem', color: '#64748b', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                            {stock.company_name}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                        <span style={{
+                                                            fontSize: '1rem',
+                                                            fontWeight: 700,
+                                                            color: (() => {
+                                                                const n = typeof val === 'number' ? val : parseFloat(val?.toString().replace(',', '.') || '0');
+                                                                if (segMetric.startsWith('cagr')) {
+                                                                    return n > 0 ? '#4ade80' : n < 0 ? '#f87171' : '#f1f5f9';
+                                                                }
+                                                                if (segMetric === 'div_ebit' || segMetric === 'div_pl') {
+                                                                    return n > 2.5 ? '#f87171' : '#f1f5f9';
+                                                                }
+                                                                return '#f1f5f9';
+                                                            })()
+                                                        }}>
+                                                            {formatted}
+                                                        </span>
+                                                        {(segMetric === 'div_ebit' || segMetric === 'div_pl') && (() => {
+                                                            const n = typeof val === 'number' ? val : parseFloat(val?.toString().replace(',', '.') || '0');
+                                                            return n > 2.5;
+                                                        })() && (
+                                                                <span style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 800, marginTop: '-3px', textTransform: 'uppercase' }}>Risco</span>
+                                                            )}
+                                                    </div>
+                                                    <ChevronRight size={14} color="#475569" />
+                                                </div>
+                                            </div>
+                                            {idx < segmentedStocks.length - 1 && (
+                                                <div style={{ margin: '2px 8px', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                                <TrendingUp size={32} style={{ opacity: 0.2, marginBottom: '8px' }} />
+                                <p>Nenhum dado encontrado para este filtro.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* Separator and Renda Fixa Header */}
-            < div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div >
+            <div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
 
             <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px' }}>
                 <Landmark size={24} color="#94a3b8" />
@@ -1942,6 +2146,14 @@ const Home = ({ onNavigate }) => {
                     />
                 )
             }
+
+            {/* Stock Detail Modal */}
+            {selectedStock && (
+                <StockDetail
+                    stock={selectedStock}
+                    onClose={() => setSelectedStock(null)}
+                />
+            )}
 
             {/* ================================================================================== */}
             {/* NEW SECTIONS: News & Calendar Highlights */}
