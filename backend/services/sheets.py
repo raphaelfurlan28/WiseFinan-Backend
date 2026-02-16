@@ -118,6 +118,24 @@ def get_sheet_data():
     # User calls it "Menor Valor", UI shows "Custo Baixo". Add both.
     idx_min_val = get_col_index(["MENOR VALOR", "CUSTO BAIXO", "CUSTO", "VALOR MINIMO", "MIN VALOR"])
     idx_max_val = get_col_index(["MAIOR VALOR", "CUSTO ALTO", "VALOR MAXIMO", "MAX VALOR"])
+    
+    # Growth Columns (CAGR)
+    idx_cagr_luc = get_col_index(["CAGR/LUC", "CAGR LUCRO", "CAGR LUC"])
+    idx_cagr_pat = get_col_index(["CAGR/PAT", "CAGR PATRIMONIO", "CAGR PAT"])
+    idx_cagr_roe = get_col_index(["CAGR/ROE", "CAGR ROE"])
+
+    # Variation Columns
+    idx_var_12m = get_col_index(["VAR(12M)", "VAR 12M", "VARIAÇÃO 12M"])
+    idx_var_1m = get_col_index(["VAR(1M)", "VAR 1M", "VARIAÇÃO MÊS", "VARIAÇÃO 1M"])
+
+    # Debt Columns
+    idx_div_ebit = get_col_index(["DIV/EBIT", "DIVIDA/EBIT", "DIVIDA LIQUIDA / EBIT"])
+    idx_div_pl = get_col_index(["DIV/PL", "DIVIDA/PL", "DIVIDA LIQUIDA / PL"])
+
+    # Profitability Columns
+    idx_roe = get_col_index(["ROE"])
+    idx_roa = get_col_index(["ROA"])
+    idx_roic = get_col_index(["ROIC"])
 
     # Fallback to defaults if not found (based on user image logic)
     # But dynamic search is safer.
@@ -179,7 +197,17 @@ def get_sheet_data():
             "change_day": get_cached_value(t, 'variation', get_val(get_col_index(["VARIAÇÃO DIA", "VARIAÇÃO DO DIA", "VARIAÇÃO", "CHANGE"]))),
             "vol_ano": vol_ano_raw,
             "last_close": get_val(get_col_index(["ULTIMO FECHAMENTO", "FECHAMENTO ANTERIOR", "FECHAMENTO"])),
-            "about": get_val(get_col_index(["SOBRE", "DESCRIÇÃO"]))
+            "about": get_val(get_col_index(["SOBRE", "DESCRIÇÃO"])),
+            "cagr_luc": get_val(idx_cagr_luc),
+            "cagr_pat": get_val(idx_cagr_pat),
+            "cagr_roe": get_val(idx_cagr_roe),
+            "var_12m": get_val(idx_var_12m),
+            "var_1m": get_val(idx_var_1m),
+            "div_ebit": get_val(idx_div_ebit),
+            "div_pl": get_val(idx_div_pl),
+            "roe_val": get_val(idx_roe),
+            "roa_val": get_val(idx_roa),
+            "roic_val": get_val(idx_roic)
         })
         
     return stocks

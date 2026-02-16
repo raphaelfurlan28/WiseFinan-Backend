@@ -42,8 +42,13 @@ def debug():
 
     headers = vals[0]
     print(f"--- BASE Headers ({len(headers)}) ---")
+    header_list = []
     for i, h in enumerate(headers):
         print(f"{i}: {h}")
+        header_list.append(h)
+    
+    with open('headers.json', 'w', encoding='utf-8') as f:
+        json.dump(header_list, f, ensure_ascii=False, indent=2)
 
     if len(vals) > 1:
         print("\n--- First Row Data ---")

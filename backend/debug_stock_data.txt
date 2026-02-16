@@ -1,0 +1,39 @@
+﻿
+> output_v2.json:29:            "underlying": 
+"POMO4",
+  output_v2.json:30:            "volume": "132,00"
+  output_v2.json:31:          },
+  output_v2.json:32:          {
+  output_v2.json:33:            "bs_price": 
+0.0058824655081684135,
+  output_v2.json:34:            "bs_price_val": 
+"R$ 0.01",
+  output_v2.json:35:            "cost_display": 
+"0.57%",
+  output_v2.json:36:            "delta": 
+0.014143427581633795,
+  output_v2.json:37:            "delta_val": 
+"0.014",
+  output_v2.json:38:            "dist_val": 0.6604,
+  output_v2.json:39:            "distance": 
+"66.04%",
+  output_v2.json:40:            "edge_formatted": 
+"920.0%",
+  output_v2.json:41:            "expiration": 
+"2026-06-19",
+  output_v2.json:42:            "last_price": 0.06,
+  output_v2.json:43:            "premium": "0.57%",
+  output_v2.json:44:            "premium_val": 
+0.0057,
+  output_v2.json:45:            "price": "0,06",
+  output_v2.json:46:            "price_val": 0.06,
+  output_v2.json:47:            "prob_success": 
+"1.4%",
+  output_v2.json:48:            "sigma": "32.9%",
+  output_v2.json:49:            "strike": "10,56",
+  output_v2.json:50:            "ticker": 
+"POMOF105",
+  output_v2.json:51:            "trades": "1",
+  output_v2.json:52:            "type": "CALL",
+
+

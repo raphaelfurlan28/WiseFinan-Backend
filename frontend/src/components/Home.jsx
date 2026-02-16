@@ -57,6 +57,7 @@ const Home = ({ onNavigate }) => {
     const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
     const [generalQuotes, setGeneralQuotes] = useState([]);
     const [qtPeriod, setQtPeriod] = useState('1D'); // 1D, 1S, 1M
+    const [moverPeriod, setMoverPeriod] = useState('1D'); // 1D, 1M, 1A
 
     // Fetch Home Highlights
     useEffect(() => {
@@ -89,38 +90,12 @@ const Home = ({ onNavigate }) => {
                     console.error("Error fetching quotes", e);
                 }
 
-                // Stocks Map & Market Movers
+                // Stocks Map
                 const resStocks = await fetch(getApiUrl('/api/stocks'));
                 const jsonStocks = await resStocks.json();
                 const map = {};
                 if (Array.isArray(jsonStocks)) {
                     jsonStocks.forEach(s => map[s.ticker] = s);
-
-                    // Calculate Gainers/Losers
-                    const getVal = (v) => {
-                        if (v === undefined || v === null) return 0;
-                        let num = 0;
-                        if (typeof v === 'number') {
-                            num = Math.abs(v) < 1 ? v * 100 : v;
-                        } else if (typeof v === 'string') {
-                            let clean = v.replace('%', '').replace(',', '.');
-                            num = parseFloat(clean);
-                            if (!v.includes('%') && Math.abs(num) < 1) {
-                                num = num * 100;
-                            }
-                        }
-                        return isNaN(num) ? 0 : num;
-                    };
-
-                    const sorted = [...jsonStocks]
-                        .filter(s => {
-                            const val = getVal(s.change_day);
-                            return val !== 0; // Filter out zeros as requested
-                        })
-                        .sort((a, b) => getVal(b.change_day) - getVal(a.change_day));
-
-                    setTopGainers(sorted.slice(0, 3));
-                    setTopLosers(sorted.slice(-3).reverse());
                 }
                 setStocksMap(map);
 
@@ -156,6 +131,44 @@ const Home = ({ onNavigate }) => {
         };
         fetchHighlights();
     }, []);
+
+    // Effect to update Movers based on period
+    useEffect(() => {
+        const stocksList = Object.values(stocksMap);
+        if (stocksList.length === 0) return;
+
+        const getVal = (v) => {
+            if (v === undefined || v === null) return 0;
+            let num = 0;
+            if (typeof v === 'number') {
+                num = Math.abs(v) < 1 ? v * 100 : v;
+            } else if (typeof v === 'string') {
+                let clean = v.replace('%', '').replace(',', '.');
+                num = parseFloat(clean);
+                if (!v.includes('%') && Math.abs(num) < 1) {
+                    num = num * 100;
+                }
+            }
+            return isNaN(num) ? 0 : num;
+        };
+
+        const fieldMap = {
+            '1D': 'change_day',
+            '1M': 'var_1m',
+            '1A': 'var_12m'
+        };
+        const field = fieldMap[moverPeriod];
+
+        const sorted = [...stocksList]
+            .filter(s => {
+                const val = getVal(s[field]);
+                return val !== 0;
+            })
+            .sort((a, b) => getVal(b[field]) - getVal(a[field]));
+
+        setTopGainers(sorted.slice(0, 3));
+        setTopLosers(sorted.slice(-3).reverse());
+    }, [moverPeriod, stocksMap]);
 
     // Helper for Calendar Dates
     const formatDateSimple = (dateStr) => {
@@ -1166,9 +1179,39 @@ const Home = ({ onNavigate }) => {
             {/* Resumo do Dia: Maiores Altas e Baixas */}
             < div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div >
 
-            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px' }}>
-                <TrendingUp size={24} color="#94a3b8" />
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Resumo do Dia</h2>
+            <div style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px', paddingRight: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TrendingUp size={24} color="#94a3b8" />
+                    <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap' }}>Resumo do Dia</h2>
+                </div>
+
+                {/* Period Selector for Movers */}
+                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', alignSelf: 'flex-start' }}>
+                    {[
+                        { id: '1D', label: '1 Dia' },
+                        { id: '1M', label: '1 Mês' },
+                        { id: '1A', label: '1 Ano' }
+                    ].map((p) => (
+                        <button
+                            key={p.id}
+                            onClick={() => setMoverPeriod(p.id)}
+                            style={{
+                                background: moverPeriod === p.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                color: moverPeriod === p.id ? '#fff' : '#64748b',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '4px 10px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="dashboard-grid" style={{ marginTop: '0' }}>
@@ -1219,10 +1262,12 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>Var. dia</span>
+                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
+                                                Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
+                                            </span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '1rem' }}>
                                                 <TrendingUp size={16} />
-                                                {formatVariation(stock.change_day)}
+                                                {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
                                             </div>
                                         </div>
                                     </div>
@@ -1284,10 +1329,12 @@ const Home = ({ onNavigate }) => {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>Var. dia</span>
+                                            <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
+                                                Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
+                                            </span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '1rem' }}>
                                                 <TrendingDown size={16} />
-                                                {formatVariation(stock.change_day)}
+                                                {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
                                             </div>
                                         </div>
                                     </div>

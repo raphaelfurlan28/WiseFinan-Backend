@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Label } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, ListPlus, Landmark, Target, DollarSign, ArrowUp, ArrowDown, Coins, PieChart, Activity } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ListPlus, Landmark, Target, DollarSign, ArrowUp, ArrowDown, Coins, PieChart, Activity, Shield } from 'lucide-react';
 import OptionsModule from './OptionsModule';
 import ModernLoader from './ModernLoader';
 import { getApiUrl } from '../services/api';
@@ -107,6 +107,17 @@ export default function StockDetail({ stock, onBack }) {
         return pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
     };
 
+    const parsePrice = (val) => {
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        try {
+            const clean = val.toString().replace('R$', '').replace(' ', '').replace('%', '').replace('.', '').replace(',', '.');
+            return parseFloat(clean) || 0;
+        } catch (e) {
+            return 0;
+        }
+    };
+
     return (
         <div className="stock-detail-container">
             {/* HEADER */}
@@ -172,25 +183,13 @@ export default function StockDetail({ stock, onBack }) {
 
             {showOptions && <OptionsModule ticker={stock.ticker} logoUrl={stock.image_url} onClose={() => setShowOptions(false)} />}
 
-            {/* Historical Chart Section - Now in Card Format */}
-            <div className="rf-card glass-card" style={{ marginTop: '24px', marginBottom: '24px' }}>
-                <div className="rf-card-header" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px 16px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className="rf-card-icon" style={{ background: 'rgba(96, 165, 250, 0.1)', border: '1px solid rgba(96, 165, 250, 0.2)' }}>
-                            <TrendingUp size={18} color="#60a5fa" strokeWidth={2.5} />
-                        </div>
-                        <span className="label" style={{ fontSize: '10px' }}>Histórico de Preços</span>
-                    </div>
-
+            {/* Historical Chart Section - Clean Layout */}
+            <div className="detail-chart-section">
+                <div className="stats-header-minimal">
+                    <TrendingUp size={20} color="var(--text-primary)" />
+                    <h3>Histórico de Preços</h3>
                 </div>
-                <div className="rf-card-content" style={{ padding: '8px 12px 12px 12px' }}>
+                <div className="chart-clean-wrapper">
                     <div className="chart-container" style={{ height: 250, width: '100%' }}>
                         {loadingHistory ? (
                             <ModernLoader text="Carregando gráfico..." />
@@ -203,7 +202,7 @@ export default function StockDetail({ stock, onBack }) {
                                             <stop offset="95%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.2} />
                                     <XAxis dataKey="date" hide={true} />
                                     <YAxis
                                         orientation="right"
@@ -256,102 +255,144 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
             </div>
 
-            <div className="stats-grid">
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <DollarSign size={18} color="#4ade80" strokeWidth={2.5} />
-                        </div>
-                        <span className="label">Últ. Fechamento</span>
-                    </div>
-                    <div className="val-card-content">
-                        <span className="value">R$ {stock.price}</span>
-                    </div>
+            <div className="detail-stats-section">
+                <div className="stats-header-minimal">
+                    <Activity size={20} color="var(--text-primary)" />
+                    <h3>Estatísticas</h3>
                 </div>
 
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <ArrowUp size={18} color="#4ade80" strokeWidth={2.5} />
-                        </div>
-                        <span className="label">Máxima 12m</span>
-                    </div>
-                    <div className="val-card-content">
-                        <span className="value">R$ {stock.max_12m}</span>
-                    </div>
-                </div>
-
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <ArrowDown size={18} color="#f87171" strokeWidth={2.5} />
-                        </div>
-                        <span className="label">Mínima 12m</span>
-                    </div>
-                    <div className="val-card-content">
+                <div className="stats-clean-list">
+                    <div className="stat-clean-row">
+                        <span className="label">Mín. de 52 semanas</span>
                         <span className="value">R$ {stock.min_12m}</span>
                     </div>
-                </div>
 
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <Coins size={18} color="#facc15" strokeWidth={2.5} />
-                        </div>
-                        <span className="label">Dividendo (DY)</span>
+                    <div className="stat-clean-row">
+                        <span className="label">Máx. de 52 semanas</span>
+                        <span className="value">R$ {stock.max_12m}</span>
                     </div>
-                    <div className="val-card-content" style={{ width: '100%', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', gap: '4px' }}>
-                            <span className="value">{formatPercentage(stock.dividend)}</span>
-                            {(() => {
-                                try {
-                                    const priceStr = (stock.price || "0").toString().replace('R$', '').replace('.', '').replace(',', '.');
-                                    const price = parseFloat(priceStr);
-                                    const divStr = (stock.dividend || "0").toString().replace(',', '.').replace('%', '').trim();
-                                    let divPct = parseFloat(divStr);
-                                    if (divPct < 1 && divPct > 0) divPct = divPct * 100;
 
-                                    if (price > 0 && divPct > 0) {
-                                        const divValue = price * (divPct / 100);
-                                        return (
-                                            <span style={{
-                                                fontSize: '1.2rem',
-                                                color: '#4ade80',
-                                                fontWeight: '700',
-                                                textShadow: '0 0 10px rgba(74, 222, 128, 0.3)'
-                                            }}>
-                                                {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
-                                        );
-                                    }
-                                } catch (e) { return null; }
-                                return null;
-                            })()}
-                        </div>
+                    <div className="stat-clean-row">
+                        <span className="label">Dividend yield</span>
+                        <span className="value">{formatPercentage(stock.dividend)}</span>
                     </div>
-                </div>
 
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <PieChart size={18} color="#60a5fa" strokeWidth={2.5} />
-                        </div>
+                    <div className="stat-clean-row">
+                        <span className="label">Proventos (12 Meses)</span>
+                        {(() => {
+                            try {
+                                const priceStr = (stock.price || "0").toString().replace('R$', '').replace('.', '').replace(',', '.');
+                                const price = parseFloat(priceStr);
+                                const divStr = (stock.dividend || "0").toString().replace(',', '.').replace('%', '').trim();
+                                let divPct = parseFloat(divStr);
+                                if (divPct < 1 && divPct > 0) divPct = divPct * 100;
+
+                                if (price > 0 && divPct > 0) {
+                                    const divValue = price * (divPct / 100);
+                                    return (
+                                        <span className="value">
+                                            {divValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </span>
+                                    );
+                                }
+                            } catch (e) { return <span className="value">--</span>; }
+                            return <span className="value">--</span>;
+                        })()}
+                    </div>
+
+                    <div className="stat-clean-row">
                         <span className="label">Payout Médio</span>
-                    </div>
-                    <div className="val-card-content">
                         <span className="value">{formatPercentage(stock.payout)}</span>
                     </div>
-                </div>
 
-                <div className="rf-card glass-card">
-                    <div className="rf-card-header">
-                        <div className="rf-card-icon">
-                            <Activity size={18} color="#a855f7" strokeWidth={2.5} />
-                        </div>
+                    <div className="stat-clean-row">
                         <span className="label">Volat. (Ano)</span>
-                    </div>
-                    <div className="val-card-content">
                         <span className="value">{stock.vol_ano || "--"}</span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">Variação (12M)</span>
+                        <span className="value" style={{ color: parsePrice(stock.var_12m) > 0 ? '#4ade80' : (parsePrice(stock.var_12m) < 0 ? '#ef4444' : '#fff') }}>
+                            {stock.var_12m || "--"}
+                        </span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">Variação (Mês)</span>
+                        <span className="value" style={{ color: parsePrice(stock.var_1m) > 0 ? '#4ade80' : (parsePrice(stock.var_1m) < 0 ? '#ef4444' : '#fff') }}>
+                            {stock.var_1m || "--"}
+                        </span>
+                    </div>
+
+                    <h4 className="stats-sub-title">
+                        <Activity size={20} color="var(--text-primary)" />
+                        Rentabilidade
+                    </h4>
+
+                    <div className="stat-clean-row">
+                        <span className="label">ROE</span>
+                        <span className="value">{stock.roe_val || "--"}</span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">ROA</span>
+                        <span className="value">{stock.roa_val || "--"}</span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">ROIC</span>
+                        <span className="value">{stock.roic_val || "--"}</span>
+                    </div>
+
+                    <h4 className="stats-sub-title">
+                        <TrendingUp size={20} color="var(--text-primary)" />
+                        Crescimento (CAGR 5 Anos)
+                    </h4>
+
+                    <div className="stat-clean-row">
+                        <span className="label">CAGR/LUC</span>
+                        <span className="value" style={{ color: parsePrice(stock.cagr_luc) > 0 ? '#4ade80' : (parsePrice(stock.cagr_luc) < 0 ? '#ef4444' : 'inherit') }}>
+                            {stock.cagr_luc || "--"}
+                        </span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">CAGR/PAT</span>
+                        <span className="value" style={{ color: parsePrice(stock.cagr_pat) > 0 ? '#4ade80' : (parsePrice(stock.cagr_pat) < 0 ? '#ef4444' : 'inherit') }}>
+                            {stock.cagr_pat || "--"}
+                        </span>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">CAGR/ROE</span>
+                        <span className="value" style={{ color: parsePrice(stock.cagr_roe) > 0 ? '#4ade80' : (parsePrice(stock.cagr_roe) < 0 ? '#ef4444' : 'inherit') }}>
+                            {stock.cagr_roe || "--"}
+                        </span>
+                    </div>
+
+                    <h4 className="stats-sub-title">
+                        <Shield size={20} color="var(--text-primary)" />
+                        Endividamento
+                    </h4>
+
+                    <div className="stat-clean-row">
+                        <span className="label">Dívida Líq./PL</span>
+                        <div className="value-group">
+                            <span className="value" style={{ color: parsePrice(stock.div_pl) > 2.5 ? '#ef4444' : '#fff' }}>
+                                {stock.div_pl || "--"}
+                            </span>
+                            {parsePrice(stock.div_pl) > 2.5 && <span className="sub-value" style={{ color: '#ef4444', fontSize: '11px', marginTop: '2px' }}>ALTO RISCO</span>}
+                        </div>
+                    </div>
+
+                    <div className="stat-clean-row">
+                        <span className="label">Dívida Líq./EBIT</span>
+                        <div className="value-group">
+                            <span className="value" style={{ color: parsePrice(stock.div_ebit) > 2.5 ? '#ef4444' : '#fff' }}>
+                                {stock.div_ebit || "--"}
+                            </span>
+                            {parsePrice(stock.div_ebit) > 2.5 && <span className="sub-value" style={{ color: '#ef4444', fontSize: '11px', marginTop: '2px' }}>ALTO RISCO</span>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -366,16 +407,16 @@ export default function StockDetail({ stock, onBack }) {
                             <TrendingUp size={16} color="#4ade80" />
                             <span className="label">Custo Baixo</span>
                         </div>
-                        <div className="val-card-content">
+                        <div className="val-card-content" style={{ padding: '20px' }}>
                             <span className="value">R$ {stock.min_val}</span>
                         </div>
                     </div>
                     <div className="valuation-card high-cost">
                         <div className="val-card-header">
-                            <TrendingDown size={16} color="#f87171" />
+                            <ArrowDown size={16} color="#f87171" />
                             <span className="label">Custo Alto</span>
                         </div>
-                        <div className="val-card-content">
+                        <div className="val-card-content" style={{ padding: '20px' }}>
                             <span className="value">R$ {stock.max_val}</span>
                         </div>
                     </div>
@@ -530,7 +571,7 @@ function FundamentalsSection({ ticker }) {
 
             <ChartContainer title="Lucro Líquido" icon={TrendingUp} color="#4ade80">
                 <ComposedChart data={dataWithTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.2} />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={currencyFormatter} width={45} axisLine={false} tickLine={false} />
                     <Tooltip
@@ -546,7 +587,7 @@ function FundamentalsSection({ ticker }) {
 
             <ChartContainer title="Patrimônio Líquido" icon={Landmark} color="#60a5fa">
                 <ComposedChart data={dataWithTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.2} />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={currencyFormatter} width={45} axisLine={false} tickLine={false} />
                     <Tooltip
@@ -562,7 +603,7 @@ function FundamentalsSection({ ticker }) {
 
             <ChartContainer title="ROE (Retorno s/ Patrimônio)" icon={Target} color="#34d399">
                 <ComposedChart data={dataWithTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.2} />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={roeFormatter} width={40} axisLine={false} tickLine={false} />
                     <Tooltip
