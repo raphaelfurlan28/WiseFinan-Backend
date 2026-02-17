@@ -6,7 +6,7 @@ import './OptionsModule.css'; // Import Options Styles
 import './Dashboard.css'; // Import Dashboard Styles
 import './News.css';
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling, Filter, ChevronLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling, Filter, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
@@ -38,15 +38,14 @@ const formatVariation = (val) => {
     return `${num.toFixed(2).replace('.', ',')}%`;
 };
 
-const Home = ({ onNavigate }) => {
-    const [opportunities, setOpportunities] = useState([]);
+const Home = ({ onNavigate, onStockClick }) => {
+    const [opportunities, setOpportunities] = useState({ cheap: [], expensive: [] });
     const [expensiveOpportunities, setExpensiveOpportunities] = useState([]);
     const [fixedOpportunities, setFixedOpportunities] = useState([]);
     const [guaranteeOpportunities, setGuaranteeOpportunities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
     const [selectedOperation, setSelectedOperation] = useState(null);
-    const [selectedStock, setSelectedStock] = useState(null);
 
     // Home Highlights State
     const [homeNews, setHomeNews] = useState([]);
@@ -212,9 +211,9 @@ const Home = ({ onNavigate }) => {
 
     const getMetricLabel = (m) => {
         switch (m) {
-            case 'cagr_luc': return 'CAGR Lucro (5A)';
-            case 'cagr_pat': return 'CAGR Patr. (5A)';
-            case 'cagr_roe': return 'CAGR ROE (5A)';
+            case 'cagr_luc': return 'Crescimento/Lucro';
+            case 'cagr_pat': return 'Crescimento/Patrimônio';
+            case 'cagr_roe': return 'Crescimento/ROE';
             case 'div_ebit': return 'Dív. Líq. / EBIT';
             case 'div_pl': return 'Dív. Líq. / PL';
             default: return '';
@@ -381,78 +380,6 @@ const Home = ({ onNavigate }) => {
                                     <ChevronRight size={12} style={{ opacity: 0.6 }} />
                                 </button>
 
-                                {/* BTG Deep Link Button */}
-                                <button
-                                    onClick={() => {
-                                        const ticker = option.ticker; // Use option ticker
-                                        const deepLink = `btgtrader://trade?ticker=${ticker}`; // Best guess for BTG Trader
-                                        const webLink = "https://www.btgpactual.com/investimentos/home-broker"; // Fallback to Home Broker
-                                        const storeLink = "https://apps.apple.com/br/app/btg-trader/id1396349942"; // BTG Trader Store Link
-
-                                        // Enhanced App Detection
-                                        const start = Date.now();
-                                        let appOpened = false;
-
-                                        // If the user switches apps (app opens), the page will hide/blur.
-                                        const handleVisibilityChange = () => {
-                                            if (document.hidden || document.webkitHidden) {
-                                                appOpened = true;
-                                            }
-                                        };
-                                        const handleBlur = () => {
-                                            appOpened = true;
-                                        };
-
-                                        document.addEventListener('visibilitychange', handleVisibilityChange);
-                                        window.addEventListener('blur', handleBlur);
-
-                                        window.location.href = deepLink;
-
-                                        setTimeout(() => {
-                                            document.removeEventListener('visibilitychange', handleVisibilityChange);
-                                            window.removeEventListener('blur', handleBlur);
-
-                                            // If appOpened is true, we succeeded.
-                                            // If not, we check time too.
-                                            // However, on iOS, the system dialog "Open in BTG Trader?" does NOT block execution or blur immediately.
-                                            // So we rely on a slightly longer timeout and user confirmation only if really needed.
-
-                                            if (!appOpened) {
-                                                // Ask user if they want to go to store/web
-                                                if (window.confirm(`Não detectamos o app BTG Trader aberto.\n\nDeseja acessar via Web ou instalar o App?`)) {
-                                                    // Check if mobile to suggest store, else web
-                                                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                                                    window.open(isMobile ? storeLink : webLink, '_blank');
-                                                }
-                                            }
-                                        }, 4000); // 4s timeout to allow system dialog interaction
-                                    }}
-                                    style={{
-                                        alignSelf: 'flex-start',
-                                        background: '#002561', // BTG Dark Blue
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '8px',
-                                        padding: '8px 14px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        cursor: 'pointer',
-                                        color: '#fff',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        marginTop: '12px',
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
-                                    }}
-                                >
-                                    <div style={{
-                                        width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        <TrendingUp size={10} color="#002561" />
-                                    </div>
-                                    <span>Negociar no BTG</span>
-                                    <ChevronRight size={12} style={{ opacity: 0.6 }} />
-                                </button>
 
                                 <div style={{
                                     display: 'flex',
@@ -713,8 +640,8 @@ const Home = ({ onNavigate }) => {
                             )}
                         </div>
                     </div>
-                </motion.div>
-            </div>
+                </motion.div >
+            </div >
         );
     };
 
@@ -1135,7 +1062,7 @@ const Home = ({ onNavigate }) => {
                                                     justifyContent: 'space-between',
                                                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                                                     marginBottom: '0',
-                                                    gap: '12px'
+                                                    gap: '12px',
                                                 }}>
                                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
                                                         {stock.image_url ? (
@@ -1249,21 +1176,21 @@ const Home = ({ onNavigate }) => {
                 {/* Period Selector for Movers */}
                 <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', alignSelf: 'flex-start' }}>
                     {[
-                        { id: '1D', label: '1 Dia' },
-                        { id: '1M', label: '1 Mês' },
-                        { id: '1A', label: '1 Ano' }
+                        { id: '1D', label: '1D' },
+                        { id: '1M', label: '1M' },
+                        { id: '1A', label: '1A' }
                     ].map((p) => (
                         <button
                             key={p.id}
                             onClick={() => setMoverPeriod(p.id)}
                             style={{
-                                background: moverPeriod === p.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                background: moverPeriod === p.id ? '#3B82F6CC' : 'transparent',
                                 color: moverPeriod === p.id ? '#fff' : '#64748b',
                                 border: 'none',
                                 borderRadius: '6px',
-                                padding: '4px 10px',
-                                fontSize: '0.7rem',
-                                fontWeight: 700,
+                                padding: '4px 8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                                 whiteSpace: 'nowrap'
@@ -1296,18 +1223,28 @@ const Home = ({ onNavigate }) => {
                         {topGainers.length > 0 ? (
                             topGainers.map((stock, idx) => (
                                 <React.Fragment key={idx}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div
+                                        onClick={() => onStockClick(stock)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            cursor: 'pointer', padding: '6px 8px', borderRadius: '8px',
+                                            transition: 'background 0.2s',
+                                            backgroundColor: 'transparent'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             {stock.image_url ? (
                                                 <img
                                                     src={stock.image_url}
                                                     alt={stock.ticker}
-                                                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                                                    style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
                                                 />
                                             ) : (
                                                 <div style={{
-                                                    width: 36,
-                                                    height: 36,
+                                                    width: 32,
+                                                    height: 32,
                                                     borderRadius: '50%',
                                                     background: 'rgba(255,255,255,0.1)',
                                                     display: 'flex',
@@ -1318,8 +1255,8 @@ const Home = ({ onNavigate }) => {
                                                 </div>
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
-                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
+                                                <span style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
@@ -1363,18 +1300,28 @@ const Home = ({ onNavigate }) => {
                         {topLosers.length > 0 ? (
                             topLosers.map((stock, idx) => (
                                 <React.Fragment key={idx}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div
+                                        onClick={() => onStockClick(stock)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            cursor: 'pointer', padding: '6px 8px', borderRadius: '8px',
+                                            transition: 'background 0.2s',
+                                            backgroundColor: 'transparent'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             {stock.image_url ? (
                                                 <img
                                                     src={stock.image_url}
                                                     alt={stock.ticker}
-                                                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                                                    style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
                                                 />
                                             ) : (
                                                 <div style={{
-                                                    width: 36,
-                                                    height: 36,
+                                                    width: 32,
+                                                    height: 32,
                                                     borderRadius: '50%',
                                                     background: 'rgba(255,255,255,0.1)',
                                                     display: 'flex',
@@ -1385,8 +1332,8 @@ const Home = ({ onNavigate }) => {
                                                 </div>
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
-                                                <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
+                                                <span style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
@@ -1411,32 +1358,45 @@ const Home = ({ onNavigate }) => {
                 </div>
             </div>
 
-            {/* Segmentation Filter Section */}
+            {/* Segmentation Filter Section - Refactored into a single card */}
             <div style={{ marginTop: '32px' }}>
-                <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Filter size={24} color="#94a3b8" />
-                        <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Filtro de Eficiência</h2>
+                <div className="glass-card" style={{ padding: '0', overflow: 'hidden', background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px' }}>
+                    <div className="rf-card-header" style={{
+                        background: 'linear-gradient(90deg, rgba(148, 163, 184, 0.2), transparent)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        display: 'flex', alignItems: 'center', gap: '12px', padding: '16px'
+                    }}>
+                        <div className="rf-card-icon" style={{
+                            background: '#94a3b8',
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>
+                            <Filter size={18} color="#fff" />
+                        </div>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>Filtro de Eficiência</h3>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {/* Metric Selector */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+                    <div style={{ padding: '20px' }}>
+                        {/* Metric Selector - Inside the card now */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', gap: '2px', marginBottom: '12px' }}>
                             {['cagr_luc', 'cagr_pat', 'cagr_roe', 'div_ebit', 'div_pl'].map(m => (
                                 <button
                                     key={m}
                                     onClick={() => setSegMetric(m)}
                                     style={{
-                                        background: segMetric === m ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        background: segMetric === m ? '#3B82F6CC' : 'transparent',
                                         color: segMetric === m ? '#fff' : '#64748b',
                                         border: 'none',
                                         borderRadius: '6px',
-                                        padding: '4px 10px',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 700,
+                                        padding: '4px 6px',
+                                        fontSize: '0.60rem',
+                                        fontWeight: 500,
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
-                                        whiteSpace: 'nowrap'
+                                        whiteSpace: 'nowrap',
+                                        flex: 1,
+                                        textAlign: 'center'
                                     }}
                                 >
                                     {getMetricLabel(m)}
@@ -1444,36 +1404,32 @@ const Home = ({ onNavigate }) => {
                             ))}
                         </div>
 
-                        {/* Order Selector */}
-                        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px' }}>
-                            {[
-                                { id: 'top', label: 'Maiores 5' },
-                                { id: 'bottom', label: 'Menores 5' }
-                            ].map(o => (
-                                <button
-                                    key={o.id}
-                                    onClick={() => setSegOrder(o.id)}
-                                    style={{
-                                        background: segOrder === o.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                                        color: segOrder === o.id ? '#fff' : '#64748b',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        padding: '4px 10px',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {o.label}
-                                </button>
-                            ))}
+                        {/* Sorting Arrows Header - Above the list */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 8px 4px 0', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setSegOrder('top'); }}
+                                style={{
+                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', color: segOrder === 'top' ? '#4ade80' : '#475569',
+                                    transition: 'all 0.2s', padding: '4px'
+                                }}
+                                title="Ver 5 Maiores"
+                            >
+                                <ChevronUp size={16} strokeWidth={segOrder === 'top' ? 3 : 2} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setSegOrder('bottom'); }}
+                                style={{
+                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', color: segOrder === 'bottom' ? '#f87171' : '#475569',
+                                    transition: 'all 0.2s', padding: '4px'
+                                }}
+                                title="Ver 5 Menores"
+                            >
+                                <ChevronDown size={16} strokeWidth={segOrder === 'bottom' ? 3 : 2} />
+                            </button>
                         </div>
-                    </div>
-                </div>
 
-                <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-                    <div style={{ padding: '16px' }}>
                         {segmentedStocks.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 {segmentedStocks.map((stock, idx) => {
@@ -1483,10 +1439,10 @@ const Home = ({ onNavigate }) => {
                                     return (
                                         <React.Fragment key={stock.ticker}>
                                             <div
-                                                onClick={() => setSelectedStock(stock)}
+                                                onClick={() => onStockClick(stock)}
                                                 style={{
                                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                    cursor: 'pointer', padding: '6px 8px', borderRadius: '8px',
+                                                    cursor: 'pointer', padding: '8px 12px', borderRadius: '12px',
                                                     transition: 'background 0.2s',
                                                     backgroundColor: 'transparent'
                                                 }}
@@ -1494,25 +1450,25 @@ const Home = ({ onNavigate }) => {
                                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         {stock.image_url ? (
                                                             <img src={stock.image_url} alt={stock.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                         ) : (
-                                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8' }}>{stock.ticker?.[0]}</span>
+                                                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8' }}>{stock.ticker?.[0]}</span>
                                                         )}
                                                     </div>
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f1f5f9' }}>{stock.ticker}</span>
-                                                        <span style={{ fontSize: '0.7rem', color: '#64748b', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9' }}>{stock.ticker}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: '#64748b', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                             {stock.company_name}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                                         <span style={{
-                                                            fontSize: '1rem',
+                                                            fontSize: '1.1rem',
                                                             fontWeight: 700,
                                                             color: (() => {
                                                                 const n = typeof val === 'number' ? val : parseFloat(val?.toString().replace(',', '.') || '0');
@@ -1531,23 +1487,23 @@ const Home = ({ onNavigate }) => {
                                                             const n = typeof val === 'number' ? val : parseFloat(val?.toString().replace(',', '.') || '0');
                                                             return n > 2.5;
                                                         })() && (
-                                                                <span style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 800, marginTop: '-3px', textTransform: 'uppercase' }}>Risco</span>
+                                                                <span style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 500, marginTop: '-3px', textTransform: 'uppercase' }}>Risco Elevado</span>
                                                             )}
                                                     </div>
-                                                    <ChevronRight size={14} color="#475569" />
+                                                    <ChevronRight size={16} color="#475569" />
                                                 </div>
                                             </div>
                                             {idx < segmentedStocks.length - 1 && (
-                                                <div style={{ margin: '2px 8px', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
+                                                <div style={{ margin: '4px 12px', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)' }}></div>
                                             )}
                                         </React.Fragment>
                                     );
                                 })}
                             </div>
                         ) : (
-                            <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-                                <TrendingUp size={32} style={{ opacity: 0.2, marginBottom: '8px' }} />
-                                <p>Nenhum dado encontrado para este filtro.</p>
+                            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+                                <Filter size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
+                                <p>Nenhum dado disponível para os critérios selecionados.</p>
                             </div>
                         )}
                     </div>
@@ -2147,13 +2103,6 @@ const Home = ({ onNavigate }) => {
                 )
             }
 
-            {/* Stock Detail Modal */}
-            {selectedStock && (
-                <StockDetail
-                    stock={selectedStock}
-                    onClose={() => setSelectedStock(null)}
-                />
-            )}
 
             {/* ================================================================================== */}
             {/* NEW SECTIONS: News & Calendar Highlights */}
@@ -2439,4 +2388,4 @@ const Home = ({ onNavigate }) => {
     );
 };
 
-export default Home;
+export default Home1

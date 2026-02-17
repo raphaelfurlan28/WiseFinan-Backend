@@ -381,7 +381,7 @@ export default function StockDetail({ stock, onBack }) {
                             <span className="value" style={{ color: parsePrice(stock.div_pl) > 2.5 ? '#ef4444' : '#fff' }}>
                                 {stock.div_pl || "--"}
                             </span>
-                            {parsePrice(stock.div_pl) > 2.5 && <span className="sub-value" style={{ color: '#ef4444', fontSize: '11px', marginTop: '2px' }}>ALTO RISCO</span>}
+                            {parsePrice(stock.div_pl) > 2.5 && <span className="sub-value" style={{ color: '#64748b', fontSize: '9px', marginTop: '2px', fontWeight: 500 }}>RISCO ELEVADO</span>}
                         </div>
                     </div>
 
@@ -391,7 +391,7 @@ export default function StockDetail({ stock, onBack }) {
                             <span className="value" style={{ color: parsePrice(stock.div_ebit) > 2.5 ? '#ef4444' : '#fff' }}>
                                 {stock.div_ebit || "--"}
                             </span>
-                            {parsePrice(stock.div_ebit) > 2.5 && <span className="sub-value" style={{ color: '#ef4444', fontSize: '11px', marginTop: '2px' }}>ALTO RISCO</span>}
+                            {parsePrice(stock.div_ebit) > 2.5 && <span className="sub-value" style={{ color: '#64748b', fontSize: '9px', marginTop: '2px', fontWeight: 500 }}>RISCO ELEVADO</span>}
                         </div>
                     </div>
                 </div>
