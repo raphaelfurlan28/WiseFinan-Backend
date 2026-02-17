@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Trash2, Bell, TrendingUp, Lightbulb, BarChart3, AlertTriangle, Plus, X, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { db } from '../services/firebaseConfig';
+import { db, storage } from '../services/firebaseConfig';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CATEGORIES = {
@@ -47,7 +48,10 @@ const Chat = () => {
     const [formCategory, setFormCategory] = useState('operacao');
     const [formTitle, setFormTitle] = useState('');
     const [formBody, setFormBody] = useState('');
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [sending, setSending] = useState(false);
+    const fileInputRef = useRef(null);
 
     const ADMIN_EMAIL = 'raphaelfurlan28@gmail.com';
     const canSend = user?.email === ADMIN_EMAIL;
@@ -72,37 +76,82 @@ const Chat = () => {
         updateReadStatus();
     }, [alerts, updateReadStatus]);
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeSelectedImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!formTitle.trim() || !canSend) return;
 
         setSending(true);
         try {
+            let imageUrl = null;
+            let imagePath = null;
+
+            if (selectedImage) {
+                const path = `alerts/${Date.now()}_${selectedImage.name}`;
+                const storageRef = ref(storage, path);
+                await uploadBytes(storageRef, selectedImage);
+                imageUrl = await getDownloadURL(storageRef);
+                imagePath = path;
+            }
+
             await addDoc(collection(db, "chat_messages"), {
                 category: formCategory,
                 title: formTitle.trim(),
                 text: formBody.trim(),
+                imageUrl,
+                imagePath,
                 user: user.display_name || user.email,
                 email: user.email,
                 timestamp: serverTimestamp()
             });
+
             setFormTitle('');
             setFormBody('');
+            removeSelectedImage();
             setShowForm(false);
         } catch (err) {
             console.error("Error sending alert:", err);
+            alert("Erro ao enviar alerta. Tente novamente.");
         } finally {
             setSending(false);
         }
     };
 
-    const handleDelete = async (alertId) => {
+    const handleDelete = async (alert) => {
         if (!canSend) return;
         if (!window.confirm("Apagar este alerta?")) return;
+
         try {
-            await deleteDoc(doc(db, "chat_messages", alertId));
+            // Delete image from storage if exists
+            if (alert.imagePath) {
+                const imageRef = ref(storage, alert.imagePath);
+                await deleteObject(imageRef).catch(err => {
+                    console.error("Error deleting image from storage:", err);
+                });
+            }
+
+            // Delete document from firestore
+            await deleteDoc(doc(db, "chat_messages", alert.id));
         } catch (err) {
             console.error("Error deleting alert:", err);
+            alert("Erro ao excluir alerta.");
         }
     };
 
@@ -329,6 +378,56 @@ const Chat = () => {
                                 }}
                             />
 
+                            {imagePreview && (
+                                <div style={{ position: 'relative', marginBottom: '20px', width: 'fit-content' }}>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    />
+                                    <button
+                                        onClick={removeSelectedImage}
+                                        style={{
+                                            position: 'absolute', top: '-10px', right: '-10px',
+                                            background: '#ef4444', color: '#fff', border: 'none',
+                                            borderRadius: '50%', width: '24px', height: '24px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                                        }}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '12px',
+                                        padding: '10px 16px',
+                                        color: '#cbd5e1',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                        transition: 'all 0.3s'
+                                    }}
+                                >
+                                    <Plus size={16} />
+                                    {selectedImage ? 'Trocar Imagem' : 'Anexar Imagem'}
+                                </button>
+                            </div>
+
                             <button
                                 onClick={handleSend}
                                 disabled={!formTitle.trim() || sending}
@@ -443,7 +542,7 @@ const Chat = () => {
                                     </span>
                                     {canSend && (
                                         <button
-                                            onClick={() => handleDelete(alert.id)}
+                                            onClick={() => handleDelete(alert)}
                                             style={{
                                                 background: 'rgba(255, 255, 255, 0.05)',
                                                 border: 'none',
@@ -475,6 +574,17 @@ const Chat = () => {
                                     }}>
                                         {renderMessageWithBold(alert.text)}
                                     </p>
+
+                                    {alert.imageUrl && (
+                                        <div style={{ marginTop: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <img
+                                                src={alert.imageUrl}
+                                                alt="Alert"
+                                                style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
+                                                onClick={() => window.open(alert.imageUrl, '_blank')}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </motion.div>

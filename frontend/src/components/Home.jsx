@@ -1263,7 +1263,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                             <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
                                                 Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
                                             </span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                 <TrendingUp size={16} />
                                                 {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
                                             </div>
@@ -1340,7 +1340,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                             <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
                                                 Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
                                             </span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                 <TrendingDown size={16} />
                                                 {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
                                             </div>
@@ -1465,10 +1465,10 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                                         <span style={{
-                                                            fontSize: '1.1rem',
+                                                            fontSize: '0.9rem',
                                                             fontWeight: 700,
                                                             color: (() => {
                                                                 const n = typeof val === 'number' ? val : parseFloat(val?.toString().replace(',', '.') || '0');
@@ -1490,7 +1490,6 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                                 <span style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 500, marginTop: '-3px', textTransform: 'uppercase' }}>Risco Elevado</span>
                                                             )}
                                                     </div>
-                                                    <ChevronRight size={16} color="#475569" />
                                                 </div>
                                             </div>
                                             {idx < segmentedStocks.length - 1 && (
@@ -2388,4 +2387,4 @@ const Home = ({ onNavigate, onStockClick }) => {
     );
 };
 
-export default Home1
+export default Home
