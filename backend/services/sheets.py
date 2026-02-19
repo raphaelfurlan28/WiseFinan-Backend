@@ -325,9 +325,73 @@ def get_options_data(ticker_filter=None):
         
     tf = ticker_filter.upper()
     filtered = []
+    
+    # Pre-fetch data for Greeks if we have a filter
+    stock_ref = None
+    r = 0.1075 # Default Risk Free
+    
+    try:
+        # Get Stock Data
+        stocks = get_sheet_data()
+        stock_ref = next((s for s in stocks if s['ticker'] == tf), None)
+        
+        # Get Risk Free Rate
+        indices = get_economic_indices()
+        selic_str = indices.get('selic', '10.75').replace('%', '').replace(',', '.')
+        r = float(selic_str) / 100.0
+    except:
+        pass
+
     for opt in all_options:
+        # Check Ticker or Underlying matches
         if opt['underlying'].upper() == tf or opt['ticker'].upper() == tf:
-            filtered.append(opt)
+            # Clone dict to avoid mutating cache if we modify it (though cache returns list of dicts, best to be safe)
+            # Actually _fetch_all_raw_options returns list of dicts. Modifying them modifies cache? 
+            # Yes, if we don't copy.
+            opt_copy = opt.copy()
+            
+            # Add Greeks if we have stock data
+            if stock_ref and HAS_BS_LIBS:
+                try:
+                    stock_price = parse_price(stock_ref.get('price', 0.0))
+                    strike = smart_float(opt_copy.get('strike', 0))
+                    
+                    # Volatility
+                    vol_str = str(stock_ref.get('vol_ano', '0')).replace('%', '').replace(',', '.')
+                    try:
+                       sigma = float(vol_str) / 100.0
+                       if sigma <= 0: sigma = 0.40
+                    except:
+                       sigma = 0.40
+                       
+                    exp = opt_copy.get('expiration', '')
+                    bdays = get_business_days(exp)
+                    
+                    if bdays > 0 and stock_price > 0 and strike > 0:
+                        T = bdays / 252.0
+                        bs_type = 'call' if 'CALL' in opt_copy.get('type', '').upper() else 'put'
+                        
+                        delta = calculate_delta(stock_price, strike, T, r, sigma, bs_type)
+                        bs_price = black_scholes_price(stock_price, strike, T, r, sigma, bs_type)
+                        
+                        # Prob Success (Approx)
+                        prob_success = abs(delta) # Standard approximation
+                        
+                        # Edge
+                        market_price = opt_copy.get('price_val', 0.0)
+                        edge_pct = 0.0
+                        if bs_price > 0:
+                            edge_pct = ((market_price - bs_price) / bs_price) * 100
+                            
+                        opt_copy['delta_val'] = f"{delta:.3f}"
+                        opt_copy['bs_price_val'] = f"R$ {bs_price:.2f}"
+                        opt_copy['prob_success'] = f"{prob_success*100:.1f}%"
+                        opt_copy['edge_formatted'] = f"{edge_pct:.1f}%"
+                        opt_copy['sigma'] = f"{sigma*100:.1f}%"
+                except:
+                    pass
+            
+            filtered.append(opt_copy)
             
     return filtered
 
@@ -633,6 +697,13 @@ def get_filtered_opportunities():
                             opt['sigma'] = f"{sigma*100:.1f}%"
                             opt['delta_val'] = f"{delta:.3f}"
                             opt['bs_price_val'] = f"R$ {bs_price:.2f}"
+                            
+                            # Edge Calculation
+                            edge_pct = 0.0
+                            if bs_price > 0:
+                                edge_pct = ((market_price - bs_price) / bs_price) * 100
+                            opt['edge_formatted'] = f"{edge_pct:.1f}%"
+                            
                             valid_puts.append(opt)
 
                         elif 'CALL' in otype or 'COMPRA' in otype: # CALL BUY (Upside)
@@ -650,6 +721,13 @@ def get_filtered_opportunities():
                             opt['sigma'] = f"{sigma*100:.1f}%"
                             opt['delta_val'] = f"{delta:.3f}"
                             opt['bs_price_val'] = f"R$ {bs_price:.2f}"
+
+                            # Edge Calculation
+                            edge_pct = 0.0
+                            if bs_price > 0:
+                                edge_pct = ((market_price - bs_price) / bs_price) * 100
+                            opt['edge_formatted'] = f"{edge_pct:.1f}%"
+
                             valid_calls.append(opt)
 
                     # --- EXPENSIVE STRATEGY ---
@@ -670,6 +748,13 @@ def get_filtered_opportunities():
                              opt['sigma'] = f"{sigma*100:.1f}%"
                              opt['delta_val'] = f"{delta:.3f}"
                              opt['bs_price_val'] = f"R$ {bs_price:.2f}"
+                             
+                             # Edge Calculation
+                             edge_pct = 0.0
+                             if bs_price > 0:
+                                 edge_pct = ((market_price - bs_price) / bs_price) * 100
+                             opt['edge_formatted'] = f"{edge_pct:.1f}%"
+                             
                              valid_calls.append(opt)
 
                         # Puts (Compra a Seco)
@@ -688,6 +773,13 @@ def get_filtered_opportunities():
                              opt['sigma'] = f"{sigma*100:.1f}%"
                              opt['delta_val'] = f"{delta:.3f}"
                              opt['bs_price_val'] = f"R$ {bs_price:.2f}"
+
+                             # Edge Calculation
+                             edge_pct = 0.0
+                             if bs_price > 0:
+                                 edge_pct = ((market_price - bs_price) / bs_price) * 100
+                             opt['edge_formatted'] = f"{edge_pct:.1f}%"
+
                              valid_puts.append(opt)
 
                 except Exception as loop_e:
@@ -782,6 +874,165 @@ def get_filtered_opportunities():
         "fixed_income": fixed_data,
         "guarantee": guarantee_data
     }
+
+@cached(ttl_seconds=300)
+def get_pozinho_options():
+    """
+    Returns options priced <= 0.05 (Calls and Puts) grouped by Ticker.
+    Calculates Greeks and Probabilities.
+    """
+    from datetime import datetime
+    import numpy as np
+    from concurrent.futures import ThreadPoolExecutor
+
+    # Helper functions for parallel execution (reused)
+    def fetch_stocks_data():
+        try:
+            return get_sheet_data()
+        except: return []
+
+    def fetch_all_options():
+        try:
+            return get_options_data(None)
+        except: return []
+        
+    def fetch_indices_data():
+        try:
+            return get_economic_indices()
+        except: return {}
+
+    print("[POZINHO] Starting parallel fetch...")
+    start_time = datetime.now()
+
+    stocks = []
+    all_options = []
+    indices = {}
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        future_stocks = executor.submit(fetch_stocks_data)
+        future_options = executor.submit(fetch_all_options)
+        future_indices = executor.submit(fetch_indices_data)
+
+        stocks = future_stocks.result()
+        all_options = future_options.result()
+        indices = future_indices.result()
+
+    end_time = datetime.now()
+    print(f"[POZINHO] Parallel fetch done in {(end_time - start_time).total_seconds():.2f}s")
+
+    if not stocks or not all_options: return {}
+
+    # Map Stocks for price reference
+    stocks_map = {s['ticker']: s for s in stocks}
+
+    # Get Risk-Free Rate
+    try:
+        selic_str = indices.get('selic', '10.75').replace('%', '').replace(',', '.')
+        r = float(selic_str) / 100.0
+    except:
+        r = 0.1075
+
+    pozinho_groups = {}
+    
+    for opt in all_options:
+        try:
+            # COPY TO AVOID MUTATION ISSUES
+            opt = opt.copy()
+            
+            price_val = float(opt.get('price_val', 0.0))
+            
+            # Filter: Price <= 0.05
+            if price_val > 0.05: continue
+            
+            # Get Underlying Stock Data
+            ticker = opt.get('ticker', '')
+            underlying = opt.get('underlying', '')
+            
+            # Identify parent stock
+            parent_stock = None
+            if underlying and underlying in stocks_map:
+                parent_stock = stocks_map[underlying]
+            elif ticker[:4] in stocks_map: # Try prefix
+                 parent_stock = stocks_map[ticker[:4]]
+            
+            if not parent_stock: continue # Skip if we don't know the stock
+            
+            stock_price = parse_price(parent_stock.get('price', 0.0))
+            strike = smart_float(opt.get('strike', 0))
+            
+            if stock_price <= 0 or strike <= 0: continue
+
+            # Get Volatility
+            vol_str = str(parent_stock.get('vol_ano', '0')).replace('%', '').replace(',', '.')
+            try:
+               sigma = float(vol_str) / 100.0
+               if sigma <= 0: sigma = 0.40
+            except:
+               sigma = 0.40
+
+            # Calculate Greeks
+            exp = opt.get('expiration', '')
+            bdays = get_business_days(exp)
+            if bdays <= 0: continue
+            
+            T = bdays / 252.0
+            bs_type = 'call' if 'CALL' in opt.get('type', '').upper() else 'put'
+            
+            delta = 0.0
+            bs_price = 0.0
+            
+            if HAS_BS_LIBS:
+                try:
+                    delta = calculate_delta(stock_price, strike, T, r, sigma, bs_type)
+                    bs_price = black_scholes_price(stock_price, strike, T, r, sigma, bs_type)
+                except:
+                    pass
+            
+            # Filter: Delta > 0.01 (Avoid impossible options)
+            if abs(delta) < 0.01: continue
+            
+            # Calculate Probabilities & Edge
+            prob_success = 0.0
+            if HAS_BS_LIBS:
+                 # For Buy Strategy: Prob ITM = |Delta| roughly
+                 prob_success = abs(delta)
+            
+            edge_pct = 0.0
+            if bs_price > 0:
+                edge_pct = ((price_val - bs_price) / bs_price) * 100
+            
+            # Add Metrics to Option
+            opt['delta_val'] = f"{delta:.3f}"
+            opt['bs_price_val'] = f"R$ {bs_price:.2f}"
+            opt['prob_success'] = f"{prob_success*100:.1f}%"
+            opt['edge_formatted'] = f"{edge_pct:.1f}%"
+            opt['sigma'] = f"{sigma*100:.1f}%"
+            
+            # Grouping
+            group_key = parent_stock['ticker']
+            if group_key not in pozinho_groups:
+                pozinho_groups[group_key] = {
+                    "stock": parent_stock,
+                    "options": []
+                }
+            
+            pozinho_groups[group_key]['options'].append(opt)
+
+        except Exception as e:
+            continue
+
+    # Convert to list and sort by number of options
+    result_list = []
+    for k, v in pozinho_groups.items():
+        # Sort options by Strike
+        v['options'].sort(key=lambda x: smart_float(x.get('strike', 0)))
+        result_list.append(v)
+        
+    # Sort groups by ticker
+    result_list.sort(key=lambda x: x['stock']['ticker'])
+    
+    print(f"[POZINHO] Found {len(result_list)} companies with valid options.")
+    return result_list
 
 @cached(ttl_seconds=1800)
 def get_stock_history(ticker_filter=None):

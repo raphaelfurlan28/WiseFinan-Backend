@@ -281,6 +281,17 @@ def get_home_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/strategies/pozinho', methods=['GET'])
+def get_pozinho_strategies():
+    try:
+        from services.sheets import get_pozinho_options
+        data = get_pozinho_options()
+        return jsonify(data)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 # Chat Store (In-Memory)
 chat_messages = []

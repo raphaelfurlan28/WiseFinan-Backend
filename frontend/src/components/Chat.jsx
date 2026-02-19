@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, Trash2, Bell, TrendingUp, Lightbulb, BarChart3, AlertTriangle, Plus, X, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { db, storage } from '../services/firebaseConfig';
+import { db } from '../services/firebaseConfig';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CATEGORIES = {
@@ -94,6 +93,45 @@ const Chat = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
+    const optimizeImage = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG with 0.7 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(dataUrl);
+                };
+            };
+        });
+    };
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!formTitle.trim() || !canSend) return;
@@ -101,14 +139,9 @@ const Chat = () => {
         setSending(true);
         try {
             let imageUrl = null;
-            let imagePath = null;
 
             if (selectedImage) {
-                const path = `alerts/${Date.now()}_${selectedImage.name}`;
-                const storageRef = ref(storage, path);
-                await uploadBytes(storageRef, selectedImage);
-                imageUrl = await getDownloadURL(storageRef);
-                imagePath = path;
+                imageUrl = await optimizeImage(selectedImage);
             }
 
             await addDoc(collection(db, "chat_messages"), {
@@ -116,7 +149,6 @@ const Chat = () => {
                 title: formTitle.trim(),
                 text: formBody.trim(),
                 imageUrl,
-                imagePath,
                 user: user.display_name || user.email,
                 email: user.email,
                 timestamp: serverTimestamp()
@@ -128,7 +160,7 @@ const Chat = () => {
             setShowForm(false);
         } catch (err) {
             console.error("Error sending alert:", err);
-            alert("Erro ao enviar alerta. Tente novamente.");
+            alert(`Erro ao enviar Alerta: ${err.message || "Erro desconhecido"}`);
         } finally {
             setSending(false);
         }
@@ -139,15 +171,6 @@ const Chat = () => {
         if (!window.confirm("Apagar este alerta?")) return;
 
         try {
-            // Delete image from storage if exists
-            if (alert.imagePath) {
-                const imageRef = ref(storage, alert.imagePath);
-                await deleteObject(imageRef).catch(err => {
-                    console.error("Error deleting image from storage:", err);
-                });
-            }
-
-            // Delete document from firestore
             await deleteDoc(doc(db, "chat_messages", alert.id));
         } catch (err) {
             console.error("Error deleting alert:", err);
@@ -387,15 +410,17 @@ const Chat = () => {
                                     />
                                     <button
                                         onClick={removeSelectedImage}
+                                        type="button"
                                         style={{
-                                            position: 'absolute', top: '-10px', right: '-10px',
-                                            background: '#ef4444', color: '#fff', border: 'none',
-                                            borderRadius: '50%', width: '24px', height: '24px',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                                            position: 'absolute', top: '-8px', right: '-8px',
+                                            background: '#ef4444', color: '#ffffff', border: '2px solid #0f172a',
+                                            borderRadius: '50%', width: '22px', height: '22px',
+                                            display: 'grid', placeItems: 'center',
+                                            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                                            zIndex: 5, padding: 0
                                         }}
                                     >
-                                        <X size={14} />
+                                        <X size={14} style={{ display: 'block' }} />
                                     </button>
                                 </div>
                             )}
@@ -580,8 +605,7 @@ const Chat = () => {
                                             <img
                                                 src={alert.imageUrl}
                                                 alt="Alert"
-                                                style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
-                                                onClick={() => window.open(alert.imageUrl, '_blank')}
+                                                style={{ width: '100%', height: 'auto', display: 'block' }}
                                             />
                                         </div>
                                     )}

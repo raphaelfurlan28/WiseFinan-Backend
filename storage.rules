@@ -1,0 +1,12 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Permitir leitura pública para que usuários vejam os alertas
+      allow read: if true;
+      
+      // Permitir escrita apenas para o administrador (email específico)
+      allow write: if request.auth != null && request.auth.token.email == 'raphaelfurlan28@gmail.com';
+    }
+  }
+}

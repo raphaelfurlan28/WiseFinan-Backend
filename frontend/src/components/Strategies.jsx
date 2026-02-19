@@ -2,13 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
     BookOpen, Shield, TrendingUp, TrendingDown, AlertTriangle,
-    Target, Anchor, DollarSign, ArrowRight, Clock, Activity, AlertCircle, X, Calendar
+    Target, Anchor, DollarSign, ArrowRight, Clock, Activity, AlertCircle, X, Calendar, Sparkles
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea
 } from 'recharts';
 import '../styles/main.css';
 import './Strategies.css';
+import PozinhoModule from './PozinhoModule';
 
 const strategies = [
     {
@@ -436,8 +437,11 @@ const Strategies = () => {
         }
     }, []);
 
+    const [showPozinho, setShowPozinho] = React.useState(false);
+
     return (
         <div className="rf-container">
+            {showPozinho && <PozinhoModule onClose={() => setShowPozinho(false)} />}
             {/* Header */}
             <header className="rf-header" style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
@@ -493,6 +497,8 @@ const Strategies = () => {
                             {/* Enhanced Chart with Simulation Data */}
                             <StrategyChart strategy={strat.name} color={strat.color} sim={strat.sim} />
 
+
+
                             <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)', margin: '16px 0' }}></div>
 
                             {/* Steps */}
@@ -507,6 +513,38 @@ const Strategies = () => {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* POZINHO BUTTON - Moved to Bottom */}
+                            {strat.name === "Compra a Seco (Pózinho)" && (
+                                <button
+                                    onClick={() => setShowPozinho(true)}
+                                    style={{
+                                        width: '100%',
+                                        marginTop: '20px',
+                                        marginBottom: '0px',
+                                        padding: '12px',
+                                        background: 'rgba(239, 68, 68, 0.15)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        borderRadius: '8px',
+                                        color: '#ef4444',
+                                        fontWeight: '600',
+                                        fontSize: '0.9rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s',
+                                        boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.1)'
+                                    }}
+                                    className="pozinho-btn"
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+                                >
+                                    <Sparkles size={16} />
+                                    Ver Opções Disponíveis
+                                </button>
+                            )}
 
                         </div>
                     </div>

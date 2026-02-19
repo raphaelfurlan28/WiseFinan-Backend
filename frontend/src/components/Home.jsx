@@ -11,6 +11,7 @@ import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
 import StockDetail from './StockDetail';
+import OptionCard from './OptionCard';
 
 
 
@@ -39,7 +40,7 @@ const formatVariation = (val) => {
 };
 
 const Home = ({ onNavigate, onStockClick }) => {
-    const [opportunities, setOpportunities] = useState({ cheap: [], expensive: [] });
+    const [opportunities, setOpportunities] = useState([]);
     const [expensiveOpportunities, setExpensiveOpportunities] = useState([]);
     const [fixedOpportunities, setFixedOpportunities] = useState([]);
     const [guaranteeOpportunities, setGuaranteeOpportunities] = useState([]);
@@ -381,125 +382,11 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 </button>
 
 
-                                <div style={{
-                                    display: 'flex',
-                                    gap: '12px',
-                                    marginTop: '12px',
-                                    paddingTop: '12px',
-                                    borderTop: '1px solid rgba(255,255,255,0.05)',
-                                    width: '100%',
-                                    flexWrap: 'wrap'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Vol. Implícita:</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.sigma || '-'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Delta:</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.delta_val || '-'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Preço B.S.:</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>{option.bs_price_val || '-'}</span>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
 
-                        <div style={{
-                            background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '20px',
-                            padding: '20px',
-                            marginBottom: '28px',
-                            border: '1px solid rgba(255,255,255,0.05)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '16px'
-                        }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#64748b' }}></div>
-                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>Ação Atual</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 700 }}>R$ {stockPrice.toFixed(2).replace('.', ',')}</div>
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: strategyColor }}></div>
-                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>Strike</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 700 }}>R$ {option.strike}</div>
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isVenda ? '#4ade80' : '#ef4444' }}></div>
-                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>{isVenda ? 'Prêmio/Opção' : 'Custo/Opção'}</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 700 }}>R$ {premium.toFixed(2).replace('.', ',')}</div>
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isVenda ? '#4ade80' : '#ef4444' }}></div>
-                                        <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>{isVenda ? 'Prêmio/Lote' : 'Custo/Lote'}</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.1rem', color: isVenda ? '#4ade80' : '#ef4444', fontWeight: 700 }}>R$ {premiumTotal.toFixed(2).replace('.', ',')}</div>
-                                </div>
-                            </div>
-                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', width: '100%' }}></div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Calendar size={14} color="#64748b" />
-                                <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vencimento:</span>
-                                <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>{formatDate(option.expiration)}</span>
-                            </div>
-                        </div>
-
-                        {(option.prob_success || option.edge_formatted) && (
-                            <div style={{
-                                background: 'rgba(56, 189, 248, 0.05)',
-                                borderRadius: '16px',
-                                padding: '16px 0',
-                                marginBottom: '28px',
-                                border: '1px solid rgba(56, 189, 248, 0.15)',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, textAlign: 'center' }}>Prob. Desfecho Favorável</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }}></div>
-                                        <span style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 700 }}>{option.prob_success || 'N/A'}</span>
-                                    </div>
-                                </div>
-
-                                <div style={{ width: '1px', height: '32px', background: 'rgba(255,255,255,0.1)' }}></div>
-
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, textAlign: 'center' }}>Vantagem Teórica (Edge)</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        {(() => {
-                                            const edgeVal = parseFloat(option.edge_formatted);
-                                            const isBuy = !strategy.includes('venda');
-                                            // Adjusted Logic: If Buy strategy and Edge > 50% (Positive), show text
-                                            if (isBuy && edgeVal > 50) {
-                                                return (
-                                                    <span style={{ fontSize: '0.9rem', color: '#facc15', fontWeight: 700 }}>Alta Volatilidade</span>
-                                                );
-                                            }
-                                            return (
-                                                <span style={{
-                                                    fontSize: '1.25rem',
-                                                    color: (strategy.includes('venda'))
-                                                        ? (edgeVal > 0 ? '#4ade80' : '#ef4444')
-                                                        : (edgeVal < 0 ? '#4ade80' : '#ef4444'),
-                                                    fontWeight: 700
-                                                }}>{option.edge_formatted || 'N/A'}</span>
-                                            );
-                                        })()}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {/* Probability Card Removed as per request */}
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {strategy === 'venda_put' && (
@@ -553,7 +440,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 <React.Fragment>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>1</div>
                                             <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
                                         </div>
                                         <div style={{ flex: 1, paddingBottom: '12px' }}>
@@ -565,7 +452,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                     </div>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>2</div>
                                             <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.05)' }}></div>
                                         </div>
                                         <div style={{ flex: 1, paddingBottom: '12px' }}>
@@ -577,7 +464,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                     </div>
                                     <div style={{ display: 'flex', gap: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>3</div>
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 600 }}>Cenários no Vencimento</h4>
@@ -1390,7 +1277,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                         border: 'none',
                                         borderRadius: '6px',
                                         padding: '4px 6px',
-                                        fontSize: '0.60rem',
+                                        fontSize: '0.65rem',
                                         fontWeight: 500,
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
@@ -1871,84 +1758,29 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                 .map((opt, i) => {
                                                     const stockPrice = parseFloat((selectedOpportunity.stock.price || "0").replace('R$', '').replace('.', '').replace(',', '.'));
                                                     const dist = getDistance(opt, stockPrice);
-                                                    const isDistPos = dist >= 0;
 
                                                     return (
-                                                        <div key={i} className="option-card call" style={{
-                                                            backgroundColor: '#1e293b', borderRadius: '12px', padding: '12px',
-                                                            border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-                                                            borderLeft: '3px solid #38bdf8'
-                                                        }}>
-                                                            {/* Card Header matching .card-header */}
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                                    <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>Strike</span>
-                                                                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>R$ {opt.strike}</span>
-                                                                    <div style={{
-                                                                        fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
-                                                                        padding: '2px 6px', borderRadius: '4px', width: 'fit-content', marginTop: '4px',
-                                                                        background: 'rgba(0, 0, 0, 0.2)', color: isDistPos ? '#4ade80' : '#f87171',
-                                                                        whiteSpace: 'nowrap'
-                                                                    }}>
-                                                                        {isDistPos ? '▲' : '▼'} {dist.toFixed(2).replace('.', ',')}%
-                                                                    </div>
-                                                                </div>
-                                                                <span style={{
-                                                                    fontSize: '0.6rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
-                                                                    color: 'rgba(255, 255, 255, 0.7)', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.3px',
-                                                                    whiteSpace: 'nowrap', flexShrink: 0
-                                                                }}>
-                                                                    {opt.ticker}
-                                                                </span>
-                                                            </div>
-
-                                                            {/* Separator */}
-                                                            <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', margin: '8px 0 10px 0' }}></div>
-
-                                                            {/* Card Body matching .card-body */}
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                    <span>Preço:</span>
-                                                                    <strong style={{ color: '#f1f5f9', fontWeight: 600 }}>R$ {opt.last_price ? opt.last_price.toFixed(2).replace('.', ',') : '0,00'}</strong>
-                                                                </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                    <span>Prêmio:</span>
-                                                                    <strong style={{ color: '#4ade80', fontSize: '0.95rem', fontWeight: 600, textShadow: '0 0 10px rgba(74, 222, 128, 0.2)' }}>
-                                                                        {opt.cost_display || opt.yield_display || '-'}
-                                                                    </strong>
-                                                                </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.4)', marginTop: '2px' }}>
-                                                                    <span>Vol: {opt.volume || '-'}</span>
-                                                                    <span>Neg: {opt.trades || '-'}</span>
-                                                                </div>
-                                                                <div style={{ marginTop: '0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}>
-                                                                    <Calendar size={10} /> {formatDate(opt.expiration)}
-                                                                </div>
-                                                                {/* Ver Operação Button */}
-                                                                <button
-                                                                    onClick={() => setSelectedOperation({
-                                                                        option: opt,
-                                                                        type: 'call',
-                                                                        stock: selectedOpportunity.stock,
-                                                                        strategy: selectedOpportunity.opportunityType === 'cheap' ? 'compra_call' : 'venda_call'
-                                                                    })}
-                                                                    style={{
-                                                                        marginTop: '10px', width: '100%', padding: '8px 12px',
-                                                                        background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)',
-                                                                        borderRadius: '8px', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600,
-                                                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                                                        transition: 'all 0.2s'
-                                                                    }}
-                                                                >
-                                                                    <Crosshair size={14} /> Ver Operação
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                                        <OptionCard
+                                                            key={i}
+                                                            option={{
+                                                                ...opt,
+                                                                dist_val: dist,
+                                                                premium: opt.cost_display || opt.yield_display || '-',
+                                                                onAction: () => setSelectedOperation({
+                                                                    option: opt,
+                                                                    type: 'call',
+                                                                    stock: selectedOpportunity.stock,
+                                                                    strategy: selectedOpportunity.opportunityType === 'cheap' ? 'compra_call' : 'venda_call'
+                                                                })
+                                                            }}
+                                                            type="call"
+                                                            showExpiration={true}
+                                                        />
                                                     );
                                                 })
                                         ) : (
                                             <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.85rem', marginTop: '40px', fontStyle: 'italic', opacity: 0.6 }}>
-                                                Nenhuma Put disponível.
+                                                Nenhuma Call disponível.
                                             </div>
                                         )}
                                     </div>
@@ -1986,7 +1818,6 @@ const Home = ({ onNavigate, onStockClick }) => {
                                             selectedOpportunity.options.puts
                                                 .filter(opt => {
                                                     const type = selectedOpportunity.opportunityType;
-                                                    // Date Helper
                                                     const now = new Date(); now.setHours(0, 0, 0, 0);
                                                     const [y, m, d] = opt.expiration.split('-').map(Number);
                                                     const date = new Date(y, m - 1, d);
@@ -2002,79 +1833,24 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                 .map((opt, i) => {
                                                     const stockPrice = parseFloat((selectedOpportunity.stock.price || "0").replace('R$', '').replace('.', '').replace(',', '.'));
                                                     const dist = getDistance(opt, stockPrice);
-                                                    const isDistPos = dist >= 0;
 
                                                     return (
-                                                        <div key={i} className="option-card put" style={{
-                                                            backgroundColor: '#1e293b', borderRadius: '12px', padding: '12px',
-                                                            border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-                                                            borderLeft: '3px solid #ef4444'
-                                                        }}>
-                                                            {/* Card Header matching .card-header */}
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                                    <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>Strike</span>
-                                                                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>R$ {opt.strike}</span>
-                                                                    <div style={{
-                                                                        fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
-                                                                        padding: '2px 6px', borderRadius: '4px', width: 'fit-content', marginTop: '4px',
-                                                                        background: 'rgba(0, 0, 0, 0.2)', color: isDistPos ? '#4ade80' : '#f87171',
-                                                                        whiteSpace: 'nowrap'
-                                                                    }}>
-                                                                        {isDistPos ? '▲' : '▼'} {dist.toFixed(2).replace('.', ',')}%
-                                                                    </div>
-                                                                </div>
-                                                                <span style={{
-                                                                    fontSize: '0.6rem', fontFamily: 'monospace', background: 'rgba(255, 255, 255, 0.1)',
-                                                                    color: 'rgba(255, 255, 255, 0.7)', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.3px',
-                                                                    whiteSpace: 'nowrap', flexShrink: 0
-                                                                }}>
-                                                                    {opt.ticker}
-                                                                </span>
-                                                            </div>
-
-                                                            {/* Separator */}
-                                                            <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', margin: '8px 0 10px 0' }}></div>
-
-                                                            {/* Card Body matching .card-body */}
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                    <span>Preço:</span>
-                                                                    <strong style={{ color: '#f1f5f9', fontWeight: 600 }}>R$ {opt.last_price ? opt.last_price.toFixed(2).replace('.', ',') : '0,00'}</strong>
-                                                                </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                    <span>Prêmio:</span>
-                                                                    <strong style={{ color: '#4ade80', fontSize: '0.95rem', fontWeight: 600, textShadow: '0 0 10px rgba(74, 222, 128, 0.2)' }}>
-                                                                        {opt.cost_display || opt.yield_display || '-'}
-                                                                    </strong>
-                                                                </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.4)', marginTop: '2px' }}>
-                                                                    <span>Vol: {opt.volume || '-'}</span>
-                                                                    <span>Neg: {opt.trades || '-'}</span>
-                                                                </div>
-                                                                <div style={{ marginTop: '0', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}>
-                                                                    <Calendar size={10} /> {formatDate(opt.expiration)}
-                                                                </div>
-                                                                {/* Ver Operação Button */}
-                                                                <button
-                                                                    onClick={() => setSelectedOperation({
-                                                                        option: opt,
-                                                                        type: 'put',
-                                                                        stock: selectedOpportunity.stock,
-                                                                        strategy: selectedOpportunity.opportunityType === 'cheap' ? 'venda_put' : 'compra_put'
-                                                                    })}
-                                                                    style={{
-                                                                        marginTop: '10px', width: '100%', padding: '8px 12px',
-                                                                        background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                                        borderRadius: '8px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600,
-                                                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                                                        transition: 'all 0.2s'
-                                                                    }}
-                                                                >
-                                                                    <Crosshair size={14} /> Ver Operação
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                                        <OptionCard
+                                                            key={i}
+                                                            option={{
+                                                                ...opt,
+                                                                dist_val: dist,
+                                                                premium: opt.cost_display || opt.yield_display || '-',
+                                                                onAction: () => setSelectedOperation({
+                                                                    option: opt,
+                                                                    type: 'put',
+                                                                    stock: selectedOpportunity.stock,
+                                                                    strategy: selectedOpportunity.opportunityType === 'cheap' ? 'venda_put' : 'compra_put'
+                                                                })
+                                                            }}
+                                                            type="put"
+                                                            showExpiration={true}
+                                                        />
                                                     );
                                                 })
                                         ) : (

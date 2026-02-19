@@ -3,6 +3,7 @@ import { X, Calendar } from 'lucide-react';
 import ModernLoader from './ModernLoader';
 import { getApiUrl } from '../services/api';
 import './OptionsModule.css';
+import OptionCard from './OptionCard';
 
 export default function OptionsModule({ ticker, logoUrl, onClose }) {
     const [options, setOptions] = useState([]);
@@ -159,7 +160,12 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
                         <div className="cards-list">
                             {calls.length === 0 && <p className="empty-msg">Nenhuma Call disponível.</p>}
                             {calls.map((opt, idx) => (
-                                <OptionCard key={idx} option={opt} type="call" />
+                                <OptionCard
+                                    key={idx}
+                                    option={opt}
+                                    type="call"
+                                    showExpiration={false}
+                                />
                             ))}
                         </div>
                     </div>
@@ -169,7 +175,12 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
                         <div className="cards-list">
                             {puts.length === 0 && <p className="empty-msg">Nenhuma Put disponível.</p>}
                             {puts.map((opt, idx) => (
-                                <OptionCard key={idx} option={opt} type="put" />
+                                <OptionCard
+                                    key={idx}
+                                    option={opt}
+                                    type="put"
+                                    showExpiration={false}
+                                />
                             ))}
                         </div>
                     </div>
@@ -177,45 +188,4 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
             </div>
         </div>
     );
-}
-
-function OptionCard({ option, type }) {
-    const isDistPositive = option.dist_val >= 0;
-
-    return (
-        <div className={`option-card ${type}`}>
-            <div className="card-header">
-                <div className="strike-container">
-                    <span className="strike-label">Strike</span>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>R$ {option.strike}</span>
-                    <div style={{
-                        fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
-                        padding: '2px 6px', borderRadius: '4px', width: 'fit-content', marginTop: '4px',
-                        background: 'rgba(0, 0, 0, 0.2)', color: isDistPositive ? '#4ade80' : '#f87171',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {isDistPositive ? '▲' : '▼'} {option.distance}
-                    </div>
-                </div>
-                <span className="ticker">{option.ticker}</span>
-            </div>
-
-            <div className="separator-line"></div>
-
-            <div className="card-body">
-                <div className="row">
-                    <span>Preço:</span>
-                    <strong>R$ {option.price}</strong>
-                </div>
-                <div className="row">
-                    <span>Prêmio:</span>
-                    <strong className="premium">{option.premium}</strong>
-                </div>
-                <div className="row secondary">
-                    <span>Vol: {option.volume}</span>
-                    <span>Neg: {option.trades}</span>
-                </div>
-            </div>
-        </div>
-    )
 }
