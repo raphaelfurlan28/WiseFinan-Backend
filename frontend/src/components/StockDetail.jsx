@@ -16,7 +16,7 @@ const CHART_TIMEFRAMES = [
 
 export default function StockDetail({ stock, onBack }) {
     const [showOptions, setShowOptions] = useState(false);
-    const [chartTimeframe, setChartTimeframe] = useState(CHART_TIMEFRAMES[2]);
+    const [chartTimeframe, setChartTimeframe] = useState(CHART_TIMEFRAMES[1]); // Default to 1D
     const [chartLoading, setChartLoading] = useState(false);
     const [chartError, setChartError] = useState(null);
     const [chartData, setChartData] = useState(null);
@@ -67,6 +67,7 @@ export default function StockDetail({ stock, onBack }) {
                 textColor: '#64748b',
                 fontSize: 11,
                 fontFamily: "'Inter', -apple-system, sans-serif",
+                attributionLogo: false, // Hides the TradingView logo
             },
             grid: {
                 vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -274,24 +275,12 @@ export default function StockDetail({ stock, onBack }) {
                         <TrendingUp size={20} color="var(--text-primary)" />
                         <h3>Histórico de Preços</h3>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div className="home-period-selector" style={{ alignSelf: 'flex-start' }}>
                         {CHART_TIMEFRAMES.map(tf => (
                             <button
                                 key={tf.label}
+                                className={`home-period-btn ${chartTimeframe.label === tf.label ? 'active' : ''}`}
                                 onClick={() => setChartTimeframe(tf)}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: chartTimeframe.label === tf.label ? '#f1f5f9' : '#475569',
-                                    fontSize: '0.7rem',
-                                    fontWeight: chartTimeframe.label === tf.label ? 700 : 500,
-                                    padding: '4px 10px',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    borderBottom: chartTimeframe.label === tf.label ? '2px solid #f1f5f9' : '2px solid transparent',
-                                    letterSpacing: '0.3px',
-                                }}
                             >
                                 {tf.label}
                             </button>

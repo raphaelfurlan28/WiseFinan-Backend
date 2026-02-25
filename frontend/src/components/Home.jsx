@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
 import StockDetail from './StockDetail';
 import OptionCard from './OptionCard';
+import OperationChart from './OperationChart';
 
 
 
@@ -60,7 +61,6 @@ const Home = ({ onNavigate, onStockClick }) => {
     const [indices, setIndices] = useState({ selic: '', cdi: '', ipca: '', poupanca: '' });
     const [generalQuotes, setGeneralQuotes] = useState([]);
     const [qtPeriod, setQtPeriod] = useState('1D'); // 1D, 1S, 1M
-    const [moverPeriod, setMoverPeriod] = useState('1D'); // 1D, 1M, 1A
     const [segMetric, setSegMetric] = useState('cagr_luc');
     const [segOrder, setSegOrder] = useState('top'); // top or bottom
     const [segmentedStocks, setSegmentedStocks] = useState([]);
@@ -168,7 +168,7 @@ const Home = ({ onNavigate, onStockClick }) => {
         fetchHighlights();
     }, []);
 
-    // Effect to update Movers based on period
+    // Effect to update Movers based purely on daily variation
     useEffect(() => {
         const stocksList = Object.values(stocksMap);
         if (stocksList.length === 0) return;
@@ -185,12 +185,7 @@ const Home = ({ onNavigate, onStockClick }) => {
             return isNaN(num) ? 0 : num;
         };
 
-        const fieldMap = {
-            '1D': 'change_day',
-            '1M': 'var_1m',
-            '1A': 'var_12m'
-        };
-        const field = fieldMap[moverPeriod];
+        const field = 'change_day'; // Force purely daily variation
 
         const sorted = [...stocksList]
             .filter(s => {
@@ -201,7 +196,7 @@ const Home = ({ onNavigate, onStockClick }) => {
 
         setTopGainers(sorted.slice(0, 3));
         setTopLosers(sorted.slice(-3).reverse());
-    }, [moverPeriod, stocksMap]);
+    }, [stocksMap]);
 
     // Effect for Segmentation Filter
     useEffect(() => {
@@ -411,13 +406,11 @@ const Home = ({ onNavigate, onStockClick }) => {
                                     <span>Aprender sobre esta estratégia</span>
                                     <ChevronRight size={12} style={{ opacity: 0.6 }} />
                                 </button>
-
-
-
                             </div>
                         </div>
 
-                        {/* Probability Card Removed as per request */}
+                        {/* Chart Component showing exact Stock price, Strike, and Breakeven regions */}
+                        <OperationChart operation={operation} />
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {strategy === 'venda_put' && (
@@ -900,22 +893,6 @@ const Home = ({ onNavigate, onStockClick }) => {
                     <TrendingUp size={22} color="var(--home-text-secondary)" />
                     <h2>Resumo das Ações</h2>
                 </div>
-
-                <div className="home-period-selector" style={{ alignSelf: 'flex-start' }}>
-                    {[
-                        { id: '1D', label: '1D' },
-                        { id: '1M', label: '1M' },
-                        { id: '1A', label: '1A' }
-                    ].map((p) => (
-                        <button
-                            key={p.id}
-                            className={`home-period-btn ${moverPeriod === p.id ? 'active' : ''}`}
-                            onClick={() => setMoverPeriod(p.id)}
-                        >
-                            {p.label}
-                        </button>
-                    ))}
-                </div>
             </div>
 
             <div className="dashboard-grid" style={{ marginTop: '0' }}>
@@ -969,11 +946,11 @@ const Home = ({ onNavigate, onStockClick }) => {
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                             <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
-                                                Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
+                                                Var. dia
                                             </span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                 <TrendingUp size={16} />
-                                                {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
+                                                {formatVariation(stock.change_day)}
                                             </div>
                                         </div>
                                     </div>
@@ -1038,11 +1015,11 @@ const Home = ({ onNavigate, onStockClick }) => {
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                             <span style={{ fontSize: '0.55rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', fontWeight: 600 }}>
-                                                Var. {moverPeriod === '1D' ? 'dia' : moverPeriod === '1M' ? 'mês' : 'ano'}
+                                                Var. dia
                                             </span>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                 <TrendingDown size={16} />
-                                                {formatVariation(moverPeriod === '1D' ? stock.change_day : moverPeriod === '1M' ? stock.var_1m : stock.var_12m)}
+                                                {formatVariation(stock.change_day)}
                                             </div>
                                         </div>
                                     </div>

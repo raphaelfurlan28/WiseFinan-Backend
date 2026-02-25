@@ -87,38 +87,62 @@
 
 .home-hero {
     position: relative;
-    padding: 28px 20px 32px;
+    padding: 38px 20px 48px;
     margin: 0 -20px 20px;
     overflow: hidden;
-    /* Scroll-driven opacity & transform via JS custom property */
+    /* SEM BORDAS VÍSIVEIS E FUNDO TRANSPARENTE / ETÉREO */
+    border: none;
+    background: transparent;
+    /* Efeito Parallax/Fade ao Rolar a Tela */
     opacity: var(--hero-opacity, 1);
-    transform: translateY(var(--hero-translate, 0px));
+    transform: translateY(calc(var(--hero-translate, 0px) * 0.5));
     transition: opacity 0.05s linear, transform 0.05s linear;
 }
 
-/* Candlestick SVG watermark */
+/* 
+   Mapa-Múndi Realista e Tecnológico como Máscara de Cor
+   Isso permite que a cor do mapa acompanhe o tema do app!
+*/
 .home-hero::before {
     content: '';
     position: absolute;
-    inset: -40% -20% -40% -20%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='100' viewBox='0 0 60 100'%3E%3Crect x='8' y='25' width='10' height='40' rx='1' fill='%2394a3b8' opacity='0.12'/%3E%3Crect x='12' y='15' width='2' height='10' fill='%2394a3b8' opacity='0.10'/%3E%3Crect x='12' y='65' width='2' height='12' fill='%2394a3b8' opacity='0.10'/%3E%3Crect x='32' y='35' width='10' height='35' rx='1' fill='%2364748b' opacity='0.10'/%3E%3Crect x='36' y='20' width='2' height='15' fill='%2364748b' opacity='0.08'/%3E%3Crect x='36' y='70' width='2' height='14' fill='%2364748b' opacity='0.08'/%3E%3Crect x='52' y='45' width='6' height='20' rx='1' fill='%2394a3b8' opacity='0.08'/%3E%3Crect x='54' y='38' width='2' height='7' fill='%2394a3b8' opacity='0.06'/%3E%3Crect x='54' y='65' width='2' height='8' fill='%2394a3b8' opacity='0.06'/%3E%3C/svg%3E");
-    background-size: 60px 100px;
-    background-repeat: repeat;
-    transform: rotate(-18deg) scale(1.4);
+    /* Expande levemente o mapa para dar sensação de imensidão */
+    inset: -10% -5% -10% -5%;
+
+    /* A cor realística em "malha vetorial" que respeita variáveis CSS */
+    background-color: var(--home-text-secondary, #94a3b8);
+
+    /* Usando SVG como Máscara Alfa */
+    -webkit-mask-image: url('../assets/world.svg');
+    mask-image: url('../assets/world.svg');
+
+    /* Configurações da Máscara */
+    -webkit-mask-size: 110%;
+    mask-size: 110%;
+    -webkit-mask-position: center 30%;
+    mask-position: center 30%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    /* Transparência Extrema solicitada */
+    opacity: 0.08;
     pointer-events: none;
     z-index: 0;
 }
 
-/* Soft gradient overlay to fade edges */
+/* 
+   Transição Perfeita para a Restante da Tela 
+   Usa a cor de fundo nativa do tema para apagar o mapa sem deixar "linha dura"
+*/
 .home-hero::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg,
-            rgba(15, 23, 42, 0.3) 0%,
-            transparent 30%,
-            transparent 60%,
-            rgba(15, 23, 42, 0.7) 100%);
+    /* Fade from 0% opacity (invisible) to 100% Theme Background at the bottom */
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            transparent 50%,
+            var(--home-bg, #0f172a) 100%);
     pointer-events: none;
     z-index: 1;
 }
@@ -126,25 +150,29 @@
 .home-hero-content {
     position: relative;
     z-index: 2;
+    /* Sombra refinada para descolar o texto da marca d'água técnica */
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Typography — Premium */
+/* Tipografia Premium ("Olá Investidor...") */
 .home-hero-title {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 2rem;
+    font-size: 2.15rem;
     line-height: 1.15;
     margin: 0 0 6px;
     letter-spacing: -0.5px;
 }
 
+/* Forte contraste de pesos: Fina para a saudação */
 .home-hero-title .greeting {
     font-weight: 300;
-    color: rgba(241, 245, 249, 0.8);
+    color: var(--home-text-primary, rgba(241, 245, 249, 0.9));
 }
 
+/* Forte contraste de pesos: ExtraBold para "Investidor" */
 .home-hero-title .name {
     font-weight: 800;
-    background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 100%);
+    background: linear-gradient(135deg, var(--home-text-primary, #ffffff) 0%, var(--home-text-secondary, #94a3b8) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -152,11 +180,12 @@
 
 .home-hero-subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 400;
+    font-size: 0.95rem;
+    font-weight: 300;
     color: var(--home-text-tertiary);
     margin: 0;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
 }
 
 /* ── Card System ── */

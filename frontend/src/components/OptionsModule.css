@@ -431,7 +431,6 @@
 
     .ticker {
         font-size: 0.58rem;
-        padding: 2px 5px;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;

@@ -315,10 +315,42 @@
     gap: 12px;
 }
 
+/* ── Standard App Period Selector for Chart ── */
+.home-period-selector {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 1px;
+}
+
+.home-period-btn {
+    background: transparent;
+    color: var(--text-secondary, #94a3b8);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.home-period-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary, #f1f5f9);
+}
+
 .chart-clean-wrapper {
     background: transparent;
     border: none;
     padding: 0;
+}
+
+/* Forcefully hide TradingView lightweight-charts attribution link/logo */
+.chart-container a {
+    display: none !important;
 }
 
 .detail-chart-item {
