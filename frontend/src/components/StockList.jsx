@@ -259,7 +259,7 @@ export default function StockList({ onSelectStock }) {
               if (distance <= 15) {
                 barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
                 barGlow = '0 0 10px rgba(74, 222, 128, 0.4)';
-              } else if (distance <= 30) {
+              } else if (distance < 50) {
                 barGradient = 'linear-gradient(90deg, #facc15, #eab308)';
                 barGlow = '0 0 10px rgba(250, 204, 21, 0.3)';
               } else {
@@ -322,7 +322,7 @@ export default function StockList({ onSelectStock }) {
                         }}
                       ></div>
                     </div>
-                    <span className="progress-label" style={{ color: !isCheap && Math.abs(faltaVal) > 30 ? '#f87171' : (!isCheap && Math.abs(faltaVal) > 15 ? '#facc15' : '#4ade80') }}>
+                    <span className="progress-label" style={{ color: !isCheap && Math.abs(faltaVal) >= 50 ? '#f87171' : (!isCheap && Math.abs(faltaVal) > 15 ? '#facc15' : '#4ade80') }}>
                       Falta: {stock.falta_pct}
                     </span>
                   </div>

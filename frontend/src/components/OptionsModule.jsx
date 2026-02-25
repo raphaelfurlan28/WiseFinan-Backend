@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 import ModernLoader from './ModernLoader';
 import { getApiUrl } from '../services/api';
 import './OptionsModule.css';
@@ -156,7 +156,10 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
 
                 <div className="options-content">
                     <div className="options-column calls">
-                        <h3>CALLs</h3>
+                        <h3>
+                            <TrendingUp size={14} />
+                            CALLs
+                        </h3>
                         <div className="cards-list">
                             {calls.length === 0 && <p className="empty-msg">Nenhuma Call disponível.</p>}
                             {calls.map((opt, idx) => (
@@ -171,7 +174,10 @@ export default function OptionsModule({ ticker, logoUrl, onClose }) {
                     </div>
 
                     <div className="options-column puts">
-                        <h3>PUTs</h3>
+                        <h3>
+                            <TrendingDown size={14} />
+                            PUTs
+                        </h3>
                         <div className="cards-list">
                             {puts.length === 0 && <p className="empty-msg">Nenhuma Put disponível.</p>}
                             {puts.map((opt, idx) => (

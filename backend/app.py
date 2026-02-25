@@ -75,6 +75,65 @@ def get_stock_history(ticker):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/chart/<ticker>', methods=['GET'])
+def get_chart_data(ticker):
+    """Fetch OHLCV candlestick data using yfinance."""
+    import yfinance as yf
+    from flask import request
+    import math
+    try:
+        time_range = request.args.get('range', '1mo')
+        interval = request.args.get('interval', '1d')
+        
+        # Brazilian tickers need .SA suffix for Yahoo Finance
+        yf_ticker = ticker if '.' in ticker else f"{ticker}.SA"
+        
+        stock = yf.Ticker(yf_ticker)
+        df = stock.history(period=time_range, interval=interval)
+        
+        if df.empty:
+            return jsonify({"error": "Nenhum dado encontrado para este ativo.", "candles": []}), 404
+        
+        # Get company name
+        try:
+            info = stock.info
+            name = info.get('longName', info.get('shortName', ticker))
+        except:
+            name = ticker
+        
+        candles = []
+        for idx, row in df.iterrows():
+            # Convert timestamp to unix seconds
+            ts = int(idx.timestamp())
+            
+            o = round(row['Open'], 2) if not math.isnan(row['Open']) else 0
+            h = round(row['High'], 2) if not math.isnan(row['High']) else 0
+            l = round(row['Low'], 2) if not math.isnan(row['Low']) else 0
+            c = round(row['Close'], 2) if not math.isnan(row['Close']) else 0
+            v = int(row['Volume']) if not math.isnan(row['Volume']) else 0
+            
+            if o > 0 and h > 0 and l > 0 and c > 0:
+                candles.append({
+                    'time': ts,
+                    'open': o,
+                    'high': h,
+                    'low': l,
+                    'close': c,
+                    'volume': v
+                })
+        
+        return jsonify({
+            'ticker': ticker,
+            'name': name,
+            'currency': 'BRL',
+            'candles': candles
+        })
+    except Exception as e:
+        import traceback
+        print(f"[CHART ERROR] {ticker}: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e), "candles": []}), 500
+
 @app.route('/api/stocks/<ticker>/options', methods=['GET'])
 def get_stock_options(ticker):
     try:

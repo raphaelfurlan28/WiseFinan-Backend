@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createChart, CandlestickSeries, HistogramSeries } from 'lightweight-charts';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Label } from 'recharts';
 import { ArrowLeft, TrendingUp, TrendingDown, ListPlus, Landmark, Target, DollarSign, ArrowUp, ArrowDown, Coins, PieChart, Activity, Shield } from 'lucide-react';
 import OptionsModule from './OptionsModule';
@@ -6,26 +7,109 @@ import ModernLoader from './ModernLoader';
 import { getApiUrl } from '../services/api';
 import './StockDetail.css';
 
+const CHART_TIMEFRAMES = [
+    { label: '15m', range: '1mo', interval: '15m' },
+    { label: '1D', range: '6mo', interval: '1d' },
+    { label: '1S', range: '1y', interval: '1wk' },
+    { label: '1M', range: '5y', interval: '1mo' },
+];
+
 export default function StockDetail({ stock, onBack }) {
-    const [history, setHistory] = useState([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
+    const [chartTimeframe, setChartTimeframe] = useState(CHART_TIMEFRAMES[2]);
+    const [chartLoading, setChartLoading] = useState(false);
+    const [chartError, setChartError] = useState(null);
+    const [chartData, setChartData] = useState(null);
+    const chartContainerRef = useRef(null);
+    const chartInstanceRef = useRef(null);
+
+    // Fetch candlestick data from yfinance API
+    const fetchChartData = useCallback(async () => {
+        if (!stock?.ticker) return;
+        setChartLoading(true);
+        setChartError(null);
+        try {
+            const url = getApiUrl(`/api/chart/${stock.ticker}?range=${chartTimeframe.range}&interval=${chartTimeframe.interval}`);
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.error || !data.candles || data.candles.length === 0) {
+                setChartError(data.error || 'Sem dados disponíveis.');
+                setChartData(null);
+            } else {
+                setChartData(data);
+            }
+        } catch (err) {
+            console.error('Chart fetch error:', err);
+            setChartError('Erro ao buscar dados.');
+            setChartData(null);
+        } finally {
+            setChartLoading(false);
+        }
+    }, [stock?.ticker, chartTimeframe]);
 
     useEffect(() => {
-        if (stock?.ticker) {
-            setLoadingHistory(true);
-            fetch(getApiUrl(`/api/stocks/${stock.ticker}/history`))
-                .then(res => res.json())
-                .then(data => {
-                    setHistory(data);
-                    setLoadingHistory(false);
-                })
-                .catch(err => {
-                    console.error("Error fetching history:", err);
-                    setLoadingHistory(false);
-                });
+        fetchChartData();
+    }, [fetchChartData]);
+
+    // Render TradingView chart
+    useEffect(() => {
+        if (!chartContainerRef.current || !chartData || !chartData.candles.length) return;
+        if (chartInstanceRef.current) {
+            chartInstanceRef.current.remove();
+            chartInstanceRef.current = null;
         }
-    }, [stock]);
+        const container = chartContainerRef.current;
+        const chart = createChart(container, {
+            width: container.clientWidth,
+            height: container.clientHeight,
+            layout: {
+                background: { color: 'transparent' },
+                textColor: '#64748b',
+                fontSize: 11,
+                fontFamily: "'Inter', -apple-system, sans-serif",
+            },
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+            },
+            crosshair: {
+                mode: 0,
+                vertLine: { color: 'rgba(255, 255, 255, 0.4)', width: 1, style: 2, labelBackgroundColor: '#334155' },
+                horzLine: { color: 'rgba(255, 255, 255, 0.4)', width: 1, style: 2, labelBackgroundColor: '#334155' },
+            },
+            rightPriceScale: {
+                borderColor: 'rgba(255, 255, 255, 0.06)',
+                scaleMargins: { top: 0.1, bottom: 0.25 },
+            },
+            timeScale: {
+                borderColor: 'rgba(255, 255, 255, 0.06)',
+                timeVisible: chartTimeframe.interval === '15m',
+                secondsVisible: false,
+                rightOffset: 3,
+                barSpacing: 6,
+            },
+            handleScroll: { vertTouchDrag: false },
+        });
+        const candleSeries = chart.addSeries(CandlestickSeries, {
+            upColor: '#4ade80', downColor: '#ef4444',
+            borderUpColor: '#4ade80', borderDownColor: '#ef4444',
+            wickUpColor: '#4ade80', wickDownColor: '#ef4444',
+        });
+        const volumeSeries = chart.addSeries(HistogramSeries, {
+            color: '#94a3b8', priceFormat: { type: 'volume' }, priceScaleId: 'volume',
+        });
+        chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+        candleSeries.setData(chartData.candles.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
+        volumeSeries.setData(chartData.candles.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? 'rgba(74,222,128,0.25)' : 'rgba(239,68,68,0.25)' })));
+        chart.timeScale().fitContent();
+        const resizeObserver = new ResizeObserver(entries => {
+            const { width, height } = entries[0].contentRect;
+            chart.applyOptions({ width, height });
+        });
+        resizeObserver.observe(container);
+        chartInstanceRef.current = chart;
+        return () => { resizeObserver.disconnect(); chart.remove(); chartInstanceRef.current = null; };
+    }, [chartData, chartTimeframe.interval]);
 
     if (!stock) return null;
 
@@ -78,13 +162,13 @@ export default function StockDetail({ stock, onBack }) {
             barGradient = 'linear-gradient(90deg, #4ade80, #22c55e)';
             textColor = '#4ade80';
             barGlow = '0 0 12px rgba(74, 222, 128, 0.5)';
-        } else if (distance <= 30) {
-            // Gap 15-30% (e.g. -20%) -> Yellow
+        } else if (distance < 50) {
+            // Gap 15-50% -> Yellow
             barGradient = 'linear-gradient(90deg, #facc15, #eab308)';
             textColor = '#facc15';
             barGlow = '0 0 12px rgba(250, 204, 21, 0.4)';
         } else {
-            // Gap > 30% -> Red
+            // Gap >= 50% -> Red
             barGradient = 'linear-gradient(90deg, #f87171, #ef4444)';
             textColor = '#ef4444';
             barGlow = '0 0 12px rgba(239, 68, 68, 0.5)';
@@ -183,75 +267,49 @@ export default function StockDetail({ stock, onBack }) {
 
             {showOptions && <OptionsModule ticker={stock.ticker} logoUrl={stock.image_url} onClose={() => setShowOptions(false)} />}
 
-            {/* Historical Chart Section - Clean Layout */}
+            {/* Historical Chart Section - TradingView Candlestick */}
             <div className="detail-chart-section">
-                <div className="stats-header-minimal">
-                    <TrendingUp size={20} color="var(--text-primary)" />
-                    <h3>Histórico de Preços</h3>
+                <div style={{ marginBottom: '14px' }}>
+                    <div className="stats-header-minimal" style={{ marginBottom: '10px' }}>
+                        <TrendingUp size={20} color="var(--text-primary)" />
+                        <h3>Histórico de Preços</h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                        {CHART_TIMEFRAMES.map(tf => (
+                            <button
+                                key={tf.label}
+                                onClick={() => setChartTimeframe(tf)}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: chartTimeframe.label === tf.label ? '#f1f5f9' : '#475569',
+                                    fontSize: '0.7rem',
+                                    fontWeight: chartTimeframe.label === tf.label ? 700 : 500,
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    borderBottom: chartTimeframe.label === tf.label ? '2px solid #f1f5f9' : '2px solid transparent',
+                                    letterSpacing: '0.3px',
+                                }}
+                            >
+                                {tf.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div className="chart-clean-wrapper">
-                    <div className="chart-container" style={{ height: 250, width: '100%' }}>
-                        {loadingHistory ? (
+                    <div className="chart-container" style={{ height: 300, width: '100%' }}>
+                        {chartLoading ? (
                             <ModernLoader text="Carregando gráfico..." />
-                        ) : history.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={history} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.2} />
-                                    <XAxis dataKey="date" hide={true} />
-                                    <YAxis
-                                        orientation="right"
-                                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                                        axisLine={false}
-                                        tickLine={false}
-                                        domain={['auto', 'auto']}
-                                        width={40}
-                                    />
-                                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-
-                                    {(() => {
-                                        const parseVal = (v) => parseFloat((v || "0").toString().replace('R$', '').replace('.', '').replace(',', '.').trim());
-                                        const currentP = parseVal(stock.price);
-                                        const lowP = parseVal(stock.min_val);
-                                        const highP = parseVal(stock.max_val);
-
-                                        return (
-                                            <>
-                                                {/* Current Price Line */}
-                                                <ReferenceLine
-                                                    y={currentP}
-                                                    stroke="#fff"
-                                                    strokeWidth={0.5}
-                                                    strokeDasharray="3 3"
-                                                    label={{
-                                                        position: 'insideRight', // Moves it back inside/closer to the axis
-                                                        value: 'PREÇO ATUAL',
-                                                        fill: '#fff',
-                                                        fontSize: 8,
-                                                        fontWeight: 300,
-                                                        letterSpacing: 1,
-                                                        dx: 0, // Reset dx or small adjustment if needed, 0 keeps it aligned
-                                                        dy: -8
-                                                    }}
-                                                />
-                                            </>
-                                        );
-                                    })()}
-
-                                    <Area type="monotone" dataKey="price" stroke={isZero ? "#ffffff" : (isPositive ? "#4ade80" : "#ef4444")} fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        ) : chartError ? (
+                            <div className="chart-empty">{chartError}</div>
+                        ) : chartData ? (
+                            <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
                         ) : (
-                            <div className="chart-empty">Sem dados de histórico.</div>
+                            <div className="chart-empty">Selecione um período.</div>
                         )}
                     </div>
-
-
                 </div>
             </div>
 
@@ -262,16 +320,6 @@ export default function StockDetail({ stock, onBack }) {
                 </div>
 
                 <div className="stats-clean-list">
-                    <div className="stat-clean-row">
-                        <span className="label">Mín. de 52 semanas</span>
-                        <span className="value">R$ {stock.min_12m}</span>
-                    </div>
-
-                    <div className="stat-clean-row">
-                        <span className="label">Máx. de 52 semanas</span>
-                        <span className="value">R$ {stock.max_12m}</span>
-                    </div>
-
                     <div className="stat-clean-row">
                         <span className="label">Dividend yield</span>
                         <span className="value">{formatPercentage(stock.dividend)}</span>
@@ -308,20 +356,6 @@ export default function StockDetail({ stock, onBack }) {
                     <div className="stat-clean-row">
                         <span className="label">Volat. (Ano)</span>
                         <span className="value">{stock.vol_ano || "--"}</span>
-                    </div>
-
-                    <div className="stat-clean-row">
-                        <span className="label">Variação (12M)</span>
-                        <span className="value" style={{ color: parsePrice(stock.var_12m) > 0 ? '#4ade80' : (parsePrice(stock.var_12m) < 0 ? '#ef4444' : '#fff') }}>
-                            {stock.var_12m || "--"}
-                        </span>
-                    </div>
-
-                    <div className="stat-clean-row">
-                        <span className="label">Variação (Mês)</span>
-                        <span className="value" style={{ color: parsePrice(stock.var_1m) > 0 ? '#4ade80' : (parsePrice(stock.var_1m) < 0 ? '#ef4444' : '#fff') }}>
-                            {stock.var_1m || "--"}
-                        </span>
                     </div>
 
                     <h4 className="stats-sub-title">

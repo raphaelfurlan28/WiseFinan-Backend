@@ -698,8 +698,8 @@ const Portfolio = () => {
                                                                         {(() => {
                                                                             const faltaVal = parseFloat(rec.falta.replace('%', '').replace(',', '.')) || 0;
                                                                             let color = '#ef4444';
-                                                                            if (faltaVal > -15) color = '#4ade80';
-                                                                            else if (faltaVal >= -30) color = '#facc15';
+                                                                            if (faltaVal >= -15) color = '#4ade80';
+                                                                            else if (faltaVal > -50) color = '#facc15';
 
                                                                             const fillPercentage = Math.max(0, Math.min(100, 100 + faltaVal));
                                                                             const radius = 13;

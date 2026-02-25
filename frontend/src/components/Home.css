@@ -1,0 +1,736 @@
+/* ═══════════════════════════════════════════
+   HOME DESIGN SYSTEM — Design Tokens & Cards
+   ═══════════════════════════════════════════ */
+
+/* ── Design Tokens ── */
+:root {
+    /* Typography Scale */
+    --home-font-ticker: 0.95rem;
+    --home-font-price: 0.92rem;
+    --home-font-company: 0.72rem;
+    --home-font-label: 0.6rem;
+    --home-font-badge: 0.72rem;
+    --home-font-section-title: 1.2rem;
+    --home-font-card-title: 1.05rem;
+    --home-font-news-title: 0.88rem;
+    --home-font-body: 0.82rem;
+    --home-font-micro: 0.58rem;
+
+    /* Weights */
+    --home-w-ticker: 700;
+    --home-w-price: 700;
+    --home-w-label: 500;
+    --home-w-title: 600;
+
+    /* Colors — Text Hierarchy */
+    --home-text-primary: #f1f5f9;
+    --home-text-secondary: #94a3b8;
+    --home-text-tertiary: #64748b;
+    --home-text-muted: #475569;
+    --home-text-company: #64748b;
+
+    /* Colors — Semantic */
+    --home-positive: #4ade80;
+    --home-negative: #f87171;
+    --home-info: #38bdf8;
+    --home-warning: #facc15;
+
+    /* Card Geometry */
+    --home-card-radius: 16px;
+    --home-card-padding: 16px;
+    --home-card-bg: rgba(30, 41, 59, 0.45);
+    --home-card-border: 1px solid rgba(255, 255, 255, 0.05);
+    --home-card-header-padding: 14px 16px;
+
+    /* Icon Box */
+    --home-icon-size: 32px;
+    --home-icon-radius: 10px;
+
+    /* Avatar */
+    --home-avatar-size: 34px;
+
+    /* Separator */
+    --home-separator: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+
+    /* Header gradient intensity */
+    --home-header-alpha: 0.12;
+}
+
+/* ── Section Headers ── */
+.home-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    margin-bottom: 12px;
+}
+
+.home-section-header h2 {
+    font-size: var(--home-font-section-title);
+    color: var(--home-text-secondary);
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+}
+
+.home-separator {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    margin: 28px 0 14px 0;
+}
+
+
+/* ════════════════════════════════════════════
+   HERO SECTION — Premium Greeting
+   ════════════════════════════════════════════ */
+
+.home-hero {
+    position: relative;
+    padding: 28px 20px 32px;
+    margin: 0 -20px 20px;
+    overflow: hidden;
+    /* Scroll-driven opacity & transform via JS custom property */
+    opacity: var(--hero-opacity, 1);
+    transform: translateY(var(--hero-translate, 0px));
+    transition: opacity 0.05s linear, transform 0.05s linear;
+}
+
+/* Candlestick SVG watermark */
+.home-hero::before {
+    content: '';
+    position: absolute;
+    inset: -40% -20% -40% -20%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='100' viewBox='0 0 60 100'%3E%3Crect x='8' y='25' width='10' height='40' rx='1' fill='%2394a3b8' opacity='0.12'/%3E%3Crect x='12' y='15' width='2' height='10' fill='%2394a3b8' opacity='0.10'/%3E%3Crect x='12' y='65' width='2' height='12' fill='%2394a3b8' opacity='0.10'/%3E%3Crect x='32' y='35' width='10' height='35' rx='1' fill='%2364748b' opacity='0.10'/%3E%3Crect x='36' y='20' width='2' height='15' fill='%2364748b' opacity='0.08'/%3E%3Crect x='36' y='70' width='2' height='14' fill='%2364748b' opacity='0.08'/%3E%3Crect x='52' y='45' width='6' height='20' rx='1' fill='%2394a3b8' opacity='0.08'/%3E%3Crect x='54' y='38' width='2' height='7' fill='%2394a3b8' opacity='0.06'/%3E%3Crect x='54' y='65' width='2' height='8' fill='%2394a3b8' opacity='0.06'/%3E%3C/svg%3E");
+    background-size: 60px 100px;
+    background-repeat: repeat;
+    transform: rotate(-18deg) scale(1.4);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Soft gradient overlay to fade edges */
+.home-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+            rgba(15, 23, 42, 0.3) 0%,
+            transparent 30%,
+            transparent 60%,
+            rgba(15, 23, 42, 0.7) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.home-hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* Typography — Premium */
+.home-hero-title {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 2rem;
+    line-height: 1.15;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+}
+
+.home-hero-title .greeting {
+    font-weight: 300;
+    color: rgba(241, 245, 249, 0.8);
+}
+
+.home-hero-title .name {
+    font-weight: 800;
+    background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.home-hero-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: var(--home-text-tertiary);
+    margin: 0;
+    letter-spacing: 0.2px;
+}
+
+/* ── Card System ── */
+.home-card {
+    border-radius: var(--home-card-radius);
+    border: var(--home-card-border);
+    background: var(--home-card-bg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.home-card:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Card Header ── */
+.home-card-header {
+    padding: var(--home-card-header-padding);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.home-card-header h3 {
+    font-size: var(--home-font-card-title);
+    font-weight: var(--home-w-title);
+    color: var(--home-text-primary);
+    margin: 0;
+    line-height: 1.25;
+}
+
+.home-card-header .subtitle {
+    color: var(--home-text-tertiary);
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+/* Header accent icon box */
+.home-icon-box {
+    min-width: var(--home-icon-size);
+    width: var(--home-icon-size);
+    height: var(--home-icon-size);
+    border-radius: var(--home-icon-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Card Body ── */
+.home-card-body {
+    padding: var(--home-card-padding);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Stock Row (reusable across Altas, Baixas, Calendar, Efficiency) ── */
+.home-stock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.home-stock-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.home-stock-row .stock-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-stock-row .stock-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
+/* ── Avatar ── */
+.home-avatar {
+    width: var(--home-avatar-size);
+    height: var(--home-avatar-size);
+    min-width: var(--home-avatar-size);
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.home-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-avatar .fallback {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--home-text-secondary);
+}
+
+/* ── Stock Info (Ticker + Company) — GLOBAL ── */
+.home-stock-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.home-stock-info .ticker {
+    font-size: var(--home-font-ticker);
+    font-weight: var(--home-w-ticker);
+    color: var(--home-text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.2px;
+}
+
+.home-stock-info .company {
+    font-size: var(--home-font-company);
+    color: var(--home-text-company);
+    line-height: 1.1;
+    margin-top: 2px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Labels (micro text above values) ── */
+.home-label {
+    font-size: var(--home-font-label);
+    color: var(--home-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: var(--home-w-label);
+}
+
+/* ── Value (price, variation) ── */
+.home-value {
+    font-size: var(--home-font-price);
+    font-weight: var(--home-w-price);
+    color: var(--home-text-primary);
+}
+
+.home-value.positive {
+    color: var(--home-positive);
+}
+
+.home-value.negative {
+    color: var(--home-negative);
+}
+
+/* ── Pill Badges (CALLS/PUTS counts) ── */
+.home-pill {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: var(--home-font-badge);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.home-pill.call {
+    background: rgba(56, 189, 248, 0.10);
+    color: var(--home-info);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.home-pill.put {
+    background: rgba(239, 68, 68, 0.10);
+    color: var(--home-negative);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.home-pill .count {
+    font-weight: 700;
+}
+
+.home-pill .desc {
+    font-weight: 400;
+    opacity: 0.65;
+    font-size: 0.68rem;
+}
+
+/* ── List Separator ── */
+.home-list-divider {
+    margin: 6px 8px;
+    height: 1px;
+    background: var(--home-separator);
+}
+
+/* ── Period Selector Buttons ── */
+.home-period-selector {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 1px;
+}
+
+.home-period-btn {
+    background: transparent;
+    color: var(--home-text-tertiary);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.home-period-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--home-text-primary);
+}
+
+
+/* ════════════════════════════════════════════
+   OPPORTUNITY CARDS — Responsive Fix
+   ════════════════════════════════════════════ */
+
+.home-opportunity-card {
+    border-radius: var(--home-card-radius);
+    border: var(--home-card-border);
+    background: var(--home-card-bg);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.home-opportunity-card:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.home-opportunity-card.cheap {
+    border-left: 3px solid rgba(74, 222, 128, 0.5);
+}
+
+.home-opportunity-card.expensive {
+    border-left: 3px solid rgba(239, 68, 68, 0.5);
+}
+
+/* ── Opportunity Header: avatar | ticker+company | price | circle ── */
+.home-opportunity-header {
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.home-opportunity-header .stock-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 0;
+}
+
+.home-opportunity-header .stock-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.home-opportunity-header .stock-right .home-value {
+    font-size: var(--home-font-price);
+    font-weight: var(--home-w-price);
+    color: var(--home-text-primary);
+    white-space: nowrap;
+}
+
+/* ── Opportunity Body ── */
+.home-opportunity-body {
+    padding: 10px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.home-opportunity-label {
+    font-size: var(--home-font-micro);
+    color: var(--home-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+/* Mobile safeguard */
+@media (max-width: 380px) {
+    .home-opportunity-header {
+        flex-wrap: wrap;
+    }
+
+    .home-opportunity-header .stock-right {
+        margin-left: auto;
+    }
+
+    .home-stock-info .company {
+        max-width: 100px;
+    }
+}
+
+
+/* ════════════════════════════════════════════
+   NEWS CARDS — Clean Modern Layout
+   ════════════════════════════════════════════ */
+
+.home-news-card {
+    cursor: pointer;
+    padding: 16px 18px;
+    background: var(--home-card-bg);
+    border: var(--home-card-border);
+    border-radius: var(--home-card-radius);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.home-news-card:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Meta line: badges left, date right */
+.home-news-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.home-news-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.home-news-badge {
+    font-size: var(--home-font-micro);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+
+.home-news-badge.brazil {
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--home-positive);
+}
+
+.home-news-badge.world {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--home-info);
+}
+
+.home-news-badge.source {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--home-text-tertiary);
+}
+
+.home-news-date {
+    font-size: var(--home-font-micro);
+    color: var(--home-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Content: image + title side by side */
+.home-news-content {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.home-news-image {
+    width: 72px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.home-news-title {
+    font-size: var(--home-font-news-title);
+    line-height: 1.4;
+    margin: 0;
+    font-weight: 600;
+    color: var(--home-text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.home-news-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.home-read-more {
+    font-size: 0.68rem;
+    color: var(--home-text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.home-news-card:hover .home-read-more {
+    color: var(--home-text-secondary);
+}
+
+
+/* ════════════════════════════════════════════
+   RENDA FIXA CARDS — Premium Redesign
+   ════════════════════════════════════════════ */
+
+.home-rf-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 640px) {
+    .home-rf-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.home-rf-card {
+    border-radius: var(--home-card-radius);
+    background: var(--home-card-bg);
+    border: var(--home-card-border);
+    border-left: 3px solid rgba(59, 130, 246, 0.5);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-rf-card:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+/* Top section: category badge + rate */
+.home-rf-top {
+    padding: 16px 18px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.home-rf-category {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.home-rf-category-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: var(--home-text-secondary);
+}
+
+.home-rf-category svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.home-rf-rate-block {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.home-rf-rate {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--home-positive);
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.home-rf-period {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--home-text-muted);
+    margin-top: 2px;
+    text-align: right;
+}
+
+/* Title section */
+.home-rf-title {
+    padding: 6px 18px 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--home-text-primary);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+/* Footer section: min invest + vencimento */
+.home-rf-footer {
+    margin: 12px 18px 0;
+    padding: 10px 0 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.home-rf-footer span {
+    font-size: 0.72rem;
+    color: var(--home-text-secondary);
+    font-weight: 500;
+}
+
+
+/* ── Cotações Mundiais Card ── */
+.home-cotacoes-header {
+    padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ── Dashboard Grid — keep existing but standardize gap ── */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 8px;
+}
+
+@media (min-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

@@ -17,11 +17,11 @@ export default function OptionCard({ option, type, showExpiration = true }) {
     const hasGreeks = option.delta_val || option.prob_success;
 
     return (
-        <div className={`option-card ${type}`} style={{ height: 'auto', minHeight: 'auto', display: 'flex', flexDirection: 'column', paddingBottom: '12px' }}>
+        <div className={`option-card ${type}`} style={{ height: 'auto', minHeight: 'auto', display: 'flex', flexDirection: 'column' }}>
             <div className="card-header">
                 <div className="strike-container">
                     <span className="strike-label">Strike</span>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#f1f5f9' }}>R$ {option.strike}</span>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>R$ {option.strike}</span>
                     <div style={{
                         fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
                         padding: '2px 6px', borderRadius: '4px', width: 'fit-content', marginTop: '4px',
@@ -56,7 +56,7 @@ export default function OptionCard({ option, type, showExpiration = true }) {
 
                 {showExpiration && (
                     <div className="row secondary" style={{ marginTop: '4px' }}>
-                        <span>Vencimento:</span>
+                        <span>Venc:</span>
                         <span style={{ color: '#cbd5e1' }}>{option.expiration ? option.expiration.split('-').reverse().join('/') : '-'}</span>
                     </div>
                 )}
@@ -67,20 +67,21 @@ export default function OptionCard({ option, type, showExpiration = true }) {
                         onClick={(e) => { e.stopPropagation(); option.onAction(option); }}
                         style={{
                             width: '100%',
-                            marginTop: '12px',
+                            marginTop: '10px',
                             padding: '8px',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            fontSize: '0.8rem',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            color: '#cbd5e1',
+                            fontSize: '0.78rem',
                             fontWeight: 600,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '6px',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            letterSpacing: '0.2px'
                         }}
                     >
                         Ver Operação
@@ -88,22 +89,22 @@ export default function OptionCard({ option, type, showExpiration = true }) {
                 )}
 
                 {hasGreeks && (
-                    <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.75rem' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>Prob. Sucesso</span>
-                                <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{option.prob_success}</span>
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.73rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ color: '#475569', fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prob. Sucesso</span>
+                                <span style={{ color: '#38bdf8', fontWeight: 700 }}>{option.prob_success}</span>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>Delta</span>
-                                <span style={{ color: '#cbd5e1' }}>{option.delta_val}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ color: '#475569', fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Delta</span>
+                                <span style={{ color: '#94a3b8', fontWeight: 500 }}>{option.delta_val}</span>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>Preço Justo (BS)</span>
-                                <span style={{ color: '#cbd5e1' }}>{option.bs_price_val}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ color: '#475569', fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preço Justo (BS)</span>
+                                <span style={{ color: '#94a3b8', fontWeight: 500 }}>{option.bs_price_val}</span>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>Edge Teórico</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ color: '#475569', fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edge Teórico</span>
                                 <span style={{
                                     color: Math.abs(getVal(option.edge_formatted)) > 500 ? '#64748b' : (getVal(option.edge_formatted) > 0 ? '#4ade80' : '#ef4444'),
                                     fontWeight: 'bold'

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import ModernLoader from './ModernLoader';
 import '../components/FixedIncome.css';
-import './OptionsModule.css'; // Import Options Styles
+import './OptionsModule.css';
+import './Home.css';
 import './Dashboard.css'; // Import Dashboard Styles
 import './News.css';
 import '../styles/main.css';
@@ -63,6 +64,36 @@ const Home = ({ onNavigate, onStockClick }) => {
     const [segMetric, setSegMetric] = useState('cagr_luc');
     const [segOrder, setSegOrder] = useState('top'); // top or bottom
     const [segmentedStocks, setSegmentedStocks] = useState([]);
+
+    // ── Hero Parallax Effect ──
+    const heroRef = useRef(null);
+
+    useEffect(() => {
+        const container = heroRef.current?.closest('.rf-container');
+        if (!container) return;
+
+        let ticking = false;
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                const scrollY = container.scrollTop || window.scrollY;
+                const fadeDistance = 200;
+                const progress = Math.min(scrollY / fadeDistance, 1);
+
+                if (heroRef.current) {
+                    heroRef.current.style.setProperty('--hero-opacity', String(1 - progress));
+                    heroRef.current.style.setProperty('--hero-translate', `${-progress * 30}px`);
+                }
+                ticking = false;
+            });
+        };
+
+        // Try container scroll first, fall back to window
+        const scrollTarget = container.scrollHeight > container.clientHeight ? container : window;
+        scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
+        return () => scrollTarget.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Fetch Home Highlights
     useEffect(() => {
@@ -602,8 +633,8 @@ const Home = ({ onNavigate, onStockClick }) => {
     const VolatilityCircle = ({ value }) => {
         const val = parseFloat(String(value).replace('%', '').replace(',', '.')) || 0;
         let color = '#ef4444';
-        if (val > -15) color = '#4ade80';
-        else if (val >= -30) color = '#facc15';
+        if (val >= -15) color = '#4ade80';
+        else if (val > -50) color = '#facc15';
 
         const fillPercentage = Math.max(0, Math.min(100, 100 + val));
         const radius = 13;
@@ -630,66 +661,34 @@ const Home = ({ onNavigate, onStockClick }) => {
             {/* Ticker de Variações */}
             <StockTicker />
 
-            {/* Greeting */}
-            <div style={{ padding: '0 8px', marginBottom: '24px', marginTop: '16px' }}>
-                <h1 style={{
-                    fontSize: '1.8rem',
-                    fontWeight: '700',
-                    marginBottom: '4px',
-                    background: 'linear-gradient(90deg, #fff, #aaa)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                }}>
-                    Olá Investidor
-                </h1>
-                <p style={{ color: '#64748b', margin: 0 }}>Seja bem vindo!</p>
-                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)', margin: '24px 0 0 0' }}></div>
+            {/* ═══ HERO SECTION ═══ */}
+            <div className="home-hero" ref={heroRef}>
+                <div className="home-hero-content">
+                    <h1 className="home-hero-title">
+                        <span className="greeting">Olá </span>
+                        <span className="name">Investidor</span>
+                    </h1>
+                    <p className="home-hero-subtitle">Seja bem vindo!</p>
+                </div>
             </div>
 
             {/* Renda Variável Header */}
-            <div style={{ padding: '0 8px', marginBottom: '12px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={24} color="#94a3b8" />
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Renda Variável</h2>
+            <div className="home-section-header" style={{ marginTop: '16px' }}>
+                <TrendingUp size={22} color="var(--home-text-secondary)" />
+                <h2>Renda Variável</h2>
             </div>
 
             {/* Dashboard Grid for Two Columns on Desktop */}
             <div className="dashboard-grid">
                 {/* 1. Oportunidade em Ativos Descontados */}
                 <div style={{ marginTop: '8px' }}>
-                    <div className="glass-card" style={{
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        background: 'rgba(30, 41, 59, 0.4)',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%' // Ensure height fills grid cell
-                    }}>
-                        <div className="rf-card-header" style={{
-                            background: 'linear-gradient(90deg, rgba(0, 255, 136, 0.35), transparent)',
-                            borderBottom: '1px solid rgba(0, 255, 136, 0.2)',
-                            padding: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                        }}>
+                    <div className="home-card" style={{ height: '100%' }}>
+                        <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(74, 222, 128, var(--home-header-alpha)), transparent)' }}>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                                <div className="rf-card-icon" style={{
-                                    background: '#00ff88',
-                                    color: '#000',
-                                    minWidth: '32px', // Prevent shrinking
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <TrendingUp size={20} />
+                                <div className="home-icon-box" style={{ background: '#4ade80', color: '#000' }}>
+                                    <TrendingUp size={18} />
                                 </div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
-                                    Oportunidade em Ativos Descontados
-                                </h3>
+                                <h3>Oportunidade em Ativos Descontados</h3>
                             </div>
                         </div>
 
@@ -734,111 +733,46 @@ const Home = ({ onNavigate, onStockClick }) => {
                                         return (
                                             <div
                                                 key={idx}
-                                                className="rf-card icon-hover-effect glass-card"
-                                                style={{
-                                                    borderLeft: '4px solid #4ade80',
-                                                    cursor: 'pointer',
-                                                    minHeight: 'auto',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'center',
-                                                    padding: '0' // Reset padding so children control it
-                                                }}
+                                                className="home-opportunity-card cheap"
                                                 onClick={() => setSelectedOpportunity({ ...item, opportunityType: 'cheap' })}
                                             >
-                                                <div className="rf-card-header" style={{
-                                                    padding: '12px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                                                    marginBottom: '0',
-                                                    gap: '12px'
-                                                }}>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        {stock.image_url ? (
-                                                            <img
-                                                                src={stock.image_url}
-                                                                alt={stock.ticker}
-                                                                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
-                                                            />
-                                                        ) : (
-                                                            <div style={{
-                                                                width: 36,
-                                                                height: 36,
-                                                                borderRadius: '50%',
-                                                                background: 'rgba(255,255,255,0.1)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>{stock.ticker?.slice(0, 2)}</span>
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1' }}>{stock.ticker}</h3>
-                                                            <span style={{ fontSize: '0.65rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                <div className="home-opportunity-header">
+                                                    <div className="stock-left">
+                                                        <div className="home-avatar">
+                                                            {stock.image_url ? (
+                                                                <img src={stock.image_url} alt={stock.ticker} />
+                                                            ) : (
+                                                                <span className="fallback">{stock.ticker?.slice(0, 2)}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="home-stock-info">
+                                                            <span className="ticker">{stock.ticker}</span>
+                                                            <span className="company">{stock.company_name}</span>
                                                         </div>
                                                     </div>
 
-                                                    {/* Price and Volatility Circle */}
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ textAlign: 'right' }}>
-                                                            <span style={{ display: 'block', fontSize: '0.45rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
-                                                            <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
-                                                        </div>
+                                                    <div className="stock-right">
+                                                        <span className="home-value">{stock.price || '---'}</span>
                                                         {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
                                                     </div>
                                                 </div>
 
-                                                <div className="rf-card-content" style={{
-                                                    padding: '12px',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '8px',
-                                                    marginTop: '0'
-                                                }}>
+                                                <div className="home-opportunity-body">
                                                     {putsCount > 0 && (
                                                         <div>
-                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Renda Extra :</span>
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
-                                                                <div style={{
-                                                                    padding: '6px 12px',
-                                                                    background: 'rgba(239, 68, 68, 0.15)',
-                                                                    color: '#ef4444',
-                                                                    borderRadius: '20px',
-                                                                    fontSize: '0.75rem',
-                                                                    whiteSpace: 'nowrap',
-                                                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '4px'
-                                                                }}>
-                                                                    <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Venda Coberta</span>
-                                                                </div>
+                                                            <span className="home-opportunity-label">Renda Extra</span>
+                                                            <div className="home-pill put" style={{ marginTop: '3px' }}>
+                                                                <span className="count">{putsCount} PUTS</span>
+                                                                <span className="desc">- Para Venda Coberta</span>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {callsCount > 0 && (
                                                         <div>
-                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Alavancagem de Capital :</span>
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
-                                                                <div style={{
-                                                                    padding: '6px 12px',
-                                                                    background: 'rgba(56, 189, 248, 0.15)',
-                                                                    color: '#38bdf8',
-                                                                    borderRadius: '20px',
-                                                                    fontSize: '0.75rem',
-                                                                    whiteSpace: 'nowrap',
-                                                                    border: '1px solid rgba(56, 189, 248, 0.2)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '4px'
-                                                                }}>
-                                                                    <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
-                                                                </div>
+                                                            <span className="home-opportunity-label">Alavancagem de Capital</span>
+                                                            <div className="home-pill call" style={{ marginTop: '3px' }}>
+                                                                <span className="count">{callsCount} CALLS</span>
+                                                                <span className="desc">- Para Compra a Seco</span>
                                                             </div>
                                                         </div>
                                                     )}
@@ -855,40 +789,13 @@ const Home = ({ onNavigate, onStockClick }) => {
 
                 {/* 2. Oportunidade em Ativos Caros */}
                 <div style={{ marginTop: '8px' }}>
-                    <div className="glass-card" style={{
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        background: 'rgba(30, 41, 59, 0.4)',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%'
-                    }}>
-                        <div className="rf-card-header" style={{
-                            background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.35), transparent)',
-                            borderBottom: '1px solid rgba(239, 68, 68, 0.2)',
-                            padding: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                        }}>
+                    <div className="home-card" style={{ height: '100%' }}>
+                        <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(239, 68, 68, var(--home-header-alpha)), transparent)' }}>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                                <div className="rf-card-icon" style={{
-                                    background: '#ef4444',
-                                    color: '#fff',
-                                    minWidth: '32px',
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <TrendingUp size={20} style={{ transform: 'rotate(180deg)' }} /> {/* Trending Down */}
+                                <div className="home-icon-box" style={{ background: '#ef4444', color: '#fff' }}>
+                                    <TrendingUp size={18} style={{ transform: 'rotate(180deg)' }} />
                                 </div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
-                                    Oportunidade em Ativos Caros <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '400' }}>- em carteira</span>
-                                </h3>
+                                <h3>Oportunidade em Ativos Caros <span className="subtitle">- em carteira</span></h3>
                             </div>
                         </div>
 
@@ -930,112 +837,46 @@ const Home = ({ onNavigate, onStockClick }) => {
                                         return (
                                             <div
                                                 key={idx}
-                                                className="rf-card icon-hover-effect glass-card"
-                                                style={{
-                                                    borderLeft: '4px solid #ef4444',
-                                                    cursor: 'pointer',
-                                                    minHeight: 'auto',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'center',
-                                                    padding: '0'
-                                                }}
+                                                className="home-opportunity-card expensive"
                                                 onClick={() => setSelectedOpportunity({ ...item, opportunityType: 'expensive' })}
                                             >
-                                                <div className="rf-card-header" style={{
-                                                    padding: '12px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                                                    marginBottom: '0',
-                                                    gap: '12px',
-                                                }}>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                                                        {stock.image_url ? (
-                                                            <img
-                                                                src={stock.image_url}
-                                                                alt={stock.ticker}
-                                                                style={{ width: 36, height: 36, minWidth: 36, borderRadius: '50%', objectFit: 'cover' }}
-                                                            />
-                                                        ) : (
-                                                            <div style={{
-                                                                width: 36,
-                                                                height: 36,
-                                                                minWidth: 36,
-                                                                borderRadius: '50%',
-                                                                background: 'rgba(255,255,255,0.1)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>{stock.ticker?.slice(0, 2)}</span>
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1' }}>{stock.ticker}</h3>
-                                                            <span style={{ fontSize: '0.65rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name}</span>
+                                                <div className="home-opportunity-header">
+                                                    <div className="stock-left">
+                                                        <div className="home-avatar">
+                                                            {stock.image_url ? (
+                                                                <img src={stock.image_url} alt={stock.ticker} />
+                                                            ) : (
+                                                                <span className="fallback">{stock.ticker?.slice(0, 2)}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="home-stock-info">
+                                                            <span className="ticker">{stock.ticker}</span>
+                                                            <span className="company">{stock.company_name}</span>
                                                         </div>
                                                     </div>
 
-                                                    {/* Price and Volatility Circle */}
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ textAlign: 'right' }}>
-                                                            <span style={{ display: 'block', fontSize: '0.45rem', color: 'rgb(170, 170, 170)', textTransform: 'uppercase', marginBottom: '2px' }}>Preço Atual</span>
-                                                            <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>{stock.price || '---'}</span>
-                                                        </div>
+                                                    <div className="stock-right">
+                                                        <span className="home-value">{stock.price || '---'}</span>
                                                         {stock.falta_pct && <VolatilityCircle value={stock.falta_pct} />}
                                                     </div>
                                                 </div>
 
-                                                <div className="rf-card-content" style={{
-                                                    padding: '12px',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '8px',
-                                                    marginTop: '0'
-                                                }}>
+                                                <div className="home-opportunity-body">
                                                     {callsCount > 0 && (
                                                         <div>
-                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Renda Extra :</span>
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
-                                                                <div style={{
-                                                                    padding: '6px 12px',
-                                                                    background: 'rgba(56, 189, 248, 0.15)',
-                                                                    color: '#38bdf8',
-                                                                    borderRadius: '20px',
-                                                                    fontSize: '0.75rem',
-                                                                    whiteSpace: 'nowrap',
-                                                                    border: '1px solid rgba(56, 189, 248, 0.2)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '4px'
-                                                                }}>
-                                                                    <span style={{ fontWeight: '800' }}>{callsCount} CALLS</span>
-                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Lançamento Coberto</span>
-                                                                </div>
+                                                            <span className="home-opportunity-label">Renda Extra</span>
+                                                            <div className="home-pill call" style={{ marginTop: '3px' }}>
+                                                                <span className="count">{callsCount} CALLS</span>
+                                                                <span className="desc">- Para Lançamento Coberto</span>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {putsCount > 0 && (
                                                         <div>
-                                                            <span style={{ fontSize: '0.55rem', color: '#AAAAAA', textTransform: 'uppercase', letterSpacing: '0px' }}>Alavancagem de Capital :</span>
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '0px' }}>
-                                                                <div style={{
-                                                                    padding: '6px 12px',
-                                                                    background: 'rgba(239, 68, 68, 0.15)',
-                                                                    color: '#ef4444',
-                                                                    borderRadius: '20px',
-                                                                    fontSize: '0.75rem',
-                                                                    whiteSpace: 'nowrap',
-                                                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '4px'
-                                                                }}>
-                                                                    <span style={{ fontWeight: '800' }}>{putsCount} PUTS</span>
-                                                                    <span style={{ fontWeight: '500', opacity: 0.7 }}> - Para Compra a Seco</span>
-                                                                </div>
+                                                            <span className="home-opportunity-label">Alavancagem de Capital</span>
+                                                            <div className="home-pill put" style={{ marginTop: '3px' }}>
+                                                                <span className="count">{putsCount} PUTS</span>
+                                                                <span className="desc">- Para Compra a Seco</span>
                                                             </div>
                                                         </div>
                                                     )}
@@ -1052,16 +893,15 @@ const Home = ({ onNavigate, onStockClick }) => {
 
 
             {/* Resumo das Ações: Maiores Altas e Baixas */}
-            < div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div >
+            <div className="home-separator"></div>
 
             <div style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px', paddingRight: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <TrendingUp size={24} color="#94a3b8" />
-                    <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap' }}>Resumo das Ações</h2>
+                <div className="home-section-header" style={{ padding: 0, marginBottom: 0 }}>
+                    <TrendingUp size={22} color="var(--home-text-secondary)" />
+                    <h2>Resumo das Ações</h2>
                 </div>
 
-                {/* Period Selector for Movers */}
-                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', alignSelf: 'flex-start' }}>
+                <div className="home-period-selector" style={{ alignSelf: 'flex-start' }}>
                     {[
                         { id: '1D', label: '1D' },
                         { id: '1M', label: '1M' },
@@ -1069,19 +909,8 @@ const Home = ({ onNavigate, onStockClick }) => {
                     ].map((p) => (
                         <button
                             key={p.id}
+                            className={`home-period-btn ${moverPeriod === p.id ? 'active' : ''}`}
                             onClick={() => setMoverPeriod(p.id)}
-                            style={{
-                                background: moverPeriod === p.id ? '#3B82F6CC' : 'transparent',
-                                color: moverPeriod === p.id ? '#fff' : '#64748b',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '4px 8px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                whiteSpace: 'nowrap'
-                            }}
                         >
                             {p.label}
                         </button>
@@ -1091,18 +920,10 @@ const Home = ({ onNavigate, onStockClick }) => {
 
             <div className="dashboard-grid" style={{ marginTop: '0' }}>
                 {/* Maiores Altas */}
-                <div className="glass-card">
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(74, 222, 128, 0.2), transparent)',
-                        borderBottom: '1px solid rgba(74, 222, 128, 0.1)'
-                    }}>
-                        <div className="rf-card-icon" style={{
-                            background: '#4ade80',
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                            <TrendingUp size={18} color="#000" />
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(74, 222, 128, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#4ade80', color: '#000' }}>
+                            <TrendingUp size={16} />
                         </div>
                         <h3>Maiores Altas</h3>
                     </div>
@@ -1143,7 +964,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
-                                                <span style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
@@ -1168,18 +989,10 @@ const Home = ({ onNavigate, onStockClick }) => {
                 </div>
 
                 {/* Maiores Baixas */}
-                <div className="glass-card">
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(248, 113, 113, 0.2), transparent)',
-                        borderBottom: '1px solid rgba(248, 113, 113, 0.1)'
-                    }}>
-                        <div className="rf-card-icon" style={{
-                            background: '#f87171',
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                            <TrendingDown size={18} color="#fff" />
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(248, 113, 113, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#f87171', color: '#fff' }}>
+                            <TrendingDown size={16} />
                         </div>
                         <h3>Maiores Baixas</h3>
                     </div>
@@ -1220,7 +1033,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                             )}
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{stock.ticker}</h3>
-                                                <span style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1', display: 'block', marginTop: '2px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stock.company_name}</span>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
@@ -1247,44 +1060,22 @@ const Home = ({ onNavigate, onStockClick }) => {
 
             {/* Segmentation Filter Section - Refactored into a single card */}
             <div style={{ marginTop: '32px' }}>
-                <div className="glass-card" style={{ padding: '0', overflow: 'hidden', background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px' }}>
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(148, 163, 184, 0.2), transparent)',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        display: 'flex', alignItems: 'center', gap: '12px', padding: '16px'
-                    }}>
-                        <div className="rf-card-icon" style={{
-                            background: '#94a3b8',
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                            <Filter size={18} color="#fff" />
+                <div className="home-card" style={{ padding: '0' }}>
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(148, 163, 184, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#94a3b8', color: '#fff' }}>
+                            <Filter size={16} />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 600 }}>Filtro de Eficiência</h3>
+                        <h3>Filtro de Eficiência</h3>
                     </div>
 
-                    <div style={{ padding: '20px' }}>
-                        {/* Metric Selector - Inside the card now */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2px', gap: '2px', marginBottom: '12px' }}>
+                    <div className="home-card-body">
+                        <div className="home-period-selector" style={{ flexWrap: 'wrap', marginBottom: '12px', gap: '2px' }}>
                             {['cagr_luc', 'cagr_pat', 'cagr_roe', 'div_ebit', 'div_pl'].map(m => (
                                 <button
                                     key={m}
+                                    className={`home-period-btn ${segMetric === m ? 'active' : ''}`}
                                     onClick={() => setSegMetric(m)}
-                                    style={{
-                                        background: segMetric === m ? '#3B82F6CC' : 'transparent',
-                                        color: segMetric === m ? '#fff' : '#64748b',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        padding: '4px 6px',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 500,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        whiteSpace: 'nowrap',
-                                        flex: 1,
-                                        textAlign: 'center'
-                                    }}
+                                    style={{ flex: 1, textAlign: 'center', fontSize: '0.65rem' }}
                                 >
                                     {getMetricLabel(m)}
                                 </button>
@@ -1345,7 +1136,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                         )}
                                                     </div>
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9' }}>{stock.ticker}</span>
+                                                        <span style={{ fontSize: '0.95rem', fontWeight: "bold", color: '#f1f5f9' }}>{stock.ticker}</span>
                                                         <span style={{ fontSize: '0.75rem', color: '#64748b', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                             {stock.company_name}
                                                         </span>
@@ -1396,48 +1187,29 @@ const Home = ({ onNavigate, onStockClick }) => {
                 </div>
             </div>
 
-            {/* Separator and Renda Fixa Header */}
-            <div style={{ margin: '32px 0 16px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+            <div className="home-separator"></div>
 
-            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px' }}>
-                <Landmark size={24} color="#94a3b8" />
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0 }}>Renda Fixa</h2>
+            <div className="home-section-header">
+                <Landmark size={22} color="var(--home-text-secondary)" />
+                <h2>Renda Fixa</h2>
             </div>
 
             {/* Oportunidades em Renda Fixa Card */}
             <div style={{ marginTop: '0' }}>
-                <div className="glass-card" style={{
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    background: 'rgba(30, 41, 59, 0.4)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
-                    {/* Header - Blue Theme */}
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.35), transparent)',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        padding: '16px',
-                        display: 'flex', alignItems: 'center', gap: '12px'
-                    }}>
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(59, 130, 246, var(--home-header-alpha)), transparent)' }}>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                            <div className="rf-card-icon" style={{
-                                background: '#3b82f6', color: '#fff',
-                                minWidth: '32px', width: '32px', height: '32px',
-                                borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <Landmark size={20} />
+                            <div className="home-icon-box" style={{ background: '#3b82f6', color: '#fff' }}>
+                                <Landmark size={18} />
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.2' }}>
-                                Oportunidades em Renda Fixa
-                            </h3>
+                            <h3>Oportunidades em Renda Fixa</h3>
                         </div>
                     </div>
 
-                    <div className="rf-items-grid" style={{ padding: '24px' }}>
+
+                    <div className="home-rf-grid" style={{ padding: '16px' }}>
                         {fixedOpportunities.length === 0 ? (
-                            <div className="rf-empty" style={{ marginTop: '0' }}>
+                            <div className="rf-empty" style={{ marginTop: '0', gridColumn: '1 / -1' }}>
                                 <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5, color: '#3b82f6' }} />
                                 <p style={{ color: '#3b82f6' }}>Nenhuma oportunidade encontrada.</p>
                             </div>
@@ -1480,7 +1252,6 @@ const Home = ({ onNavigate, onStockClick }) => {
 
                                 // Determine Style (Icon + Color)
                                 let StyleIcon = Landmark;
-                                // Minimalist Gray for all types (User requested to remove colors)
                                 let styleColor = '#94a3b8';
 
                                 if (catUpper.includes("RESERVA") || titleUpper.includes("SELIC")) {
@@ -1494,44 +1265,25 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 }
 
                                 return (
-                                    <div key={idx} className="rf-card glass-card" style={{
-                                        borderLeft: `4px solid ${styleColor}`,
-                                        padding: '12px', cursor: 'default'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                                            <div style={{ overflow: 'hidden', flex: 1 }}>
-                                                {/* Category with Icon */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                                                    <StyleIcon size={12} color={styleColor} />
-                                                    <span style={{
-                                                        fontSize: '0.65rem',
-                                                        textTransform: 'uppercase',
-                                                        color: styleColor,
-                                                        letterSpacing: '0.5px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        {item.type_display || item.category}
-                                                    </span>
-                                                </div>
-
-                                                <h4 style={{
-                                                    fontSize: '0.85rem', color: '#f1f5f9', margin: '2px 0', fontWeight: 600,
-                                                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                                                }} title={item.titulo}>
-                                                    {item.titulo}
-                                                </h4>
+                                    <div key={idx} className="home-rf-card">
+                                        <div className="home-rf-top">
+                                            <div className="home-rf-category">
+                                                <StyleIcon size={13} color={styleColor} />
+                                                <span className="home-rf-category-label">
+                                                    {item.type_display || item.category}
+                                                </span>
                                             </div>
-                                            <div style={{ textAlign: 'right', minWidth: '80px' }}>
-                                                <span style={{ fontSize: '0.9rem', color: '#4ade80', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                                    {displayRate}
-                                                </span>
-                                                <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b' }}>
-                                                    {periodLabel}
-                                                </span>
+                                            <div className="home-rf-rate-block">
+                                                <span className="home-rf-rate">{displayRate}</span>
+                                                <span className="home-rf-period">{periodLabel}</span>
                                             </div>
                                         </div>
 
-                                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#cbd5e1' }}>
+                                        <h4 className="home-rf-title" title={item.titulo}>
+                                            {item.titulo}
+                                        </h4>
+
+                                        <div className="home-rf-footer">
                                             <span>Min: {item.min_investimento}</span>
                                             <span>Venc: {formatDate(item.vencimento)}</span>
                                         </div>
@@ -1545,27 +1297,12 @@ const Home = ({ onNavigate, onStockClick }) => {
 
             {/* Garantia Card - Purple */}
             <div style={{ marginTop: '16px' }}>
-                <div className="glass-card" style={{
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    background: 'rgba(30, 41, 59, 0.4)',
-                    overflow: 'hidden',
-                    display: 'flex', flexDirection: 'column'
-                }}>
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.35), transparent)', // Purple
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        padding: '16px', display: 'flex', alignItems: 'center', gap: '12px'
-                    }}>
-                        <div className="rf-card-icon" style={{
-                            background: '#a855f7', color: '#fff', width: '32px', height: '32px',
-                            borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <Landmark size={20} />
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(168, 85, 247, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#a855f7', color: '#fff' }}>
+                            <Landmark size={18} />
                         </div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff', margin: 0 }}>
-                            Garantia para opções
-                        </h3>
+                        <h3>Garantia para opções</h3>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -1585,7 +1322,7 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                     {/* Rentabilidade */}
                                     <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Rentabilidade</span>
-                                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#4ade80' }}>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4ade80' }}>
                                         {guaranteeOpportunities[0].yield_val ? guaranteeOpportunities[0].yield_val.toFixed(2).replace('.', ',') + '%' : '-'}
                                     </span>
                                     <span style={{ fontSize: '0.65rem', color: '#64748b', marginBottom: '8px' }}>
@@ -1715,10 +1452,14 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     {/* Header matching .options-column.calls h3 */}
                                     <h3 style={{
-                                        textAlign: 'center', padding: '12px', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0,
-                                        background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', borderBottom: '2px solid #38bdf8'
+                                        textAlign: 'center', padding: '12px 12px 10px', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0,
+                                        background: 'transparent', color: '#38bdf8', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                                        position: 'relative'
                                     }}>
+                                        <TrendingUp size={14} />
                                         CALLS
+                                        <span style={{ position: 'absolute', bottom: '-1px', left: '20%', right: '20%', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)' }}></span>
                                     </h3>
                                     <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         {selectedOpportunity.options.calls && selectedOpportunity.options.calls
@@ -1790,10 +1531,14 @@ const Home = ({ onNavigate, onStockClick }) => {
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     {/* Header matching .options-column.puts h3 */}
                                     <h3 style={{
-                                        textAlign: 'center', padding: '12px', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', margin: 0,
-                                        background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderBottom: '2px solid #ef4444'
+                                        textAlign: 'center', padding: '12px 12px 10px', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0,
+                                        background: 'transparent', color: '#ef4444', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                                        position: 'relative'
                                     }}>
+                                        <TrendingDown size={14} />
                                         PUTS
+                                        <span style={{ position: 'absolute', bottom: '-1px', left: '20%', right: '20%', height: '2px', borderRadius: '2px', background: 'linear-gradient(90deg, transparent, #ef4444, transparent)' }}></span>
                                     </h3>
                                     <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         {selectedOpportunity.options.puts && selectedOpportunity.options.puts
@@ -1884,59 +1629,45 @@ const Home = ({ onNavigate, onStockClick }) => {
             {/* ================================================================================== */}
 
             {/* Separator */}
-            <div style={{ margin: '40px 0 20px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+            <div className="home-separator" style={{ margin: '36px 0 16px 0' }}></div>
 
-            {/* 1. Destaques: Notícias (2 Brasil + 2 Mundo) */}
-            <div className="section-header" style={{ marginBottom: '16px' }}>
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Newspaper size={20} /> Notícias (Brasil & Mundo)
-                </h2>
+            <div className="home-section-header" style={{ marginBottom: '16px' }}>
+                <Newspaper size={20} color="var(--home-text-secondary)" />
+                <h2>Notícias (Brasil & Mundo)</h2>
             </div>
 
             <div className="dashboard-grid" style={{ gap: '12px' }}>
                 {homeNews.length > 0 ? (
                     homeNews.map((item, idx) => (
-                        <div key={idx} className="news-card glass-card" onClick={() => window.open(item.link, '_blank')}
-                            style={{
-                                cursor: 'pointer',
-                                padding: '12px',
-                                background: 'rgba(30, 41, 59, 0.4)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '8px',
-                                minHeight: 'auto'
-                            }}>
-                            <div className="news-card-header" style={{ marginBottom: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                    <span className="news-badge" style={{ fontSize: '0.6rem', padding: '2px 6px', background: item.category === 'MUNDO' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(74, 222, 128, 0.2)', color: item.category === 'MUNDO' ? '#38bdf8' : '#4ade80' }}>
+                        <div key={idx} className="home-news-card" onClick={() => window.open(item.link, '_blank')}>
+                            <div className="home-news-meta">
+                                <div className="home-news-badges">
+                                    <span className={`home-news-badge ${item.category === 'MUNDO' ? 'world' : 'brazil'}`}>
                                         {item.category || (idx < 2 ? 'BRASIL' : 'MUNDO')}
                                     </span>
-                                    <span className="news-badge" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>{item.source}</span>
+                                    <span className="home-news-badge source">{item.source}</span>
                                 </div>
-                                <span className="news-date" style={{ fontSize: '0.65rem' }}>{item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}</span>
+                                <span className="home-news-date">
+                                    {item.date ? new Date(item.date).toLocaleDateString('pt-BR') : ''}
+                                </span>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px' }}>
+                            <div className="home-news-content">
                                 {item.image && (
-                                    <img src={item.image} alt={item.title} style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                                    <img className="home-news-image" src={item.image} alt={item.title} />
                                 )}
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                    <h3 className="news-title" style={{ fontSize: '0.9rem', lineHeight: '1.3', margin: 0, fontWeight: 600, color: '#f1f5f9', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                        {item.title}
-                                    </h3>
-                                </div>
+                                <h3 className="home-news-title">{item.title}</h3>
                             </div>
 
-                            <div className="news-footer" style={{ marginTop: '0', paddingTop: '0', borderTop: 'none', justifyContent: 'flex-end' }}>
-                                <span className="news-read-more" style={{ fontSize: '0.7rem' }}>
+                            <div className="home-news-footer">
+                                <span className="home-read-more">
                                     Ler mais <ChevronRight size={12} />
                                 </span>
                             </div>
                         </div>
                     ))
                 ) : (
-                    <div className="glass-card" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                    <div className="home-card" style={{ padding: '20px', textAlign: 'center', color: 'var(--home-text-tertiary)' }}>
                         Carregando destaques...
                     </div>
                 )}
@@ -1944,44 +1675,23 @@ const Home = ({ onNavigate, onStockClick }) => {
 
             {/* 2. Cotações Gerais */}
             {/* 2. Cotações Gerais */}
-            <div className="market-overview-card glass-card" style={{ padding: '0', marginTop: '32px', overflow: 'hidden' }}>
-                <div style={{
-                    padding: '12px 16px',
-                    background: 'linear-gradient(90deg, #1e3a8a 0%, #0f172a 100%)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                }}>
+            <div className="home-card" style={{ marginTop: '32px' }}>
+                <div className="home-cotacoes-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            background: '#3b82f6',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
-                        }}>
-                            <TrendingUp size={18} color="#ffffff" />
+                        <div className="home-icon-box" style={{ background: '#3b82f6', color: '#fff' }}>
+                            <TrendingUp size={16} />
                         </div>
-                        <h2 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0, fontWeight: 700, letterSpacing: '-0.3px' }}>
+                        <h2 style={{ fontSize: '1.05rem', color: 'var(--home-text-primary)', margin: 0, fontWeight: 700, letterSpacing: '-0.3px' }}>
                             Cotações Mundiais
                         </h2>
                     </div>
 
-                    {/* Period Selector */}
-                    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2px' }}>
+                    <div className="home-period-selector">
                         {['1D', '1S', '1M'].map((p) => (
                             <button
                                 key={p}
+                                className={`home-period-btn ${qtPeriod === p ? 'active' : ''}`}
                                 onClick={() => setQtPeriod(p)}
-                                style={{
-                                    background: qtPeriod === p ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
-                                    color: qtPeriod === p ? '#fff' : '#94a3b8',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    padding: '4px 8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
                             >
                                 {p}
                             </button>
@@ -2062,23 +1772,19 @@ const Home = ({ onNavigate, onStockClick }) => {
             </div>
 
             {/* 3. Destaques: Calendário (Dividends & Earnings) */}
-            <div style={{ margin: '40px 0 20px 0', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)' }}></div>
+            <div className="home-separator" style={{ margin: '36px 0 16px 0' }}></div>
 
-            <div className="section-header" style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', color: '#94a3b8', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Calendar size={20} /> Radar da Semana
-                </h2>
+            <div className="home-section-header" style={{ marginBottom: '16px' }}>
+                <Calendar size={20} color="var(--home-text-secondary)" />
+                <h2>Radar da Semana</h2>
             </div>
 
             <div className="dashboard-grid">
                 {/* Dividendos */}
-                <div className="glass-card">
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(74, 222, 128, 0.2), transparent)',
-                        borderBottom: '1px solid rgba(74, 222, 128, 0.1)'
-                    }}>
-                        <div className="rf-card-icon" style={{ background: '#4ade80' }}>
-                            <DollarSign size={20} color="#fff" />
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(74, 222, 128, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#4ade80', color: '#fff' }}>
+                            <DollarSign size={16} />
                         </div>
                         <h3>Próximos Dividendos</h3>
                     </div>
@@ -2094,12 +1800,12 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                     {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
                                                 </div>
                                                 <div>
-                                                    <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
-                                                    <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                                    <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                    <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                                <span style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 'bold' }}>PREVISTO</span>
+                                                <span style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 500 }}>Previsto</span>
                                                 <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
                                             </div>
                                         </div>
@@ -2116,13 +1822,10 @@ const Home = ({ onNavigate, onStockClick }) => {
                 </div>
 
                 {/* Resultados */}
-                <div className="glass-card">
-                    <div className="rf-card-header" style={{
-                        background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.2), transparent)',
-                        borderBottom: '1px solid rgba(56, 189, 248, 0.1)'
-                    }}>
-                        <div className="rf-card-icon" style={{ background: '#38bdf8' }}>
-                            <PieChart size={20} color="#fff" />
+                <div className="home-card">
+                    <div className="home-card-header" style={{ background: 'linear-gradient(90deg, rgba(56, 189, 248, var(--home-header-alpha)), transparent)' }}>
+                        <div className="home-icon-box" style={{ background: '#38bdf8', color: '#fff' }}>
+                            <PieChart size={16} />
                         </div>
                         <h3>Resultados Trimestrais</h3>
                     </div>
@@ -2138,12 +1841,12 @@ const Home = ({ onNavigate, onStockClick }) => {
                                                     {stock.image_url ? <img src={stock.image_url} alt={evt.ticker} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#cbd5e1' }}>{evt.ticker[0]}</span>}
                                                 </div>
                                                 <div>
-                                                    <h3 style={{ fontSize: '1rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
-                                                    <span style={{ fontSize: '0.75rem', color: '#aaa', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
+                                                    <h3 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0', lineHeight: '1', fontWeight: 'bold' }}>{evt.ticker}</h3>
+                                                    <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1', display: 'block', marginTop: '2px' }}>{stock.company_name || ''}</span>
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 'bold' }}>RESULTADO</span>
+                                                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 500 }}>Resultado</span>
                                                 <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatDateSimple(evt.date)}</span>
                                             </div>
                                         </div>
