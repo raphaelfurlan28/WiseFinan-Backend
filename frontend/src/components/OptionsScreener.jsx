@@ -161,6 +161,7 @@ export default function OptionsScreener({ onStockClick }) {
     const [selectedCostRef, setSelectedCostRef] = useState(() => sessionStorage.getItem('screener_selectedCostRef') || 'ALL'); // ALL, CUSTO_BAIXO, CUSTO_ALTO
     const [costDistance, setCostDistance] = useState(() => parseFloat(sessionStorage.getItem('screener_costDistance')) || 10); // in percent (default 10)
     const [sortBy, setSortBy] = useState(() => sessionStorage.getItem('screener_sortBy') || 'PREMIUM_DESC'); // PREMIUM_DESC, PREMIUM_ASC, TICKER_STRIKE
+    const [strikeRelation, setStrikeRelation] = useState(() => sessionStorage.getItem('screener_strikeRelation') || 'ALL'); // ALL, UNDER, OVER
 
     // Applied Filters (Used for display)
     const [filteredOptions, setFilteredOptions] = useState([]);
@@ -202,6 +203,10 @@ export default function OptionsScreener({ onStockClick }) {
     useEffect(() => {
         sessionStorage.setItem('screener_sortBy', sortBy);
     }, [sortBy]);
+
+    useEffect(() => {
+        sessionStorage.setItem('screener_strikeRelation', strikeRelation);
+    }, [strikeRelation]);
 
     // Fetch initial list of options and stocks in background on mount
     useEffect(() => {
@@ -250,8 +255,22 @@ export default function OptionsScreener({ onStockClick }) {
                     const limitDate = parseExpirationDate(maxExpiration);
                     if (optionDate > limitDate) return false;
                 }
-
-
+                // Strike relation to current stock price filter
+                if (strikeRelation !== 'ALL') {
+                    const stock = stocksMap[option.underlying];
+                    if (!stock) return false;
+                    const S = parsePrice(stock.price);
+                    const K = smartFloat(option.strike);
+                    if (S > 0 && K > 0) {
+                        if (strikeRelation === 'UNDER') {
+                            if (S >= K) return false;
+                        } else if (strikeRelation === 'OVER') {
+                            if (S <= K) return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
 
                 // Cost reference filter
                 if (selectedCostRef !== 'ALL') {
@@ -337,8 +356,22 @@ export default function OptionsScreener({ onStockClick }) {
                     if (optionDate > limitDate) return false;
                 }
 
-                // Moneyness filter (ATM/OTM/ITM)
-
+                // Strike relation to current stock price filter
+                if (strikeRelation !== 'ALL') {
+                    const stock = stocksMap[option.underlying];
+                    if (!stock) return false;
+                    const S = parsePrice(stock.price);
+                    const K = smartFloat(option.strike);
+                    if (S > 0 && K > 0) {
+                        if (strikeRelation === 'UNDER') {
+                            if (S >= K) return false;
+                        } else if (strikeRelation === 'OVER') {
+                            if (S <= K) return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
 
                 // Cost reference filter
                 if (selectedCostRef !== 'ALL') {
@@ -795,6 +828,20 @@ export default function OptionsScreener({ onStockClick }) {
                         </select>
                     </div>
 
+                    {/* Strike Relation to Price Filter */}
+                    <div className="filter-group">
+                        <span className="filter-label">Preço Atual vs Strike</span>
+                        <select
+                            className="screener-select"
+                            value={strikeRelation}
+                            onChange={(e) => setStrikeRelation(e.target.value)}
+                        >
+                            <option value="ALL">Qualquer Relação</option>
+                            <option value="UNDER">Preço Atual Abaixo do Strike (S &lt; K)</option>
+                            <option value="OVER">Preço Atual Acima do Strike (S &gt; K)</option>
+                        </select>
+                    </div>
+
                     {/* Premium Minimum Slider */}
                     <div className="filter-group">
                         <span className="filter-label">Prêmio Mínimo</span>
@@ -917,6 +964,7 @@ export default function OptionsScreener({ onStockClick }) {
                                 setHasSearched(false);
                                 setCurrentPage(1);
                                 setSortBy('PREMIUM_DESC');
+                                setStrikeRelation('ALL');
 
                                 // Clear session storage values
                                 sessionStorage.removeItem('screener_searchQuery');
@@ -926,6 +974,7 @@ export default function OptionsScreener({ onStockClick }) {
                                 sessionStorage.removeItem('screener_currentPage');
                                 sessionStorage.removeItem('screener_hasSearched');
                                 sessionStorage.removeItem('screener_sortBy');
+                                sessionStorage.removeItem('screener_strikeRelation');
                             }}
                             style={{
                                 background: 'transparent',
