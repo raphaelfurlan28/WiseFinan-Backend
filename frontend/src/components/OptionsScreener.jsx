@@ -154,6 +154,7 @@ export default function OptionsScreener({ onStockClick }) {
     const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem('screener_searchQuery') || '');
     const [selectedType, setSelectedType] = useState(() => sessionStorage.getItem('screener_selectedType') || 'ALL');
     const [minPremium, setMinPremium] = useState(() => parseFloat(sessionStorage.getItem('screener_minPremium')) || 0);
+    const [minExpiration, setMinExpiration] = useState(() => sessionStorage.getItem('screener_minExpiration') || 'ALL');
     const [maxExpiration, setMaxExpiration] = useState(() => sessionStorage.getItem('screener_maxExpiration') || 'ALL');
     const [hasSearched, setHasSearched] = useState(() => sessionStorage.getItem('screener_hasSearched') === 'true');
 
@@ -179,6 +180,10 @@ export default function OptionsScreener({ onStockClick }) {
     useEffect(() => {
         sessionStorage.setItem('screener_minPremium', minPremium.toString());
     }, [minPremium]);
+
+    useEffect(() => {
+        sessionStorage.setItem('screener_minExpiration', minExpiration);
+    }, [minExpiration]);
 
     useEffect(() => {
         sessionStorage.setItem('screener_maxExpiration', maxExpiration);
@@ -250,10 +255,15 @@ export default function OptionsScreener({ onStockClick }) {
                 const premiumPercent = (option.premium_val || 0) * 100;
                 if (premiumPercent < minPremium) return false;
 
+                if (minExpiration !== 'ALL') {
+                    const optionDate = parseExpirationDate(option.expiration);
+                    const minDate = parseExpirationDate(minExpiration);
+                    if (optionDate < minDate) return false;
+                }
                 if (maxExpiration !== 'ALL') {
                     const optionDate = parseExpirationDate(option.expiration);
-                    const limitDate = parseExpirationDate(maxExpiration);
-                    if (optionDate > limitDate) return false;
+                    const maxDate = parseExpirationDate(maxExpiration);
+                    if (optionDate > maxDate) return false;
                 }
                 // Strike relation to current stock price filter
                 if (strikeRelation !== 'ALL') {
@@ -350,10 +360,15 @@ export default function OptionsScreener({ onStockClick }) {
                 if (premiumPercent < minPremium) return false;
 
                 // Expiration date filter
+                if (minExpiration !== 'ALL') {
+                    const optionDate = parseExpirationDate(option.expiration);
+                    const minDate = parseExpirationDate(minExpiration);
+                    if (optionDate < minDate) return false;
+                }
                 if (maxExpiration !== 'ALL') {
                     const optionDate = parseExpirationDate(option.expiration);
-                    const limitDate = parseExpirationDate(maxExpiration);
-                    if (optionDate > limitDate) return false;
+                    const maxDate = parseExpirationDate(maxExpiration);
+                    if (optionDate > maxDate) return false;
                 }
 
                 // Strike relation to current stock price filter
@@ -799,9 +814,23 @@ export default function OptionsScreener({ onStockClick }) {
                         </select>
                     </div>
 
-                    {/* Expiration Filter */}
+                    {/* Expiration Range Filters */}
                     <div className="filter-group">
-                        <span className="filter-label">Vencimento Máximo</span>
+                        <span className="filter-label">Vencimento de</span>
+                        <select
+                            className="screener-select"
+                            value={minExpiration}
+                            onChange={(e) => setMinExpiration(e.target.value)}
+                        >
+                            <option value="ALL">Qualquer Data</option>
+                            {uniqueExpirations.map(exp => (
+                                <option key={exp} value={exp}>{exp}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filter-group">
+                        <span className="filter-label">Vencimento até</span>
                         <select
                             className="screener-select"
                             value={maxExpiration}
@@ -959,6 +988,7 @@ export default function OptionsScreener({ onStockClick }) {
                                 setSearchQuery('');
                                 setSelectedType('ALL');
                                 setMinPremium(0);
+                                setMinExpiration('ALL');
                                 setMaxExpiration('ALL');
                                 setFilteredOptions([]);
                                 setHasSearched(false);
@@ -970,6 +1000,7 @@ export default function OptionsScreener({ onStockClick }) {
                                 sessionStorage.removeItem('screener_searchQuery');
                                 sessionStorage.removeItem('screener_selectedType');
                                 sessionStorage.removeItem('screener_minPremium');
+                                sessionStorage.removeItem('screener_minExpiration');
                                 sessionStorage.removeItem('screener_maxExpiration');
                                 sessionStorage.removeItem('screener_currentPage');
                                 sessionStorage.removeItem('screener_hasSearched');
