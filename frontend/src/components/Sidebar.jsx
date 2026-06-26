@@ -14,7 +14,8 @@ import {
     MessageSquare,
     BookOpen,
     Calendar,
-    Users
+    Users,
+    Filter
 } from 'lucide-react';
 import './Sidebar.css';
 import { useNotification } from '../context/NotificationContext';
@@ -31,6 +32,7 @@ export default function Sidebar({ isOpen, onClose, onNavigate, currentView }) {
         { id: 'renda-fixa', label: 'Renda Fixa', icon: Landmark },
         { id: 'portfolio', label: 'Divisão de Portfólio', icon: PieChart },
         { id: 'calculator', label: 'Simulador Renda Fixa', icon: Calculator },
+        { id: 'options_screener', label: 'Filtro de Opções', icon: Filter },
         { id: 'options_calculator', label: 'Simulador Opções', icon: Layers },
         { id: 'strategies', label: 'Estratégias Opções', icon: BookOpen },
         { id: 'news', label: 'Notícias', icon: Newspaper },

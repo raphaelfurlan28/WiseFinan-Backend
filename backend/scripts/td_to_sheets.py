@@ -21,6 +21,43 @@ def _suppress_del(self):
         pass
 uc.Chrome.__del__ = _suppress_del
 
+def get_chrome_version() -> int | None:
+    import winreg
+    import os
+    import subprocess
+    try:
+        for key_path in [
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe",
+            r"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"
+        ]:
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+                path, _ = winreg.QueryValueEx(key, "")
+                winreg.CloseKey(key)
+                if path and os.path.exists(path):
+                    cmd = f'(Get-Item "{path}").VersionInfo.ProductVersion'
+                    res = subprocess.check_output(["powershell", "-Command", cmd], text=True).strip()
+                    if res:
+                        return int(res.split('.')[0])
+            except Exception:
+                continue
+    except Exception:
+        pass
+    
+    for path in [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+    ]:
+        if os.path.exists(path):
+            try:
+                cmd = f'(Get-Item "{path}").VersionInfo.ProductVersion'
+                res = subprocess.check_output(["powershell", "-Command", cmd], text=True).strip()
+                if res:
+                    return int(res.split('.')[0])
+            except Exception:
+                pass
+    return None
+
 def normalize_td(payload: Any, debug: bool = False) -> pd.DataFrame:
     candidates = [
         ("response", "TrsrBdTradgList"),
@@ -209,8 +246,12 @@ def fetch_td_selenium(debug: bool = False) -> dict:
 
     driver = None
     try:
-        # Force version 144 to match user's Chrome
-        driver = uc.Chrome(options=opts, use_subprocess=True, version_main=144)
+        # Force detected version to match user's Chrome, fallback to omitting it
+        detected_version = get_chrome_version()
+        if detected_version:
+            driver = uc.Chrome(options=opts, use_subprocess=True, version_main=detected_version)
+        else:
+            driver = uc.Chrome(options=opts, use_subprocess=True)
         driver.get(HOMEPAGE)
 
         wait = WebDriverWait(driver, 40)

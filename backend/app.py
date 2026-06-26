@@ -134,6 +134,15 @@ def get_chart_data(ticker):
         traceback.print_exc()
         return jsonify({"error": str(e), "candles": []}), 500
 
+@app.route('/api/options', methods=['GET'])
+def get_all_options():
+    try:
+        from services.sheets import get_options_data
+        data = get_options_data(None)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/stocks/<ticker>/options', methods=['GET'])
 def get_stock_options(ticker):
     try:

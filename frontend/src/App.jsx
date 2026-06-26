@@ -20,6 +20,7 @@ import LeadBoard from './components/LeadBoard';
 import SplashScreen from './components/SplashScreen';
 import UserProfileModal from './components/UserProfileModal';
 import LandingPage from './components/LandingPage/LandingPage';
+import OptionsScreener from './components/OptionsScreener';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -117,6 +118,8 @@ const AppContent = () => {
         return <Noticias />;
       case 'calculator':
         return <Calculator />;
+      case 'options_screener':
+        return <OptionsScreener onStockClick={setSelectedStock} />;
       case 'options_calculator':
         return <OptionsCalculator />;
       case 'chat':

@@ -34,6 +34,11 @@ def _get_db():
 
 INACTIVITY_TIMEOUT_SECONDS = 15 * 60  # 15 minutes
 
+BYPASS_DEVICE_LOCK_EMAILS = [
+    'raphaelfurlan28@gmail.com',
+    'raphaelfurlan28@hotmail.com'
+]
+
 def register_user_session(email, device_id=None):
     """
     Generates a new session token for the user and saves it to Firestore.
@@ -48,7 +53,8 @@ def register_user_session(email, device_id=None):
         doc = doc_ref.get()
         
         # Check device authorization
-        if device_id and doc.exists:
+        is_admin = email.lower() in [e.lower() for e in BYPASS_DEVICE_LOCK_EMAILS]
+        if device_id and doc.exists and not is_admin:
             data = doc.to_dict()
             authorized_device = data.get('authorized_device')
             
@@ -103,7 +109,8 @@ def validate_user_session(email, token, device_id=None):
             return {"valid": False, "reason": "token_mismatch"}
         
         # Check device
-        if device_id:
+        is_admin = email.lower() in [e.lower() for e in BYPASS_DEVICE_LOCK_EMAILS]
+        if device_id and not is_admin:
             authorized_device = data.get('authorized_device')
             if authorized_device and authorized_device != device_id:
                 print(f"[AUTH] Device Mismatch for {email}. Incoming: {device_id[-8:]} | Authorized: {authorized_device[-8:]}")

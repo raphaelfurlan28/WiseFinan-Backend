@@ -7,7 +7,7 @@ import './Home.css';
 import './Dashboard.css'; // Import Dashboard Styles
 import './News.css';
 import '../styles/main.css';
-import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling, Filter, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Landmark, ChevronRight, DollarSign, Calendar, AlertCircle, X as CloseIcon, Sparkles, PieChart, Crosshair, Shield, Lock, Clock, AlertTriangle, Newspaper, BookOpen, BarChart2, Bitcoin, Euro, PoundSterling, Filter, ChevronLeft, ChevronUp, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StockTicker from './StockTicker';
@@ -1395,6 +1395,35 @@ const Home = ({ onNavigate, onStockClick }) => {
                                     <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.5px' }}>
                                         Opções de {selectedOpportunity.stock.ticker}
                                     </h2>
+                                    <button
+                                        onClick={() => {
+                                            onStockClick(selectedOpportunity.stock);
+                                            setSelectedOpportunity(null);
+                                        }}
+                                        title={`Ver detalhes de ${selectedOpportunity.stock.ticker}`}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#ffffff',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            marginLeft: '6px',
+                                            padding: 0
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = 'translateX(2px)';
+                                            e.currentTarget.style.color = '#38bdf8';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = 'none';
+                                            e.currentTarget.style.color = '#ffffff';
+                                        }}
+                                    >
+                                        <ChevronRight size={22} />
+                                    </button>
                                 </div>
                                 <button
                                     onClick={() => setSelectedOpportunity(null)}
